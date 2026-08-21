@@ -1,0 +1,16 @@
+export const routes = {
+  home: "/",
+  services: "/services",
+  serviceDetail: (slug: string) => `/services/${slug}`,
+  book: "/book",
+  bookingPayment: (bookingId: string) => `/book/pay/${bookingId}`,
+  bookingSuccess: (bookingId: string) => `/booking-success/${bookingId}`,
+  bookings: "/bookings",
+  bookingDetail: (id: string) => `/bookings/${id}`,
+  profile: "/profile",
+  support: "/support",
+  faq: "/faq",
+  privacy: "/privacy-policy",
+  terms: "/terms",
+  cancellationPolicy: "/cancellation-policy",
+};
