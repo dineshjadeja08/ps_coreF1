@@ -141,7 +141,7 @@ export function BookingReviewShell() {
 
     return (
       <section className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
-        <div className="rounded-lg border border-border bg-surface p-6">
+        <div className="rounded-3xl border border-border bg-surface p-6 shadow-[var(--shadow-card)]">
           <CheckCircle2 className="h-10 w-10 text-success" />
           <h1 className="mt-4 text-3xl font-bold text-foreground">Booking Created</h1>
           <p className="mt-2 text-secondary">Complete your advance payment to confirm the booking.</p>
@@ -185,7 +185,7 @@ export function BookingReviewShell() {
 
       <div className="grid gap-8 lg:grid-cols-[1fr_380px] lg:items-start">
         <main className="space-y-6">
-          <section className="rounded-lg border border-border bg-surface p-5">
+          <section className="rounded-3xl border border-border bg-surface p-5 shadow-sm">
             <p className="text-sm font-semibold uppercase tracking-wide text-primary">Booking Review</p>
             <h1 className="mt-2 text-3xl font-bold text-foreground">Confirm your service visit</h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-secondary">
@@ -193,7 +193,7 @@ export function BookingReviewShell() {
             </p>
           </section>
 
-          {loadingDraft ? <div className="h-28 animate-pulse rounded-lg bg-muted" /> : null}
+          {loadingDraft ? <div className="h-28 animate-pulse rounded-2xl bg-muted" /> : null}
 
           {blockedReason === "address" ? <ErrorState title="We could not load your address" error={addresses.error} onRetry={() => addresses.refetch()} /> : null}
           {blockedReason === "serviceability" ? (
@@ -239,7 +239,7 @@ export function BookingReviewShell() {
             </section>
           ) : null}
 
-          <section className="rounded-lg border border-border bg-surface p-5">
+          <section className="rounded-3xl border border-border bg-surface p-5 shadow-sm">
             <label htmlFor="problem-description" className="text-sm font-semibold text-foreground">
               Problem description
             </label>
@@ -250,7 +250,7 @@ export function BookingReviewShell() {
               value={problemDescription}
               onChange={(event) => setProblemDescription(event.target.value)}
               placeholder="Tell us what needs attention."
-              className="mt-2 min-h-28 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
+              className="mt-2 min-h-28 w-full rounded-2xl border border-border bg-background px-3 py-2 text-sm text-foreground outline-none transition focus:border-primary focus:ring-3 focus:ring-primary/15"
             />
             <label htmlFor="customer-notes" className="mt-4 block text-sm font-semibold text-foreground">
               Notes for technician
@@ -260,22 +260,22 @@ export function BookingReviewShell() {
               value={customerNotes}
               onChange={(event) => setCustomerNotes(event.target.value)}
               placeholder="Optional instructions."
-              className="mt-2 min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
+              className="mt-2 min-h-20 w-full rounded-2xl border border-border bg-background px-3 py-2 text-sm text-foreground outline-none transition focus:border-primary focus:ring-3 focus:ring-primary/15"
             />
           </section>
         </main>
 
-        <aside className="rounded-lg border border-border bg-surface p-5 shadow-sm lg:sticky lg:top-28">
+        <aside className="rounded-3xl border border-border bg-surface p-5 shadow-[var(--shadow-card)] lg:sticky lg:top-28">
           <h2 className="text-xl font-bold text-foreground">Booking Summary</h2>
           <div className="mt-5 space-y-4">
             <SummaryItem label="Pricing" value="To be confirmed by backend on booking creation" />
             <SummaryItem label="Current listed price" value={service.data ? formatMoney(service.data.effective_price) : "Loading"} />
           </div>
-          <p className="mt-5 flex gap-2 rounded-lg bg-primary-soft p-3 text-sm leading-6 text-primary">
+          <p className="mt-5 flex gap-2 rounded-2xl bg-primary-soft p-3 text-sm leading-6 text-primary">
             <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
             Your final amount is calculated securely by Purple Squad before payment.
           </p>
-          {submitError ? <p className="mt-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{submitError}</p> : null}
+          {submitError ? <p className="mt-4 rounded-2xl bg-destructive/10 p-3 text-sm text-destructive">{submitError}</p> : null}
           <Button type="submit" className="mt-5 w-full" disabled={!canSubmit} aria-disabled={!canSubmit}>
             {createBooking.isPending ? (
               <>
@@ -295,7 +295,7 @@ export function BookingReviewShell() {
 
 function ReviewCard({ title, actionHref, actionLabel, children }: { title: string; actionHref: string; actionLabel: string; children: React.ReactNode }) {
   return (
-    <article className="rounded-lg border border-border bg-surface p-5">
+    <article className="rounded-2xl border border-border bg-surface p-5 shadow-sm">
       <div className="flex items-center justify-between gap-3">
         <p className="text-xs font-semibold uppercase tracking-wide text-secondary">{title}</p>
         <Button asChild variant="ghost" size="sm">
@@ -321,7 +321,7 @@ function SummaryItem({ label, value }: { label: string; value: string }) {
 
 function BlockedPanel({ title, description, onAction }: { title: string; description: string; onAction: () => void }) {
   return (
-    <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-5">
+    <div className="rounded-2xl border border-destructive/30 bg-destructive/10 p-5">
       <div className="flex gap-3">
         <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
         <div>

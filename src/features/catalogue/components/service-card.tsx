@@ -1,4 +1,4 @@
-import { Clock, Sparkles } from "lucide-react";
+import { Clock, ShieldCheck, Sparkles } from "lucide-react";
 import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
@@ -15,14 +15,17 @@ export function ServiceCard({ service }: { service: ServiceListItem }) {
   const duration = formatDuration(service.estimated_duration_minutes);
 
   return (
-    <article className="group overflow-hidden rounded-lg border border-border bg-surface shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+    <article className="group overflow-hidden rounded-2xl border border-border bg-surface shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-[var(--shadow-card)]">
       <Link href={routes.serviceDetail(service.slug)} aria-label={`View ${service.name}`}>
         <ServiceImage src={service.cover_image} alt={service.name} className="aspect-[4/3] rounded-none" />
       </Link>
-      <div className="space-y-4 p-4">
+      <div className="space-y-3 p-4">
         <div className="space-y-2">
           <div className="flex flex-wrap gap-2">
-            <Badge>{service.category.name}</Badge>
+            <Badge>
+              <ShieldCheck className="h-3 w-3" />
+              PS Verified
+            </Badge>
             {service.is_featured || service.is_popular ? (
               <Badge className="bg-warning/10 text-warning">
                 <Sparkles className="h-3 w-3" />
@@ -35,7 +38,7 @@ export function ServiceCard({ service }: { service: ServiceListItem }) {
               {service.name}
             </Link>
           </h3>
-          <p className="line-clamp-2 min-h-10 text-sm leading-5 text-secondary">{service.short_description}</p>
+          <p className="line-clamp-1 text-sm leading-5 text-secondary">{service.short_description || service.category.name}</p>
         </div>
         {duration ? (
           <div className="flex items-center gap-2 text-sm text-secondary">
@@ -43,7 +46,7 @@ export function ServiceCard({ service }: { service: ServiceListItem }) {
             {duration}
           </div>
         ) : null}
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex items-end justify-between gap-3">
           <PriceDisplay service={service} compact />
           <Button asChild size="sm">
             <AuthActionLink href={`/book?service=${encodeURIComponent(service.slug)}`} serviceSlug={service.slug}>

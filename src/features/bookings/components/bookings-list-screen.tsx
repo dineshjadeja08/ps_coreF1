@@ -57,7 +57,7 @@ export function BookingsListScreen() {
             <Link
               key={booking.id}
               href={routes.bookingDetail(booking.id)}
-              className="rounded-lg border border-border bg-surface p-5 transition hover:border-primary/40 hover:bg-muted/40"
+              className="rounded-2xl border border-border bg-surface p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-[var(--shadow-card)]"
             >
               <article className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center">
                 <div>

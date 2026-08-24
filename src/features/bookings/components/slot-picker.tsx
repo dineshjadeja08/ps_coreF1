@@ -23,7 +23,7 @@ export function SlotPicker({ slots, selectedSlotId, loading, error, onRetry, onS
     return (
       <div className="grid gap-3">
         {Array.from({ length: 6 }).map((_, index) => (
-          <div key={index} className="h-12 animate-pulse rounded-lg bg-muted" />
+          <div key={index} className="h-12 animate-pulse rounded-2xl bg-muted" />
         ))}
       </div>
     );
@@ -35,7 +35,7 @@ export function SlotPicker({ slots, selectedSlotId, loading, error, onRetry, onS
 
   if (!slots.length) {
     return (
-      <div className="rounded-lg border border-dashed border-border bg-surface p-8 text-center">
+      <div className="rounded-2xl border border-dashed border-border bg-surface p-8 text-center">
         <h3 className="text-lg font-semibold text-foreground">No slots available for this date</h3>
         <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-secondary">Try another date to find an available technician visit.</p>
         {onClearDate ? (
@@ -67,8 +67,8 @@ export function SlotPicker({ slots, selectedSlotId, loading, error, onRetry, onS
                   aria-label={`Select ${formatSlotTime(slot.start_time)} to ${formatSlotTime(slot.end_time)}`}
                   onClick={() => onSelectSlot(slot)}
                   className={cn(
-                    "rounded-lg border p-3 text-left transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-50",
-                    selected ? "border-primary bg-primary text-primary-foreground" : "border-border bg-surface text-foreground hover:bg-muted",
+                    "rounded-2xl border p-3 text-left transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-50",
+                    selected ? "border-primary bg-primary text-primary-foreground shadow-[var(--shadow-soft)]" : "border-border bg-surface text-foreground hover:border-primary/30 hover:bg-primary-subtle",
                   )}
                 >
                   <span className="block font-semibold">

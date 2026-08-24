@@ -61,7 +61,7 @@ export function BookingDetailScreen({ bookingId }: { bookingId: string }) {
 
       <div className="grid gap-8 lg:grid-cols-[1fr_360px] lg:items-start">
         <main className="space-y-6">
-          <section className="rounded-lg border border-border bg-surface p-6">
+          <section className="rounded-3xl border border-border bg-surface p-6 shadow-sm">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <p className="text-sm font-semibold uppercase tracking-wide text-primary">Booking {item.booking_number}</p>
@@ -78,7 +78,7 @@ export function BookingDetailScreen({ bookingId }: { bookingId: string }) {
             </div>
           </section>
 
-          <section className="rounded-lg border border-border bg-surface p-6">
+          <section className="rounded-3xl border border-border bg-surface p-6 shadow-sm">
             <h2 className="text-xl font-bold text-foreground">Visit details</h2>
             <div className="mt-5 grid gap-4 md:grid-cols-2">
               <Panel label="Address" value={getBookingAddressLine(item)} icon={<MapPin className="h-4 w-4 text-primary" />} />
@@ -88,7 +88,7 @@ export function BookingDetailScreen({ bookingId }: { bookingId: string }) {
             </div>
           </section>
 
-          <section className="rounded-lg border border-border bg-surface p-6">
+          <section className="rounded-3xl border border-border bg-surface p-6 shadow-sm">
             <h2 className="text-xl font-bold text-foreground">Status timeline</h2>
             {timeline.length ? (
               <ol className="mt-5 space-y-4">
@@ -111,7 +111,7 @@ export function BookingDetailScreen({ bookingId }: { bookingId: string }) {
           </section>
         </main>
 
-        <aside className="rounded-lg border border-border bg-surface p-5 shadow-sm lg:sticky lg:top-28">
+        <aside className="rounded-3xl border border-border bg-surface p-5 shadow-[var(--shadow-card)] lg:sticky lg:top-28">
           <h2 className="text-xl font-bold text-foreground">Payment summary</h2>
           <dl className="mt-5 space-y-4">
             <SummaryItem label="Total" value={formatMoney(item.total_amount)} />
@@ -150,7 +150,7 @@ export function BookingDetailScreen({ bookingId }: { bookingId: string }) {
 
 function Panel({ label, value, icon }: { label: string; value: string; icon?: React.ReactNode }) {
   return (
-    <div className="rounded-lg border border-border bg-background p-4">
+    <div className="rounded-2xl border border-border bg-background p-4">
       <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-secondary">
         {icon}
         {label}

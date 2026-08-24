@@ -14,10 +14,10 @@ type AddressCardProps = {
 
 export function AddressCard({ address, onEdit, onDelete, onSetDefault, deleting, settingDefault }: AddressCardProps) {
   return (
-    <article className="rounded-lg border border-border bg-surface p-4 shadow-sm">
+    <article className="rounded-2xl border border-border bg-surface p-4 shadow-sm">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3">
-          <div className="grid h-10 w-10 place-items-center rounded-lg bg-primary-soft text-primary">
+          <div className="grid h-10 w-10 place-items-center rounded-xl bg-primary-soft text-primary">
             <Home className="h-5 w-5" />
           </div>
           <div>

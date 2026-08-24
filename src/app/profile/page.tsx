@@ -20,9 +20,14 @@ function ProfileContent() {
   }
 
   return (
-    <section className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
+    <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
+      <div className="mb-6 rounded-3xl border border-border bg-primary-subtle p-5">
+        <p className="text-sm font-semibold uppercase tracking-wide text-primary">Account</p>
+        <h1 className="mt-2 text-3xl font-bold text-foreground">Profile & saved addresses</h1>
+        <p className="mt-2 text-sm leading-6 text-secondary">Manage your details, service addresses, support links, and session.</p>
+      </div>
       <ProfileForm />
-      <div className="mt-8">
+      <div className="mt-8 rounded-3xl border border-border bg-surface p-5 shadow-sm">
         <AddressManager />
       </div>
       <Button type="button" variant="outline" className="mt-8" onClick={handleLogout}>

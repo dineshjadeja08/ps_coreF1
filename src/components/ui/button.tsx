@@ -5,13 +5,13 @@ import { ComponentProps } from "react";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex h-11 items-center justify-center gap-2 rounded-lg px-4 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary-hover",
+        default: "bg-primary text-primary-foreground shadow-[0_10px_20px_rgba(108,59,255,0.18)] hover:bg-primary-hover hover:shadow-[0_12px_24px_rgba(108,59,255,0.22)]",
         secondary: "bg-primary-soft text-primary hover:bg-primary-soft/80",
-        outline: "border border-border bg-surface text-foreground hover:bg-muted",
+        outline: "border border-border bg-surface text-foreground hover:border-primary/30 hover:bg-primary-subtle",
         ghost: "text-foreground hover:bg-muted",
       },
       size: {

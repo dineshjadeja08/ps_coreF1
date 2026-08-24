@@ -61,7 +61,7 @@ export function ServiceSearch({ services, initialValue = "", className, compact 
         autoComplete="off"
       />
       {focused && suggestions.length > 0 ? (
-        <div className="absolute left-0 right-0 top-full z-30 mt-2 overflow-hidden rounded-lg border border-border bg-surface shadow-lg">
+        <div className="absolute left-0 right-0 top-full z-30 mt-2 overflow-hidden rounded-2xl border border-border bg-surface shadow-[var(--shadow-card)]">
           {suggestions.map((service) => (
             <Link
               key={service.id}

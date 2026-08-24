@@ -62,7 +62,7 @@ export function ProfileForm() {
   ];
 
   return (
-    <form onSubmit={form.handleSubmit(handleSubmit)} className="rounded-lg border border-border bg-surface p-6 shadow-sm">
+    <form onSubmit={form.handleSubmit(handleSubmit)} className="rounded-3xl border border-border bg-surface p-6 shadow-[var(--shadow-card)]">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="text-sm font-semibold uppercase tracking-wide text-primary">Account</p>
@@ -93,7 +93,7 @@ export function ProfileForm() {
         ))}
       </div>
 
-      {message ? <p className="mt-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{message}</p> : null}
+      {message ? <p className="mt-4 rounded-2xl bg-destructive/10 p-3 text-sm text-destructive">{message}</p> : null}
       {saved ? <p className="mt-4 text-sm font-medium text-success">Profile saved.</p> : null}
 
       <Button type="submit" className="mt-5" disabled={form.formState.isSubmitting}>

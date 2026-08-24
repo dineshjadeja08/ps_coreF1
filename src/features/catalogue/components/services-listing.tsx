@@ -34,13 +34,15 @@ export function ServicesListing() {
   return (
     <div className="bg-background">
       <section className="mx-auto max-w-7xl space-y-6 px-4 py-10 sm:px-6 lg:px-8">
-        <div className="grid gap-5 lg:grid-cols-[1fr_420px] lg:items-end">
+        <div className="rounded-3xl border border-border bg-surface p-5 shadow-sm">
+          <div className="grid gap-5 lg:grid-cols-[1fr_420px] lg:items-end">
           <SectionHeading
             eyebrow="Services"
             title={query ? `Results for "${query}"` : title}
-            description="Search, filter, and compare Purple Squad services from the live backend catalogue."
+            description="Search, filter, and compare Purple Squad services from the live catalogue."
           />
           <ServiceSearch services={searchPool} initialValue={query ?? ""} compact />
+          </div>
         </div>
 
         <LocationSelector />
@@ -54,11 +56,14 @@ export function ServicesListing() {
         {services.isLoading ? <ServiceCardSkeletonGrid count={9} /> : null}
         {services.isError ? <ErrorState error={services.error} onRetry={() => services.refetch()} /> : null}
         {serviceResults.length ? (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <>
+          <p className="mb-4 text-sm font-semibold text-secondary">Showing {serviceResults.length} services</p>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {serviceResults.map((service) => (
               <ServiceCard key={service.id} service={service} />
             ))}
           </div>
+          </>
         ) : null}
         {services.data && serviceResults.length === 0 ? (
           <EmptyState

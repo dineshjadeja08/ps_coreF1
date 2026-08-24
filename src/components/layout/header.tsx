@@ -31,10 +31,10 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-surface/95 backdrop-blur">
-      <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3 sm:px-6 lg:px-8">
+      <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3 sm:px-6 lg:px-8">
         <Brand />
 
-        <button className="hidden h-10 items-center gap-2 rounded-lg border border-border px-3 text-sm font-medium text-foreground transition-colors hover:bg-muted md:flex">
+        <button className="hidden h-10 items-center gap-2 rounded-xl border border-border bg-primary-subtle px-3 text-sm font-semibold text-foreground transition-colors hover:border-primary/30 md:flex">
           <MapPin className="h-4 w-4 text-primary" />
           Tirupattur
         </button>
@@ -48,7 +48,7 @@ export function Header() {
             id="desktop-header-search"
             value={desktopSearch}
             onChange={(event) => setDesktopSearch(event.target.value)}
-            className="pl-9"
+            className="h-10 bg-background pl-9"
             placeholder="Search for AC repair, cleaning, installation..."
           />
         </form>
@@ -92,9 +92,9 @@ export function Header() {
         </Button>
       </div>
 
-      <div className="border-t border-border px-4 py-3 md:hidden">
+      <div className="border-t border-border bg-surface px-4 py-3 md:hidden">
         <div className="mx-auto flex max-w-7xl items-center gap-2">
-          <button className="flex h-11 items-center gap-2 rounded-lg border border-border px-3 text-sm font-medium">
+          <button className="flex h-11 items-center gap-2 rounded-xl border border-border bg-primary-subtle px-3 text-sm font-semibold">
             <MapPin className="h-4 w-4 text-primary" />
             Tirupattur
           </button>

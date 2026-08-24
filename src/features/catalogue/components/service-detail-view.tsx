@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronRight, Clock } from "lucide-react";
+import { ChevronRight, Clock, ShieldCheck, Star } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 
@@ -22,7 +22,7 @@ function TextSection({ title, body }: { title: string; body?: string }) {
   if (!body?.trim()) return null;
 
   return (
-    <section className="rounded-lg border border-border bg-surface p-5">
+    <section className="rounded-2xl border border-border bg-surface p-5">
       <h2 className="text-lg font-semibold text-foreground">{title}</h2>
       <p className="mt-3 whitespace-pre-line text-sm leading-7 text-secondary">{body}</p>
     </section>
@@ -79,15 +79,23 @@ export function ServiceDetailView() {
         </nav>
 
         <div className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
-          <ServiceImage src={detail.cover_image} alt={detail.name} priority className="aspect-[4/3]" />
+          <ServiceImage src={detail.cover_image} alt={detail.name} priority className="aspect-[4/3] shadow-[var(--shadow-card)]" />
 
-          <div className="rounded-lg border border-border bg-surface p-5 shadow-sm">
+          <div className="rounded-3xl border border-border bg-surface p-5 shadow-[var(--shadow-card)]">
             <div className="flex flex-wrap gap-2">
               <Badge>{detail.category.name}</Badge>
+              <Badge>
+                <ShieldCheck className="h-3 w-3" />
+                PS Verified
+              </Badge>
               {detail.is_featured || detail.is_popular ? <Badge className="bg-warning/10 text-warning">Featured</Badge> : null}
             </div>
             <h1 className="mt-4 text-3xl font-bold leading-tight text-foreground sm:text-4xl">{detail.name}</h1>
             {detail.short_description ? <p className="mt-3 text-base leading-7 text-secondary">{detail.short_description}</p> : null}
+            <p className="mt-4 flex items-center gap-2 text-sm font-semibold text-secondary">
+              <Star className="h-4 w-4 fill-warning text-warning" />
+              Review-backed service quality when customer reviews are available
+            </p>
             <div className="mt-5 space-y-3">
               <PriceDisplay service={detail} />
               {duration ? (

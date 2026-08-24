@@ -17,7 +17,9 @@
   --success: #16a34a;
   --warning: #f59e0b;
   --destructive: #e53935;
-  --radius: 0.5rem;
+  --radius: 0.75rem;
+  --shadow-card: 0 12px 30px rgba(23, 23, 27, 0.06);
+  --shadow-soft: 0 8px 20px rgba(108, 59, 255, 0.08);
 }
 
 @theme inline {
@@ -40,7 +42,8 @@
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 0.25rem);
+  --radius-xl: calc(var(--radius) + 0.5rem);
+  --radius-2xl: calc(var(--radius) + 0.75rem);
 }
 
 * {
@@ -51,6 +54,7 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  text-rendering: optimizeLegibility;
 }
 
 a {
@@ -60,4 +64,10 @@ a {
 ::selection {
   background: var(--primary-soft);
   color: var(--primary-dark);
+}
+
+.marketplace-card {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
 }

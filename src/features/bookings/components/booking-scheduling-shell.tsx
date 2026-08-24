@@ -111,9 +111,9 @@ export function BookingSchedulingShell() {
       <BookingStepIndicator currentStep={currentStep} />
       <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_380px] lg:items-start">
         <div className="space-y-8">
-          <section className="rounded-lg border border-border bg-surface p-5">
+          <section className="rounded-3xl border border-border bg-surface p-5 shadow-sm">
             <h1 className="text-2xl font-bold text-foreground">Book Service</h1>
-            <p className="mt-2 text-sm leading-6 text-secondary">Select a serviceable address, date, and available slot. Booking creation starts in Phase 6.</p>
+            <p className="mt-2 text-sm leading-6 text-secondary">Select your serviceable address, preferred date, and available technician slot.</p>
           </section>
 
           <section className="space-y-4">
@@ -122,7 +122,7 @@ export function BookingSchedulingShell() {
               <p className="mt-1 text-sm text-secondary">Choose where the technician should visit.</p>
             </div>
 
-            {addresses.isLoading ? <div className="h-32 animate-pulse rounded-lg bg-muted" /> : null}
+            {addresses.isLoading ? <div className="h-32 animate-pulse rounded-2xl bg-muted" /> : null}
             {addresses.isError ? <ErrorState title="We could not load your addresses" error={addresses.error} onRetry={() => addresses.refetch()} /> : null}
             {addresses.data?.results?.length ? (
               <div className="grid gap-3">
@@ -135,8 +135,8 @@ export function BookingSchedulingShell() {
                       aria-pressed={selected}
                       onClick={() => selectAddress(address)}
                       className={cn(
-                        "rounded-lg border bg-surface p-4 text-left transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
-                        selected ? "border-primary ring-2 ring-primary/15" : "border-border hover:bg-muted",
+                        "rounded-2xl border bg-surface p-4 text-left transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
+                        selected ? "border-primary bg-primary-subtle ring-2 ring-primary/15" : "border-border hover:border-primary/30 hover:bg-primary-subtle",
                       )}
                     >
                       <span className="flex items-center gap-2 font-semibold text-foreground">
@@ -154,7 +154,7 @@ export function BookingSchedulingShell() {
             {addresses.data && addresses.data.results.length === 0 ? <AddressManager compact /> : null}
 
             {selectedAddress ? (
-              <div className="rounded-lg border border-border bg-surface p-4" aria-live="polite">
+              <div className="rounded-2xl border border-border bg-surface p-4" aria-live="polite">
                 {serviceability.isFetching ? (
                   <p className="text-sm text-secondary">Checking serviceability...</p>
                 ) : serviceability.data?.is_supported ? (
@@ -187,11 +187,11 @@ export function BookingSchedulingShell() {
               <h2 className="text-xl font-bold text-foreground">3. Select time slot</h2>
               <p className="mt-1 text-sm text-secondary">Your time will be confirmed when the booking is created in the next phase.</p>
             </div>
-            {slotConflict ? <p className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{slotConflict}</p> : null}
+            {slotConflict ? <p className="rounded-2xl bg-destructive/10 p-3 text-sm text-destructive">{slotConflict}</p> : null}
             {!selectedAddress ? (
-              <p className="rounded-lg border border-border bg-surface p-4 text-sm text-secondary">Select a saved address to load available slots.</p>
+              <p className="rounded-2xl border border-border bg-surface p-4 text-sm text-secondary">Select a saved address to load available slots.</p>
             ) : serviceability.data?.is_supported === false ? (
-              <p className="rounded-lg border border-border bg-surface p-4 text-sm text-destructive">Slots are blocked because this address is not serviceable.</p>
+              <p className="rounded-2xl border border-border bg-surface p-4 text-sm text-destructive">Slots are blocked because this address is not serviceable.</p>
             ) : (
               <SlotPicker
                 slots={slots.data ?? []}
@@ -206,9 +206,9 @@ export function BookingSchedulingShell() {
           </section>
         </div>
 
-        <aside className="rounded-lg border border-border bg-surface p-4 shadow-sm lg:sticky lg:top-28">
+        <aside className="rounded-3xl border border-border bg-surface p-4 shadow-[var(--shadow-card)] lg:sticky lg:top-28">
           {service.isLoading ? (
-            <div className="h-72 animate-pulse rounded-lg bg-muted" />
+            <div className="h-72 animate-pulse rounded-2xl bg-muted" />
           ) : service.data ? (
             <div>
               <ServiceImage src={service.data.cover_image} alt={service.data.name} className="aspect-[4/3]" />
@@ -225,7 +225,7 @@ export function BookingSchedulingShell() {
                 </p>
               ) : null}
               {selectedSlot ? (
-                <p className="mt-4 rounded-lg bg-primary-soft p-3 text-sm font-semibold text-primary">
+                <p className="mt-4 rounded-2xl bg-primary-soft p-3 text-sm font-semibold text-primary">
                   Selected: {formatSlotTime(selectedSlot.start_time)} - {formatSlotTime(selectedSlot.end_time)}
                 </p>
               ) : null}

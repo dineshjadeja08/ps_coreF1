@@ -39,7 +39,7 @@ export function BookingSuccessScreen({ bookingId }: { bookingId: string }) {
 
   return (
     <section className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
-      <div className="rounded-lg border border-border bg-surface p-6">
+      <div className="rounded-3xl border border-border bg-surface p-6 shadow-[var(--shadow-card)]">
         <CheckCircle2 className={payability.alreadyPaid ? "h-12 w-12 text-success" : "h-12 w-12 text-primary"} />
         <p className="mt-4 text-sm font-semibold uppercase tracking-wide text-primary">Booking status</p>
         <h1 className="mt-2 text-3xl font-bold text-foreground">{payability.alreadyPaid ? "Booking Confirmed" : "Booking Payment Pending"}</h1>
@@ -83,7 +83,7 @@ export function BookingSuccessScreen({ bookingId }: { bookingId: string }) {
 
 function Panel({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-border bg-background p-4">
+    <div className="rounded-2xl border border-border bg-background p-4">
       <p className="text-xs font-semibold uppercase tracking-wide text-secondary">{label}</p>
       <p className="mt-1 text-sm font-semibold text-foreground">{value}</p>
     </div>

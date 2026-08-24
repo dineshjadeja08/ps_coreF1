@@ -181,7 +181,7 @@ export function BookingPaymentHandoff({ bookingId }: { bookingId: string }) {
   return (
     <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
       <div className="grid gap-8 lg:grid-cols-[1fr_380px] lg:items-start">
-        <main className="rounded-lg border border-border bg-surface p-6">
+        <main className="rounded-3xl border border-border bg-surface p-6 shadow-sm">
           <CreditCard className="h-10 w-10 text-primary" />
           <p className="mt-4 text-sm font-semibold uppercase tracking-wide text-primary">Complete Payment</p>
           <h1 className="mt-2 text-3xl font-bold text-foreground">{payability.alreadyPaid ? "Payment already completed" : "Pay your advance"}</h1>
@@ -190,6 +190,7 @@ export function BookingPaymentHandoff({ bookingId }: { bookingId: string }) {
               ? "Your advance payment is already recorded by Purple Squad."
               : "Razorpay Checkout will open only after you choose to pay."}
           </p>
+          <p className="mt-4 rounded-2xl bg-primary-soft p-3 text-sm font-semibold text-primary">Secure payment powered by Razorpay</p>
 
           <div className="mt-6 grid gap-4 md:grid-cols-2">
             <Panel label="Booking" value={summary.bookingReference} />
@@ -208,32 +209,32 @@ export function BookingPaymentHandoff({ bookingId }: { bookingId: string }) {
           </div>
         </main>
 
-        <aside className="rounded-lg border border-border bg-surface p-5 shadow-sm lg:sticky lg:top-28">
+        <aside className="rounded-3xl border border-border bg-surface p-5 shadow-[var(--shadow-card)] lg:sticky lg:top-28">
           <h2 className="text-xl font-bold text-foreground">Payment</h2>
           <p className="mt-2 text-sm leading-6 text-secondary">{payability.reason}</p>
 
           {uiState === "success" || payability.alreadyPaid ? (
-            <div className="mt-5 rounded-lg bg-success/10 p-4 text-sm text-success">
+            <div className="mt-5 rounded-2xl bg-success/10 p-4 text-sm text-success">
               <CheckCircle2 className="mb-2 h-5 w-5" />
               Payment already received.
             </div>
           ) : null}
 
           {uiState === "pending_confirmation" ? (
-            <div className="mt-5 rounded-lg bg-primary-soft p-4 text-sm leading-6 text-primary">
+            <div className="mt-5 rounded-2xl bg-primary-soft p-4 text-sm leading-6 text-primary">
               <RefreshCw className="mb-2 h-5 w-5 animate-spin" />
               We&apos;re confirming your payment. Please don&apos;t make another payment. Your booking will update automatically once confirmed.
             </div>
           ) : null}
 
           {uiState === "cancelled" || uiState === "failed" ? (
-            <div className="mt-5 rounded-lg bg-destructive/10 p-4 text-sm leading-6 text-destructive">
+            <div className="mt-5 rounded-2xl bg-destructive/10 p-4 text-sm leading-6 text-destructive">
               <AlertCircle className="mb-2 h-5 w-5" />
               {message}
             </div>
           ) : null}
 
-          {message && !["cancelled", "failed"].includes(uiState) ? <p className="mt-5 rounded-lg bg-muted p-3 text-sm text-secondary">{message}</p> : null}
+          {message && !["cancelled", "failed"].includes(uiState) ? <p className="mt-5 rounded-2xl bg-muted p-3 text-sm text-secondary">{message}</p> : null}
 
           <Button type="button" className="mt-5 w-full" disabled={!payability.canPay || busy || uiState === "pending_confirmation"} onClick={startPayment}>
             {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
@@ -257,7 +258,7 @@ export function BookingPaymentHandoff({ bookingId }: { bookingId: string }) {
 
 function Panel({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-border bg-background p-4">
+    <div className="rounded-2xl border border-border bg-background p-4">
       <p className="text-xs font-semibold uppercase tracking-wide text-secondary">{label}</p>
       <p className="mt-1 text-sm font-semibold text-foreground">{value}</p>
     </div>
