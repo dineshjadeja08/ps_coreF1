@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarCheck, LogOut, MapPin, Search, UserRound } from "lucide-react";
+import { CalendarCheck, LogOut, MapPin, Search, ShieldCheck, UserRound } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
@@ -62,6 +62,12 @@ export function Header() {
           </Button>
           <Button asChild variant="ghost" size="sm">
             <Link href={routes.support}>Help</Link>
+          </Button>
+          <Button asChild variant="ghost" size="sm">
+            <Link href={routes.admin}>
+              <ShieldCheck className="h-4 w-4" />
+              Admin
+            </Link>
           </Button>
           {isAuthenticated ? (
             <>
