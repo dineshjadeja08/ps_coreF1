@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { ArrowRight, CalendarCheck, CheckCircle2, Clock, CreditCard, MapPin, ShieldCheck, Sparkles, Wrench } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 
 import { EmptyState } from "@/components/common/empty-state";
@@ -14,7 +15,6 @@ import { routes } from "@/constants/routes";
 import { CategoryCard } from "@/features/catalogue/components/category-card";
 import { LocationSelector } from "@/features/catalogue/components/location-selector";
 import { ServiceCard } from "@/features/catalogue/components/service-card";
-import { ServiceImage } from "@/features/catalogue/components/service-image";
 import { ServiceSearch } from "@/features/catalogue/components/service-search";
 import { CategorySkeletonGrid, ServiceCardSkeletonGrid } from "@/features/catalogue/components/skeletons";
 import { useServiceCategories, useServices } from "@/features/catalogue/queries";
@@ -80,8 +80,15 @@ export function HomeDiscovery() {
           <div className="absolute -right-3 -top-3 hidden rounded-2xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow-[var(--shadow-soft)] sm:block">
             PS Verified
           </div>
-          <div className="overflow-hidden rounded-3xl bg-primary-subtle">
-            <ServiceImage src={visibleServices[0]?.cover_image} alt={visibleServices[0]?.name || "Purple Squad technician service"} className="aspect-[16/11] rounded-none" priority />
+          <div className="relative aspect-[16/9] overflow-hidden rounded-3xl bg-primary-subtle">
+            <Image
+              src="/images/hero/purple-squad-home-services-hero.png"
+              alt="Purple Squad technician with home appliances and cleaning services"
+              fill
+              priority
+              sizes="(min-width: 1024px) 46vw, 100vw"
+              className="object-cover"
+            />
           </div>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             {trustItems.slice(0, 4).map((item) => {
