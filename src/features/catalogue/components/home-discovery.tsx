@@ -86,6 +86,7 @@ export function HomeDiscovery() {
               alt="Purple Squad technician with home appliances and cleaning services"
               fill
               priority
+              unoptimized
               sizes="(min-width: 1024px) 46vw, 100vw"
               className="object-cover"
             />
