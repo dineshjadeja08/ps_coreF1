@@ -16,6 +16,9 @@ export function Footer() {
         <div className="space-y-3">
           <Brand />
           <p className="max-w-sm text-sm leading-6 text-secondary">Purple Squad Care for clear pricing, trusted technicians, and simple home-service booking.</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-primary">
+            Chennai · Bangalore · Coimbatore · Build 2026.08.24.1
+          </p>
         </div>
         <div className="grid gap-6 sm:grid-cols-3">
           {groups.map((group) => (
