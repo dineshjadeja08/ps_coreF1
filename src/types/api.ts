@@ -20,6 +20,23 @@ export type ServiceCategory = {
   display_order?: number;
 };
 
+export type AdminServiceCategory = ServiceCategory & {
+  is_active: boolean;
+  created_at: ISODateTime;
+  updated_at: ISODateTime;
+};
+
+export type AdminServiceImage = {
+  id: UUID;
+  service: UUID;
+  image: string;
+  alt_text: string;
+  display_order: number;
+  is_active: boolean;
+  created_at: ISODateTime;
+  updated_at: ISODateTime;
+};
+
 export type ServiceAreaCheckResponse = {
   postal_code: string;
   is_supported: boolean;
@@ -65,6 +82,18 @@ export type ServiceDetail = ServiceListItem & {
   whats_included?: string;
   whats_excluded?: string;
   important_notes?: string;
+};
+
+export type AdminService = Omit<ServiceDetail, "category" | "effective_price"> & {
+  category: UUID;
+  category_detail: ServiceCategory;
+  effective_price: DecimalString;
+  advance_payment_type: "FIXED" | "PERCENTAGE";
+  advance_payment_value: DecimalString;
+  images: AdminServiceImage[];
+  is_active: boolean;
+  created_at: ISODateTime;
+  updated_at: ISODateTime;
 };
 
 export type Address = {
@@ -159,6 +188,12 @@ export type Booking = {
   status_history: BookingStatusHistory[];
 };
 
+export type BalanceCollectionRequest = {
+  amount: DecimalString;
+  method: "CASH" | "UPI" | "CARD_OFFLINE" | "OTHER";
+  notes?: string;
+};
+
 export type BookingStatusHistory = {
   id: UUID;
   from_status?: string;
@@ -232,6 +267,18 @@ export type User = {
   customer_profile: CustomerProfile;
   created_at: ISODateTime;
   updated_at: ISODateTime;
+};
+
+export type TechnicianProfile = {
+  id: UUID;
+  employee_code: string;
+  display_name: string;
+  phone: string;
+  skills: Array<{ id: UUID; name: string; description?: string }>;
+  service_areas: Array<{ id: UUID; name: string; postal_code: string; city: string }>;
+  is_available: boolean;
+  is_active: boolean;
+  joined_at: ISODate | null;
 };
 
 export type UserProfileUpdateRequest = {
