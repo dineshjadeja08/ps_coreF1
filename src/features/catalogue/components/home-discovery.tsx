@@ -50,7 +50,7 @@ export function HomeDiscovery() {
           transition={{ duration: 0.35 }}
           className="flex flex-col justify-center"
         >
-          <Badge className="w-fit">Purple Squad Care in Tirupattur</Badge>
+          <Badge className="w-fit">Purple Squad Care in Chennai, Bangalore & Coimbatore</Badge>
           <h1 className="mt-5 max-w-3xl text-4xl font-bold leading-tight text-foreground sm:text-5xl">
             Expert Home Services Right at Your Doorstep
           </h1>

@@ -25,7 +25,7 @@ export const emptyAddressValues: AddressFormValues = {
   address_line_2: "",
   landmark: "",
   locality: "",
-  city: "Tirupattur",
+  city: "Chennai",
   state: "Tamil Nadu",
   postal_code: "",
   country: "India",

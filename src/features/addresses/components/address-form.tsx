@@ -55,9 +55,9 @@ export function AddressForm({ initialAddress, submitting, onSubmit, onCancel }: 
     { name: "address_line_2", label: "Address line 2", placeholder: "Apartment, floor" },
     { name: "locality", label: "Area", placeholder: "Area / locality" },
     { name: "landmark", label: "Landmark", placeholder: "Nearby landmark" },
-    { name: "city", label: "City", placeholder: "Tirupattur", required: true },
+    { name: "city", label: "City", placeholder: "Chennai", required: true },
     { name: "state", label: "State", placeholder: "Tamil Nadu", required: true },
-    { name: "postal_code", label: "Pincode", placeholder: "635601", required: true },
+    { name: "postal_code", label: "Pincode", placeholder: "600001", required: true },
   ];
 
   return (

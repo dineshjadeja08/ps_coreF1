@@ -36,7 +36,7 @@ export function Header() {
 
         <button className="hidden h-10 items-center gap-2 rounded-xl border border-border bg-primary-subtle px-3 text-sm font-semibold text-foreground transition-colors hover:border-primary/30 md:flex">
           <MapPin className="h-4 w-4 text-primary" />
-          Tirupattur
+          Chennai · Bangalore · Coimbatore
         </button>
 
         <form onSubmit={(event) => submitSearch(event, desktopSearch)} className="relative hidden flex-1 lg:block">
@@ -96,7 +96,7 @@ export function Header() {
         <div className="mx-auto flex max-w-7xl items-center gap-2">
           <button className="flex h-11 items-center gap-2 rounded-xl border border-border bg-primary-subtle px-3 text-sm font-semibold">
             <MapPin className="h-4 w-4 text-primary" />
-            Tirupattur
+            Chennai · Bangalore · Coimbatore
           </button>
           <form onSubmit={(event) => submitSearch(event, mobileSearch)} className="relative min-w-0 flex-1">
             <label className="sr-only" htmlFor="mobile-header-search">
