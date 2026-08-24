@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Loader2, ShieldCheck } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { useForm, useWatch } from "react-hook-form";
+import { useForm } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,9 +35,7 @@ export function LoginForm() {
   });
 
   const returnTo = useMemo(() => searchParams.get("returnTo") || undefined, [searchParams]);
-  const watchedPhone = useWatch({ control: phoneForm.control, name: "phone" }) ?? "";
-  const canUseDevLogin =
-    env.devPhoneLogin.enabled && watchedPhone.replace(/\D/g, "") === env.devPhoneLogin.phone.replace(/\D/g, "");
+  const canUseDevLogin = env.devPhoneLogin.enabled && Boolean(env.devPhoneLogin.phone);
 
   useEffect(() => {
     if (cooldown <= 0) return;
@@ -94,9 +92,9 @@ export function LoginForm() {
   }
 
   async function devLogin() {
-    const normalized = normalizeIndianPhone(phoneForm.getValues("phone"));
+    const normalized = normalizeIndianPhone(env.devPhoneLogin.phone || phoneForm.getValues("phone"));
     if (!normalized) {
-      phoneForm.setError("phone", { message: "Enter the allowed development phone number." });
+      phoneForm.setError("phone", { message: "Development login is not configured." });
       return;
     }
 
@@ -155,9 +153,14 @@ export function LoginForm() {
             Continue
           </Button>
           {canUseDevLogin ? (
-            <Button type="button" variant="secondary" className="w-full" disabled={isSending} onClick={devLogin}>
-              Development login without OTP
-            </Button>
+            <div className="rounded-lg border border-dashed border-primary/40 bg-primary-soft/40 p-3">
+              <p className="text-sm font-semibold text-foreground">Developer access</p>
+              <p className="mt-1 text-sm text-secondary">Use the local test profile without OTP.</p>
+              <Button type="button" variant="secondary" className="mt-3 w-full" disabled={isSending} onClick={devLogin}>
+                {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                Continue as dev user
+              </Button>
+            </div>
           ) : null}
         </form>
       ) : null}
