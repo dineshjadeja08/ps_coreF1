@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowRight, CalendarCheck, CheckCircle2, Clock, CreditCard, MapPin, Search, ShieldCheck, Sparkles, Wrench } from "lucide-react";
+import { ArrowRight, CalendarCheck, CheckCircle2, Clock, CreditCard, MapPin, Search, ShieldCheck, Sparkles, Star, Wrench } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -13,17 +13,19 @@ import { Button } from "@/components/ui/button";
 import { env } from "@/config/env";
 import { faqPreview } from "@/constants/faq";
 import { routes } from "@/constants/routes";
-import { CategoryCard } from "@/features/catalogue/components/category-card";
 import { LocationSelector } from "@/features/catalogue/components/location-selector";
 import { PromotionBanner } from "@/features/catalogue/components/promotion-banner";
 import { ReviewCard, type DemoReview } from "@/features/catalogue/components/review-card";
 import { ServiceAreasSection } from "@/features/catalogue/components/service-areas-section";
 import { ServiceCard } from "@/features/catalogue/components/service-card";
 import { ServiceCollectionSection } from "@/features/catalogue/components/service-collection-section";
+import { ServiceImage } from "@/features/catalogue/components/service-image";
 import { ServiceSearch } from "@/features/catalogue/components/service-search";
 import { CategorySkeletonGrid, ServiceCardSkeletonGrid } from "@/features/catalogue/components/skeletons";
 import { TrustMetric } from "@/features/catalogue/components/trust-metric";
 import { useServiceCategories, useServices } from "@/features/catalogue/queries";
+import type { ServiceCategory, ServiceListItem } from "@/features/catalogue/types";
+import { formatPrice, getCurrentPrice, hasOfferPrice } from "@/features/catalogue/utils";
 
 const trustItems = [
   { icon: ShieldCheck, title: "Verified Technicians", text: "Skilled local professionals for every visit." },
@@ -101,13 +103,67 @@ const demoReviews: DemoReview[] = [
   },
 ];
 
+function CategoryShowcaseCard({
+  category,
+  services,
+}: {
+  category: ServiceCategory;
+  services: ServiceListItem[];
+}) {
+  const sampleService = services.find((service) => service.category.slug === category.slug);
+
+  return (
+    <Link
+      href={`/services?category=${encodeURIComponent(category.slug)}`}
+      className="group block overflow-hidden rounded-2xl border border-border bg-surface shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[var(--shadow-card)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+    >
+      <ServiceImage
+        src={sampleService?.cover_image}
+        alt={sampleService?.name ?? category.name}
+        className="aspect-[3/2] rounded-none"
+      />
+      <div className="p-4">
+        <h3 className="text-base font-bold text-foreground group-hover:text-primary">{category.name}</h3>
+        {category.description ? <p className="mt-1 line-clamp-2 text-sm leading-5 text-secondary">{category.description}</p> : null}
+      </div>
+    </Link>
+  );
+}
+
+function CompactServiceCard({ service }: { service: ServiceListItem }) {
+  const currentPrice = formatPrice(getCurrentPrice(service));
+  const basePrice = formatPrice(service.base_price);
+  const showOffer = hasOfferPrice(service) && basePrice;
+
+  return (
+    <Link
+      href={routes.serviceDetail(service.slug)}
+      className="group block overflow-hidden rounded-2xl border border-border bg-surface shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[var(--shadow-card)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+    >
+      <ServiceImage src={service.cover_image} alt={service.name} className="aspect-[4/3] rounded-none" />
+      <div className="space-y-2 p-3">
+        <h3 className="line-clamp-1 text-sm font-bold text-foreground group-hover:text-primary">{service.name}</h3>
+        <div className="flex items-center gap-1 text-xs font-semibold text-secondary">
+          <Star className="h-3 w-3 fill-warning text-warning" />
+          <span>4.8</span>
+          <span className="text-muted-foreground">PS verified</span>
+        </div>
+        <div className="flex items-baseline gap-2">
+          <span className="text-sm font-bold text-foreground">{currentPrice ?? "View price"}</span>
+          {showOffer ? <span className="text-xs text-muted-foreground line-through">{basePrice}</span> : null}
+        </div>
+      </div>
+    </Link>
+  );
+}
+
 export function HomeDiscovery() {
   const categories = useServiceCategories();
-  const services = useServices({ page_size: 12 });
-  const featured = useServices({ featured: true, page_size: 6 });
+  const services = useServices({ page_size: 20 });
+  const featured = useServices({ featured: true, page_size: 10 });
 
   const allServices = services.data?.results ?? [];
-  const visibleServices = (featured.data?.results?.length ? featured.data.results : allServices).slice(0, 6);
+  const visibleServices = (featured.data?.results?.length ? featured.data.results : allServices).slice(0, 10);
   const repairServices = allServices.filter((service) => service.category.slug === "home-appliances-repair");
   const cleaningServices = allServices.filter((service) => service.category.slug === "cleaning");
   const whatsappUrl = env.supportWhatsapp ? `https://wa.me/${env.supportWhatsapp.replace(/\D/g, "")}` : routes.support;
@@ -209,20 +265,20 @@ export function HomeDiscovery() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl space-y-6 px-4 py-10 sm:px-6 lg:px-8">
+      <section className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
         <SectionHeading
-          eyebrow="Browse"
-          title="What service do you need?"
-          description="Browse the live Purple Squad categories published by the backend catalogue."
+          eyebrow="Top categories"
+          title="Experience finest home services"
+          description="Choose from Purple Squad categories available in your city."
           href={routes.services}
           linkLabel="View all services"
         />
         {categories.isLoading ? <CategorySkeletonGrid /> : null}
         {categories.isError ? <ErrorState error={categories.error} onRetry={() => categories.refetch()} /> : null}
         {categories.data?.length ? (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
             {categories.data.map((category) => (
-              <CategoryCard key={category.id} category={category} />
+              <CategoryShowcaseCard key={category.id} category={category} services={allServices} />
             ))}
           </div>
         ) : null}
@@ -233,6 +289,25 @@ export function HomeDiscovery() {
             actionLabel="Refresh services"
             actionHref={routes.services}
           />
+        ) : null}
+      </section>
+
+      <section className="mx-auto max-w-7xl space-y-5 px-4 py-8 sm:px-6 lg:px-8">
+        <SectionHeading
+          eyebrow="Most booked"
+          title="Most booked services"
+          description="Popular repairs and cleaning jobs ready for quick booking."
+          href={routes.services}
+          linkLabel="Open full catalogue"
+        />
+        {services.isLoading || featured.isLoading ? <ServiceCardSkeletonGrid /> : null}
+        {services.isError ? <ErrorState error={services.error} onRetry={() => services.refetch()} /> : null}
+        {visibleServices.length ? (
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
+            {visibleServices.slice(0, 10).map((service) => (
+              <CompactServiceCard key={service.id} service={service} />
+            ))}
+          </div>
         ) : null}
       </section>
 
@@ -269,7 +344,7 @@ export function HomeDiscovery() {
       <section className="mx-auto max-w-7xl space-y-6 px-4 py-10 sm:px-6 lg:px-8">
         <SectionHeading
           eyebrow={featured.data?.results?.length ? "Featured" : "Catalogue"}
-          title={featured.data?.results?.length ? "Most booked services" : "Our Services"}
+          title={featured.data?.results?.length ? "Featured services" : "Our Services"}
           description="Most useful services from the live Purple Squad catalogue."
           href={routes.services}
           linkLabel="Explore catalogue"
