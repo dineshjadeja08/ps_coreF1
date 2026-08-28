@@ -1,13 +1,34 @@
 import Link from "next/link";
 
 import { Brand } from "@/components/layout/brand";
-import { siteConfig } from "@/config/site";
+import { env } from "@/config/env";
 
 export function Footer() {
   const groups = [
-    { title: "Services", links: [{ href: "/services", label: "Services" }] },
-    { title: "Support", links: [{ href: "/support", label: "Help" }, { href: "/faq", label: "FAQ" }] },
-    { title: "Legal", links: siteConfig.footerLinks.filter((link) => ["Privacy Policy", "Terms", "Cancellation Policy"].includes(link.label)) },
+    {
+      title: "Company",
+      links: [
+        { href: "/support", label: "Contact" },
+        { href: "/terms", label: "Terms and Conditions" },
+        { href: "/privacy-policy", label: "Privacy Policy" },
+      ],
+    },
+    {
+      title: "For customers",
+      links: [
+        { href: "/bookings", label: "My bookings" },
+        { href: "/support", label: "Help centre" },
+        { href: "/cancellation-policy", label: "Cancellation policy" },
+        { href: "/faq", label: "Safety information" },
+      ],
+    },
+    {
+      title: "For professionals",
+      links: [
+        { href: "/support", label: "Join as a technician" },
+        { href: "/support", label: "Partner support" },
+      ],
+    },
   ];
 
   return (
@@ -19,6 +40,13 @@ export function Footer() {
           <p className="text-xs font-semibold uppercase tracking-wide text-primary">
             Chennai · Bangalore · Coimbatore · Build 2026.08.24.1
           </p>
+          {env.supportEmail || env.supportPhone ? (
+            <p className="text-sm leading-6 text-secondary">
+              {env.supportEmail ? env.supportEmail : null}
+              {env.supportEmail && env.supportPhone ? " · " : null}
+              {env.supportPhone ? env.supportPhone : null}
+            </p>
+          ) : null}
         </div>
         <div className="grid gap-6 sm:grid-cols-3">
           {groups.map((group) => (

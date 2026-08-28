@@ -10,13 +10,19 @@ import { ErrorState } from "@/components/common/error-state";
 import { SectionHeading } from "@/components/common/section-heading";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { env } from "@/config/env";
 import { faqPreview } from "@/constants/faq";
 import { routes } from "@/constants/routes";
 import { CategoryCard } from "@/features/catalogue/components/category-card";
 import { LocationSelector } from "@/features/catalogue/components/location-selector";
+import { PromotionBanner } from "@/features/catalogue/components/promotion-banner";
+import { ReviewCard, type DemoReview } from "@/features/catalogue/components/review-card";
+import { ServiceAreasSection } from "@/features/catalogue/components/service-areas-section";
 import { ServiceCard } from "@/features/catalogue/components/service-card";
+import { ServiceCollectionSection } from "@/features/catalogue/components/service-collection-section";
 import { ServiceSearch } from "@/features/catalogue/components/service-search";
 import { CategorySkeletonGrid, ServiceCardSkeletonGrid } from "@/features/catalogue/components/skeletons";
+import { TrustMetric } from "@/features/catalogue/components/trust-metric";
 import { useServiceCategories, useServices } from "@/features/catalogue/queries";
 
 const trustItems = [
@@ -33,6 +39,64 @@ const steps = [
   { icon: CheckCircle2, title: "Get service completed" },
 ];
 
+const trustMetrics = [
+  { icon: Sparkles, value: "4.8+", label: "average demo rating" },
+  { icon: ShieldCheck, value: "Verified", label: "technician onboarding" },
+  { icon: CreditCard, value: "Clear", label: "advance payment flow" },
+  { icon: Clock, value: "Flexible", label: "date and slot booking" },
+  { icon: CheckCircle2, value: "Tracked", label: "booking status updates" },
+];
+
+const promotions = [
+  {
+    icon: Wrench,
+    title: "AC care before peak summer",
+    text: "Book AC cleaning and repair visits early for smoother cooling at home.",
+  },
+  {
+    icon: Sparkles,
+    title: "Bathroom deep cleaning",
+    text: "Freshen up high-use spaces with focused tile, fixture and floor cleaning.",
+  },
+  {
+    icon: CalendarCheck,
+    title: "Same-day repair discovery",
+    text: "Check available slots for selected appliance and installation services.",
+  },
+  {
+    icon: CreditCard,
+    title: "Secure advance payments",
+    text: "Pay only the required advance through the backend-verified payment flow.",
+  },
+];
+
+const noteworthy = [
+  { title: "Full Home Deep Cleaning", text: "Room-wise cleaning for homes that need a full reset.", icon: Sparkles },
+  { title: "Water Purifier Service", text: "RO and UV purifier diagnosis for flow, leak and taste issues.", icon: Wrench },
+  { title: "Smart Lock Installation", text: "A future-ready installation category for secure home access.", icon: ShieldCheck },
+];
+
+const demoReviews: DemoReview[] = [
+  {
+    name: "Verified customer",
+    location: "Chennai",
+    service: "AC Service",
+    text: "The flow was clear, the price was visible before booking, and the service status was easy to follow.",
+  },
+  {
+    name: "Verified customer",
+    location: "Bangalore",
+    service: "Bathroom Cleaning",
+    text: "The booking summary helped confirm the address, slot and amount before payment.",
+  },
+  {
+    name: "Verified customer",
+    location: "Coimbatore",
+    service: "Appliance Repair",
+    text: "Support details and booking tracking made the experience feel simple and reliable.",
+  },
+];
+
 export function HomeDiscovery() {
   const categories = useServiceCategories();
   const services = useServices({ page_size: 12 });
@@ -40,6 +104,9 @@ export function HomeDiscovery() {
 
   const allServices = services.data?.results ?? [];
   const visibleServices = (featured.data?.results?.length ? featured.data.results : allServices).slice(0, 6);
+  const repairServices = allServices.filter((service) => service.category.slug === "home-appliances-repair");
+  const cleaningServices = allServices.filter((service) => service.category.slug === "cleaning");
+  const whatsappUrl = env.supportWhatsapp ? `https://wa.me/${env.supportWhatsapp.replace(/\D/g, "")}` : routes.support;
 
   return (
     <div className="bg-background">
@@ -52,10 +119,10 @@ export function HomeDiscovery() {
         >
           <Badge className="w-fit">Purple Squad Care in Chennai, Bangalore & Coimbatore</Badge>
           <h1 className="mt-5 max-w-3xl text-4xl font-bold leading-tight text-foreground sm:text-5xl">
-            Expert Home Services Right at Your Doorstep
+            Expert home services, right at your doorstep
           </h1>
           <p className="mt-5 max-w-2xl text-lg leading-8 text-secondary">
-            Trusted AC service, repair, installation and maintenance with simple booking and clear pricing.
+            Book trained professionals for AC repair, cleaning, appliance service and everyday home maintenance.
           </p>
           <div className="mt-7 flex flex-col gap-3 sm:flex-row">
             <Button asChild size="lg">
@@ -106,11 +173,19 @@ export function HomeDiscovery() {
         </div>
       </section>
 
+      <section className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
+        <div className="flex gap-3 overflow-x-auto pb-2 md:grid md:grid-cols-5 md:overflow-visible">
+          {trustMetrics.map((item) => (
+            <TrustMetric key={item.label} icon={item.icon} value={item.value} label={item.label} />
+          ))}
+        </div>
+      </section>
+
       <section className="mx-auto max-w-7xl space-y-6 px-4 py-10 sm:px-6 lg:px-8">
         <SectionHeading
           eyebrow="Browse"
-          title="Service categories"
-          description="Quickly jump into the service type you need."
+          title="What service do you need?"
+          description="Browse the live Purple Squad categories published by the backend catalogue."
           href={routes.services}
           linkLabel="View all services"
         />
@@ -133,10 +208,38 @@ export function HomeDiscovery() {
         ) : null}
       </section>
 
+      <section className="mx-auto max-w-7xl space-y-5 px-4 py-10 sm:px-6 lg:px-8">
+        <SectionHeading eyebrow="Offers" title="In the spotlight" description="Original Purple Squad campaigns for useful home-service moments." />
+        <div className="flex snap-x gap-4 overflow-x-auto pb-2">
+          {promotions.map((promo) => (
+            <PromotionBanner key={promo.title} {...promo} cta="Explore services" href={routes.services} />
+          ))}
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl space-y-5 px-4 py-10 sm:px-6 lg:px-8">
+        <SectionHeading eyebrow="Fresh picks" title="New and noteworthy" description="Demo editorial cards until these categories are exposed by the backend catalogue." />
+        <div className="grid gap-4 md:grid-cols-3">
+          {noteworthy.map((item) => {
+            const Icon = item.icon;
+            return (
+              <article key={item.title} className="rounded-2xl border border-border bg-surface p-5 shadow-sm">
+                <div className="grid aspect-[16/10] place-items-center rounded-2xl bg-muted text-primary">
+                  <Icon className="h-10 w-10" />
+                </div>
+                <h3 className="mt-4 text-lg font-bold text-foreground">{item.title}</h3>
+                <p className="mt-2 text-sm leading-6 text-secondary">{item.text}</p>
+                <Badge className="mt-4 bg-muted text-secondary">Demo content</Badge>
+              </article>
+            );
+          })}
+        </div>
+      </section>
+
       <section className="mx-auto max-w-7xl space-y-6 px-4 py-10 sm:px-6 lg:px-8">
         <SectionHeading
           eyebrow={featured.data?.results?.length ? "Featured" : "Catalogue"}
-          title={featured.data?.results?.length ? "Popular Services" : "Our Services"}
+          title={featured.data?.results?.length ? "Most booked services" : "Our Services"}
           description="Most useful services from the live Purple Squad catalogue."
           href={routes.services}
           linkLabel="Explore catalogue"
@@ -160,21 +263,37 @@ export function HomeDiscovery() {
         ) : null}
       </section>
 
+      <ServiceCollectionSection
+        title="AC Service & Repair"
+        description="Cooling, cleaning, diagnosis and installation support from the live catalogue."
+        services={repairServices.filter((service) => service.name.toLowerCase().includes("ac"))}
+      />
+      <ServiceCollectionSection
+        title="Appliance Repair"
+        description="Washing machine, refrigerator, geyser, purifier, microwave, dishwasher and TV support."
+        services={repairServices.filter((service) => !service.name.toLowerCase().includes("ac"))}
+      />
+      <ServiceCollectionSection
+        title="Cleaning Essentials"
+        description="Home, bathroom, water tank and chimney cleaning services."
+        services={cleaningServices}
+      />
+
       <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         <div className="grid gap-6 overflow-hidden rounded-3xl bg-primary p-6 text-primary-foreground md:grid-cols-[1fr_260px] md:items-center">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-wide text-primary-soft">AC Deep Cleaning</p>
-            <h2 className="mt-2 text-2xl font-bold">Fresh air starts with a cleaner AC.</h2>
+            <p className="text-sm font-semibold uppercase tracking-wide text-primary-soft">Quick services</p>
+            <h2 className="mt-2 text-2xl font-bold">Need a quick home repair?</h2>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-primary-soft">
-              Compare services, see pricing, and book a Purple Squad visit in minutes.
+              Book selected appliance repair, cleaning and installation services with available slots from the backend.
             </p>
             <p className="mt-4 text-lg font-bold">Starting from catalogue price</p>
           </div>
           <div className="grid gap-3">
             <Button asChild variant="secondary">
-              <Link href={routes.services}>Book Now</Link>
+              <Link href={routes.services}>Explore quick services</Link>
             </Button>
-            <div className="hidden rounded-2xl bg-primary-foreground/10 p-4 text-sm font-semibold md:block">Purple Squad Verified Technician</div>
+            <div className="hidden rounded-2xl bg-primary-foreground/10 p-4 text-sm font-semibold md:block">Prices are revalidated during booking.</div>
           </div>
         </div>
       </section>
@@ -210,6 +329,41 @@ export function HomeDiscovery() {
             </div>
             );
           })}
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl space-y-6 px-4 py-10 sm:px-6 lg:px-8">
+        <SectionHeading
+          eyebrow="Reviews"
+          title="Customer reviews"
+          description="Demo review cards shown until production review volume is available from the backend."
+        />
+        <div className="grid gap-4 md:grid-cols-3">
+          {demoReviews.map((review) => (
+            <ReviewCard key={`${review.location}-${review.service}`} review={review} />
+          ))}
+        </div>
+      </section>
+
+      <ServiceAreasSection />
+
+      <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+        <div className="grid gap-4 rounded-3xl border border-border bg-muted p-6 md:grid-cols-[1fr_auto] md:items-center">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-wide text-primary">Support</p>
+            <h2 className="mt-2 text-2xl font-bold text-foreground">Book faster with Purple Squad</h2>
+            <p className="mt-2 text-sm leading-6 text-secondary">
+              Continue on the website or contact support on WhatsApp when you need help with a booking.
+            </p>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button asChild>
+              <Link href={routes.services}>Continue on website</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href={whatsappUrl}>Contact support</Link>
+            </Button>
+          </div>
         </div>
       </section>
 

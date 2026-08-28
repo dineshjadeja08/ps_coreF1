@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarCheck, LogOut, MapPin, Search, UserRound } from "lucide-react";
+import { BriefcaseBusiness, CalendarCheck, LogOut, MapPin, Search, UserRound } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
@@ -55,6 +55,12 @@ export function Header() {
 
         <nav className="ml-auto hidden items-center gap-1 md:flex">
           <Button asChild variant="ghost" size="sm">
+            <Link href={routes.home}>Home</Link>
+          </Button>
+          <Button asChild variant="ghost" size="sm">
+            <Link href={routes.services}>Services</Link>
+          </Button>
+          <Button asChild variant="ghost" size="sm">
             <Link href={routes.bookings}>
               <CalendarCheck className="h-4 w-4" />
               Bookings
@@ -62,6 +68,11 @@ export function Header() {
           </Button>
           <Button asChild variant="ghost" size="sm">
             <Link href={routes.support}>Help</Link>
+          </Button>
+          <Button asChild variant="outline" size="icon">
+            <Link href={routes.book} aria-label="Open booking">
+              <BriefcaseBusiness className="h-4 w-4" />
+            </Link>
           </Button>
           {isAuthenticated ? (
             <>
