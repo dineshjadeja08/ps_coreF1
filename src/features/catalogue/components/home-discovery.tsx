@@ -1,9 +1,11 @@
 "use client";
 
+import * as Dialog from "@radix-ui/react-dialog";
 import { motion } from "framer-motion";
-import { ArrowRight, Search, Star } from "lucide-react";
+import { ArrowRight, Search, Star, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useMemo, useState } from "react";
 
 import { EmptyState } from "@/components/common/empty-state";
 import { ErrorState } from "@/components/common/error-state";
@@ -27,16 +29,19 @@ const serviceCities = ["Chennai", "Bangalore", "Coimbatore"];
 function CategoryShowcaseCard({
   category,
   services,
+  onSelect,
 }: {
   category: ServiceCategory;
   services: ServiceListItem[];
+  onSelect: (category: ServiceCategory) => void;
 }) {
   const sampleService = services.find((service) => service.category.slug === category.slug);
 
   return (
-    <Link
-      href={`/services?category=${encodeURIComponent(category.slug)}`}
-      className="group block overflow-hidden rounded-2xl border border-border bg-surface shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[var(--shadow-card)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+    <button
+      type="button"
+      onClick={() => onSelect(category)}
+      className="group block overflow-hidden rounded-2xl border border-border bg-surface text-left shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[var(--shadow-card)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
     >
       <ServiceImage
         src={sampleService?.cover_image}
@@ -47,7 +52,7 @@ function CategoryShowcaseCard({
         <h3 className="text-base font-bold text-foreground group-hover:text-primary">{category.name}</h3>
         {category.description ? <p className="mt-1 line-clamp-2 text-sm leading-5 text-secondary">{category.description}</p> : null}
       </div>
-    </Link>
+    </button>
   );
 }
 
@@ -78,10 +83,74 @@ function CompactServiceCard({ service }: { service: ServiceListItem }) {
   );
 }
 
+function CategoryServicesDialog({
+  category,
+  services,
+  onClose,
+}: {
+  category: ServiceCategory | null;
+  services: ServiceListItem[];
+  onClose: () => void;
+}) {
+  const categoryServices = useMemo(() => {
+    if (!category) return [];
+    return services.filter((service) => service.category.slug === category.slug);
+  }, [category, services]);
+
+  return (
+    <Dialog.Root open={Boolean(category)} onOpenChange={(open) => !open && onClose()}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/45 backdrop-blur-sm" />
+        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 flex max-h-[88vh] w-[calc(100vw-2rem)] max-w-5xl -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-3xl border border-border bg-background shadow-[var(--shadow-card)] focus:outline-none">
+          <div className="flex items-start justify-between gap-4 border-b border-border bg-surface p-5 sm:p-6">
+            <div>
+              <Dialog.Title className="text-2xl font-bold text-foreground">{category?.name ?? "Services"}</Dialog.Title>
+              <Dialog.Description className="mt-2 max-w-2xl text-sm leading-6 text-secondary">
+                {category?.description || "Choose a service to view details, pricing and booking slots."}
+              </Dialog.Description>
+            </div>
+            <Dialog.Close asChild>
+              <Button type="button" variant="ghost" size="icon" aria-label="Close service popup">
+                <X className="h-5 w-5" />
+              </Button>
+            </Dialog.Close>
+          </div>
+          <div className="overflow-y-auto p-5 sm:p-6">
+            {categoryServices.length ? (
+              <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
+                {categoryServices.map((service) => (
+                  <CompactServiceCard key={service.id} service={service} />
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-border bg-surface p-6 text-center">
+                <h3 className="text-lg font-bold text-foreground">No services published yet</h3>
+                <p className="mt-2 text-sm leading-6 text-secondary">Add active services to this category from the backend admin.</p>
+              </div>
+            )}
+          </div>
+          <div className="flex flex-col gap-3 border-t border-border bg-surface p-5 sm:flex-row sm:justify-between sm:p-6">
+            <Button asChild variant="outline">
+              <Link href={category ? `/services?category=${encodeURIComponent(category.slug)}` : routes.services}>View full category</Link>
+            </Button>
+            <Button asChild>
+              <Link href={routes.services}>
+                Explore all services
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
+  );
+}
+
 export function HomeDiscovery() {
   const categories = useServiceCategories();
   const services = useServices({ page_size: 20 });
   const featured = useServices({ featured: true, page_size: 10 });
+  const [selectedCategory, setSelectedCategory] = useState<ServiceCategory | null>(null);
 
   const allServices = services.data?.results ?? [];
   const visibleServices = (featured.data?.results?.length ? featured.data.results : allServices).slice(0, 10);
@@ -141,7 +210,7 @@ export function HomeDiscovery() {
           {categories.data?.length ? (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
               {categories.data.map((category) => (
-                <CategoryShowcaseCard key={category.id} category={category} services={allServices} />
+                <CategoryShowcaseCard key={category.id} category={category} services={allServices} onSelect={setSelectedCategory} />
               ))}
             </div>
           ) : null}
@@ -155,6 +224,7 @@ export function HomeDiscovery() {
           ) : null}
         </div>
       </section>
+      <CategoryServicesDialog category={selectedCategory} services={allServices} onClose={() => setSelectedCategory(null)} />
 
       <section className="mx-auto max-w-7xl space-y-5 px-4 py-8 sm:px-6 lg:px-8">
         <SectionHeading
