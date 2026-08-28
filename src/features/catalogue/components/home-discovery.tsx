@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowRight, CalendarCheck, CheckCircle2, Clock, CreditCard, MapPin, ShieldCheck, Sparkles, Wrench } from "lucide-react";
+import { ArrowRight, CalendarCheck, CheckCircle2, Clock, CreditCard, MapPin, Search, ShieldCheck, Sparkles, Wrench } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -71,10 +71,14 @@ const promotions = [
 ];
 
 const noteworthy = [
-  { title: "Full Home Deep Cleaning", text: "Room-wise cleaning for homes that need a full reset.", icon: Sparkles },
-  { title: "Water Purifier Service", text: "RO and UV purifier diagnosis for flow, leak and taste issues.", icon: Wrench },
-  { title: "Smart Lock Installation", text: "A future-ready installation category for secure home access.", icon: ShieldCheck },
+  { title: "Full Home Deep Cleaning", text: "Room-wise cleaning for homes that need a reset before guests, moving day or festivals.", icon: Sparkles },
+  { title: "AC Repair & Service", text: "Cooling checks, cleaning, diagnosis and installation support for split and window ACs.", icon: Wrench },
+  { title: "Water Purifier Service", text: "RO and UV purifier diagnosis for water flow, leaks, filter care and taste issues.", icon: ShieldCheck },
 ];
+
+const quickServices = ["AC Service", "Washing Machine", "Refrigerator", "Bathroom Cleaning", "Water Purifier", "Chimney Cleaning"];
+
+const serviceCities = ["Chennai", "Bangalore", "Coimbatore"];
 
 const demoReviews: DemoReview[] = [
   {
@@ -110,40 +114,64 @@ export function HomeDiscovery() {
 
   return (
     <div className="bg-background">
-      <section className="mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[1.02fr_0.98fr] lg:px-8 lg:py-14">
+      <section className="mx-auto grid max-w-7xl gap-8 px-4 py-6 sm:px-6 lg:grid-cols-[0.95fr_1.05fr] lg:px-8 lg:py-12">
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35 }}
           className="flex flex-col justify-center"
         >
-          <Badge className="w-fit">Purple Squad Care in Chennai, Bangalore & Coimbatore</Badge>
+          <Badge className="w-fit">Live in Chennai, Bangalore & Coimbatore</Badge>
           <h1 className="mt-5 max-w-3xl text-4xl font-bold leading-tight text-foreground sm:text-5xl">
-            Expert home services, right at your doorstep
+            Home cleaning, AC service and appliance repair at your doorstep
           </h1>
           <p className="mt-5 max-w-2xl text-lg leading-8 text-secondary">
-            Book trained professionals for AC repair, cleaning, appliance service and everyday home maintenance.
+            Pick your city, search the catalogue and book trained Purple Squad technicians with upfront pricing and secure payment.
           </p>
-          <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-            <Button asChild size="lg">
-              <Link href={routes.services}>
-                Book a Service
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
-            <Button asChild variant="outline" size="lg">
-              <Link href={routes.services}>Explore Services</Link>
-            </Button>
+          <div className="mt-6 flex flex-wrap gap-2">
+            {serviceCities.map((city) => (
+              <span key={city} className="rounded-full border border-border bg-surface px-3 py-1 text-sm font-semibold text-secondary">
+                {city}
+              </span>
+            ))}
           </div>
-          <div className="mt-7 grid gap-3 sm:grid-cols-[0.82fr_1.18fr]">
-            <LocationSelector />
-            <div className="rounded-2xl border border-border bg-surface p-3 shadow-sm">
-              <ServiceSearch services={allServices} />
+          <div className="mt-7 space-y-3">
+            <div className="grid gap-3 md:grid-cols-[0.9fr_1.1fr]">
+              <LocationSelector />
+              <div className="rounded-2xl border border-border bg-surface p-4 shadow-sm">
+                <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <Search className="h-4 w-4 text-primary" />
+                  Search and book a service
+                </div>
+                <ServiceSearch services={allServices} />
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {quickServices.map((service) => (
+                    <Link
+                      key={service}
+                      href={`/services?q=${encodeURIComponent(service)}`}
+                      className="rounded-full bg-primary-subtle px-3 py-1 text-xs font-semibold text-primary transition hover:bg-primary hover:text-primary-foreground"
+                    >
+                      {service}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Button asChild size="lg">
+                <Link href={routes.services}>
+                  Book a Service
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+              <Button asChild variant="outline" size="lg">
+                <Link href={routes.services}>Explore Catalogue</Link>
+              </Button>
             </div>
           </div>
         </motion.div>
 
-        <div className="relative rounded-3xl border border-border bg-surface p-4 shadow-[var(--shadow-card)]">
+        <div className="relative overflow-hidden rounded-3xl border border-border bg-surface p-4 shadow-[var(--shadow-card)]">
           <div className="absolute -right-3 -top-3 hidden rounded-2xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow-[var(--shadow-soft)] sm:block">
             PS Verified
           </div>
@@ -169,7 +197,7 @@ export function HomeDiscovery() {
                 </div>
               );
             })}
-            </div>
+          </div>
         </div>
       </section>
 
@@ -209,7 +237,7 @@ export function HomeDiscovery() {
       </section>
 
       <section className="mx-auto max-w-7xl space-y-5 px-4 py-10 sm:px-6 lg:px-8">
-        <SectionHeading eyebrow="Offers" title="In the spotlight" description="Original Purple Squad campaigns for useful home-service moments." />
+        <SectionHeading eyebrow="Book faster" title="Popular service moments" description="Quick paths for everyday repair, cleaning and installation needs." />
         <div className="flex snap-x gap-4 overflow-x-auto pb-2">
           {promotions.map((promo) => (
             <PromotionBanner key={promo.title} {...promo} cta="Explore services" href={routes.services} />
@@ -218,7 +246,7 @@ export function HomeDiscovery() {
       </section>
 
       <section className="mx-auto max-w-7xl space-y-5 px-4 py-10 sm:px-6 lg:px-8">
-        <SectionHeading eyebrow="Fresh picks" title="New and noteworthy" description="Demo editorial cards until these categories are exposed by the backend catalogue." />
+        <SectionHeading eyebrow="Recommended" title="Services people look for first" description="Useful starting points for the live Purple Squad catalogue." />
         <div className="grid gap-4 md:grid-cols-3">
           {noteworthy.map((item) => {
             const Icon = item.icon;
@@ -229,7 +257,9 @@ export function HomeDiscovery() {
                 </div>
                 <h3 className="mt-4 text-lg font-bold text-foreground">{item.title}</h3>
                 <p className="mt-2 text-sm leading-6 text-secondary">{item.text}</p>
-                <Badge className="mt-4 bg-muted text-secondary">Demo content</Badge>
+                <Button asChild variant="outline" className="mt-4">
+                  <Link href={`/services?q=${encodeURIComponent(item.title)}`}>View related services</Link>
+                </Button>
               </article>
             );
           })}
