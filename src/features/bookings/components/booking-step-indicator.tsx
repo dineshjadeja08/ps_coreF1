@@ -2,11 +2,11 @@ import { CheckCircle2, Circle } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-const steps = ["Service", "Address", "Date & Time", "Review"];
+const steps = ["Details", "Payment", "Confirmed"];
 
 export function BookingStepIndicator({ currentStep }: { currentStep: number }) {
   return (
-    <ol className="grid grid-cols-4 gap-2 rounded-2xl border border-border bg-surface p-2 shadow-sm">
+    <ol className="grid grid-cols-3 gap-2 rounded-2xl border border-border bg-surface p-2 shadow-sm">
       {steps.map((step, index) => {
         const complete = index < currentStep;
         const active = index === currentStep;

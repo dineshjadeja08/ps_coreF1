@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertCircle, CheckCircle2, Clock, MapPin } from "lucide-react";
+import { AlertCircle, CheckCircle2, Clock, Loader2, MapPin, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -15,6 +15,8 @@ import type { Address } from "@/features/addresses/types";
 import { BookingStepIndicator } from "@/features/bookings/components/booking-step-indicator";
 import { DateSelector } from "@/features/bookings/components/date-selector";
 import { SlotPicker } from "@/features/bookings/components/slot-picker";
+import { useCreateBooking } from "@/features/bookings/mutations";
+import { createBookingPayload, getBookingCreationErrorMessage, isSlotConflictError } from "@/features/bookings/utils";
 import { useServiceDetail } from "@/features/catalogue/queries";
 import { PriceDisplay } from "@/features/catalogue/components/price-display";
 import { ServiceImage } from "@/features/catalogue/components/service-image";
@@ -35,12 +37,21 @@ export function BookingSchedulingShell() {
   const [selectedAddressId, setSelectedAddressId] = useState(initialAddressId);
   const [selectedDate, setSelectedDate] = useState(initialDate);
   const [selectedSlotId, setSelectedSlotId] = useState(initialSlotId);
+  const [problemDescription, setProblemDescription] = useState("");
+  const [customerNotes, setCustomerNotes] = useState("");
+  const [submitError, setSubmitError] = useState("");
 
   const service = useServiceDetail(serviceSlug);
   const addresses = useAddresses();
+  const createBooking = useCreateBooking();
+  const defaultAddressId = useMemo(() => {
+    const items = addresses.data?.results ?? [];
+    return items.find((address) => address.is_default)?.id ?? items[0]?.id ?? "";
+  }, [addresses.data?.results]);
+  const effectiveAddressId = selectedAddressId || defaultAddressId;
   const selectedAddress = useMemo(
-    () => (addresses.data?.results ?? []).find((address) => address.id === selectedAddressId) ?? null,
-    [addresses.data?.results, selectedAddressId],
+    () => (addresses.data?.results ?? []).find((address) => address.id === effectiveAddressId) ?? null,
+    [addresses.data?.results, effectiveAddressId],
   );
   const serviceability = useAddressServiceability(selectedAddress?.postal_code ?? "", Boolean(selectedAddress?.postal_code));
   const slots = useAvailableSlots(
@@ -54,11 +65,15 @@ export function BookingSchedulingShell() {
   );
 
   const selectedSlot = useMemo(
-    () => (slots.data ?? []).find((slot) => slot.id === selectedSlotId && isSlotAvailable(slot)) ?? null,
+    () => {
+      const availableSlots = (slots.data ?? []).filter((slot) => isSlotAvailable(slot));
+      return availableSlots.find((slot) => slot.id === selectedSlotId) ?? availableSlots[0] ?? null;
+    },
     [selectedSlotId, slots.data],
   );
   const slotConflict =
     selectedSlotId && slots.data && !selectedSlot ? "That time is no longer available. Please choose another slot." : "";
+  const defaultProblemDescription = service.data ? `${service.data.name} service requested.` : "Service requested.";
 
   function updateUrl(next: { address?: string; date?: string; slot?: string | null }) {
     const params = new URLSearchParams(searchParams.toString());
@@ -86,8 +101,33 @@ export function BookingSchedulingShell() {
     updateUrl({ slot: slot.id });
   }
 
+  async function createFastBooking() {
+    if (!service.data || !selectedAddress || !selectedSlot || createBooking.isPending) return;
+
+    setSubmitError("");
+
+    try {
+      const booking = await createBooking.mutateAsync(
+        createBookingPayload({
+          serviceId: service.data.id,
+          addressId: selectedAddress.id,
+          slotId: selectedSlot.id,
+          problemDescription: problemDescription.trim() || defaultProblemDescription,
+          customerNotes,
+        }),
+      );
+      router.push(routes.bookingPayment(booking.id));
+    } catch (error) {
+      setSubmitError(getBookingCreationErrorMessage(error));
+      if (isSlotConflictError(error)) {
+        setSelectedSlotId("");
+        await slots.refetch();
+        updateUrl({ slot: null });
+      }
+    }
+  }
+
   const canContinue = Boolean(service.data && selectedAddress && serviceability.data?.is_supported && selectedDate && selectedSlot);
-  const currentStep = selectedSlot ? 3 : selectedAddress && serviceability.data?.is_supported ? 2 : selectedAddressId ? 1 : 0;
   const duration = service.data ? formatDuration(service.data.estimated_duration_minutes) : null;
 
   if (!serviceSlug) {
@@ -108,18 +148,19 @@ export function BookingSchedulingShell() {
 
   return (
     <section className="mx-auto max-w-7xl px-4 py-8 pb-28 sm:px-6 lg:px-8">
-      <BookingStepIndicator currentStep={currentStep} />
+      <BookingStepIndicator currentStep={0} />
       <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_380px] lg:items-start">
         <div className="space-y-8">
           <section className="rounded-3xl border border-border bg-surface p-5 shadow-sm">
-            <h1 className="text-2xl font-bold text-foreground">Book Service</h1>
-            <p className="mt-2 text-sm leading-6 text-secondary">Select your serviceable address, preferred date, and available technician slot.</p>
+            <p className="text-sm font-semibold uppercase tracking-wide text-primary">Quick booking</p>
+            <h1 className="mt-2 text-2xl font-bold text-foreground">Book in a few taps</h1>
+            <p className="mt-2 text-sm leading-6 text-secondary">We preselect your first saved address and earliest available slot. Change anything before paying.</p>
           </section>
 
           <section className="space-y-4">
             <div>
-              <h2 className="text-xl font-bold text-foreground">1. Select address</h2>
-              <p className="mt-1 text-sm text-secondary">Choose where the technician should visit.</p>
+              <h2 className="text-xl font-bold text-foreground">Visit address</h2>
+              <p className="mt-1 text-sm text-secondary">Your default saved address is selected automatically.</p>
             </div>
 
             {addresses.isLoading ? <div className="h-32 animate-pulse rounded-2xl bg-muted" /> : null}
@@ -127,7 +168,7 @@ export function BookingSchedulingShell() {
             {addresses.data?.results?.length ? (
               <div className="grid gap-3">
                 {addresses.data.results.map((address) => {
-                  const selected = selectedAddressId === address.id;
+                  const selected = effectiveAddressId === address.id;
                   return (
                     <button
                       key={address.id}
@@ -176,16 +217,16 @@ export function BookingSchedulingShell() {
 
           <section className="space-y-4">
             <div>
-              <h2 className="text-xl font-bold text-foreground">2. Pick a date</h2>
-              <p className="mt-1 text-sm text-secondary">No business-day assumptions are made here. If the backend has no slots, we show that date as empty.</p>
+              <h2 className="text-xl font-bold text-foreground">Date</h2>
+              <p className="mt-1 text-sm text-secondary">Choose a convenient day.</p>
             </div>
             <DateSelector selectedDate={selectedDate} onSelectDate={selectDate} />
           </section>
 
           <section className="space-y-4">
             <div>
-              <h2 className="text-xl font-bold text-foreground">3. Select time slot</h2>
-              <p className="mt-1 text-sm text-secondary">Your time will be confirmed when the booking is created in the next phase.</p>
+              <h2 className="text-xl font-bold text-foreground">Time slot</h2>
+              <p className="mt-1 text-sm text-secondary">Earliest available slot is selected automatically when possible.</p>
             </div>
             {slotConflict ? <p className="rounded-2xl bg-destructive/10 p-3 text-sm text-destructive">{slotConflict}</p> : null}
             {!selectedAddress ? (
@@ -195,7 +236,7 @@ export function BookingSchedulingShell() {
             ) : (
               <SlotPicker
                 slots={slots.data ?? []}
-                selectedSlotId={selectedSlotId}
+                selectedSlotId={selectedSlot?.id ?? selectedSlotId}
                 loading={slots.isLoading || slots.isFetching}
                 error={slots.isError ? slots.error : undefined}
                 onRetry={() => slots.refetch()}
@@ -203,6 +244,29 @@ export function BookingSchedulingShell() {
                 onClearDate={() => selectDate(getUpcomingDates(1)[0].value)}
               />
             )}
+          </section>
+
+          <section className="rounded-3xl border border-border bg-surface p-5 shadow-sm">
+            <label htmlFor="problem-description" className="text-sm font-semibold text-foreground">
+              Service note
+            </label>
+            <textarea
+              id="problem-description"
+              value={problemDescription}
+              onChange={(event) => setProblemDescription(event.target.value)}
+              placeholder={defaultProblemDescription}
+              className="mt-2 min-h-24 w-full rounded-2xl border border-border bg-background px-3 py-2 text-sm text-foreground outline-none transition focus:border-primary focus:ring-3 focus:ring-primary/15"
+            />
+            <label htmlFor="customer-notes" className="mt-4 block text-sm font-semibold text-foreground">
+              Technician instructions
+            </label>
+            <textarea
+              id="customer-notes"
+              value={customerNotes}
+              onChange={(event) => setCustomerNotes(event.target.value)}
+              placeholder="Flat number, landmark, preferred call time, or other instructions."
+              className="mt-2 min-h-20 w-full rounded-2xl border border-border bg-background px-3 py-2 text-sm text-foreground outline-none transition focus:border-primary focus:ring-3 focus:ring-primary/15"
+            />
           </section>
         </div>
 
@@ -229,9 +293,30 @@ export function BookingSchedulingShell() {
                   Selected: {formatSlotTime(selectedSlot.start_time)} - {formatSlotTime(selectedSlot.end_time)}
                 </p>
               ) : null}
+              {submitError ? <p className="mt-4 rounded-2xl bg-destructive/10 p-3 text-sm text-destructive">{submitError}</p> : null}
+              <p className="mt-4 flex gap-2 rounded-2xl bg-primary-soft p-3 text-sm leading-6 text-primary">
+                <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
+                You will review the payment amount before Razorpay opens.
+              </p>
               <Button
                 type="button"
                 className="mt-5 w-full"
+                disabled={!canContinue || createBooking.isPending}
+                onClick={() => void createFastBooking()}
+              >
+                {createBooking.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Creating booking...
+                  </>
+                ) : (
+                  "Book this slot"
+                )}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="mt-2 w-full"
                 disabled={!canContinue}
                 onClick={() => {
                   if (!service.data || !selectedAddress || !selectedSlot) return;
@@ -240,7 +325,7 @@ export function BookingSchedulingShell() {
                   );
                 }}
               >
-                Continue
+                Review details first
               </Button>
               <Button asChild variant="ghost" className="mt-2 w-full">
                 <Link href={routes.services}>Change service</Link>
@@ -257,15 +342,10 @@ export function BookingSchedulingShell() {
           </p>
           <Button
             type="button"
-            disabled={!canContinue}
-            onClick={() => {
-              if (!service.data || !selectedAddress || !selectedSlot) return;
-              router.push(
-                `/book/review?service=${encodeURIComponent(service.data.slug)}&address=${encodeURIComponent(selectedAddress.id)}&date=${encodeURIComponent(selectedDate)}&slot=${encodeURIComponent(selectedSlot.id)}`,
-              );
-            }}
+            disabled={!canContinue || createBooking.isPending}
+            onClick={() => void createFastBooking()}
           >
-            Continue
+            {createBooking.isPending ? "Booking..." : "Book"}
           </Button>
         </div>
       </div>
