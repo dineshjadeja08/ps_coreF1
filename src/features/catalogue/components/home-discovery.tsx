@@ -6,14 +6,15 @@ import { ArrowRight, Search, Star, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import type { ReactNode } from "react";
 
 import { EmptyState } from "@/components/common/empty-state";
 import { ErrorState } from "@/components/common/error-state";
-import { SectionHeading } from "@/components/common/section-heading";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { env } from "@/config/env";
 import { routes } from "@/constants/routes";
+import { AuthActionLink } from "@/features/auth/components/auth-action-link";
 import { LocationSelector } from "@/features/catalogue/components/location-selector";
 import { ServiceImage } from "@/features/catalogue/components/service-image";
 import { ServiceSearch } from "@/features/catalogue/components/service-search";
@@ -25,6 +26,29 @@ import { formatPrice, getCurrentPrice, hasOfferPrice } from "@/features/catalogu
 const quickServices = ["AC Service", "Washing Machine", "Refrigerator", "Bathroom Cleaning", "Water Purifier", "Chimney Cleaning"];
 
 const serviceCities = ["Chennai", "Bangalore", "Coimbatore"];
+
+function MarketplaceSectionTitle({
+  eyebrow,
+  title,
+  description,
+  action,
+}: {
+  eyebrow?: string;
+  title: string;
+  description?: string;
+  action?: ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <div>
+        {eyebrow ? <p className="text-xs font-bold uppercase tracking-wide text-primary">{eyebrow}</p> : null}
+        <h2 className="mt-1 text-2xl font-bold tracking-normal text-foreground">{title}</h2>
+        {description ? <p className="mt-2 max-w-2xl text-sm leading-6 text-secondary">{description}</p> : null}
+      </div>
+      {action ? <div className="shrink-0">{action}</div> : null}
+    </div>
+  );
+}
 
 function CategoryShowcaseCard({
   category,
@@ -62,13 +86,14 @@ function CompactServiceCard({ service }: { service: ServiceListItem }) {
   const showOffer = hasOfferPrice(service) && basePrice;
 
   return (
-    <Link
-      href={routes.serviceDetail(service.slug)}
-      className="group block overflow-hidden rounded-2xl border border-border bg-surface shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[var(--shadow-card)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-    >
-      <ServiceImage src={service.cover_image} alt={service.name} className="aspect-[4/3] rounded-none" />
+    <article className="group overflow-hidden rounded-2xl border border-border bg-surface shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[var(--shadow-card)]">
+      <Link href={routes.serviceDetail(service.slug)} aria-label={`View ${service.name}`}>
+        <ServiceImage src={service.cover_image} alt={service.name} className="aspect-[4/3] rounded-none" />
+      </Link>
       <div className="space-y-2 p-3">
-        <h3 className="line-clamp-1 text-sm font-bold text-foreground group-hover:text-primary">{service.name}</h3>
+        <h3 className="line-clamp-1 text-sm font-bold text-foreground group-hover:text-primary">
+          <Link href={routes.serviceDetail(service.slug)}>{service.name}</Link>
+        </h3>
         <div className="flex items-center gap-1 text-xs font-semibold text-secondary">
           <Star className="h-3 w-3 fill-warning text-warning" />
           <span>4.8</span>
@@ -78,8 +103,13 @@ function CompactServiceCard({ service }: { service: ServiceListItem }) {
           <span className="text-sm font-bold text-foreground">{currentPrice ?? "View price"}</span>
           {showOffer ? <span className="text-xs text-muted-foreground line-through">{basePrice}</span> : null}
         </div>
+        <Button asChild size="sm" className="mt-1 w-full">
+          <AuthActionLink href={`/book?service=${encodeURIComponent(service.slug)}`} serviceSlug={service.slug}>
+            Book
+          </AuthActionLink>
+        </Button>
       </div>
-    </Link>
+    </article>
   );
 }
 
@@ -101,7 +131,7 @@ function CategoryServicesDialog({
     <Dialog.Root open={Boolean(category)} onOpenChange={(open) => !open && onClose()}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/45 backdrop-blur-sm" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 flex max-h-[88vh] w-[calc(100vw-2rem)] max-w-5xl -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-3xl border border-border bg-background shadow-[var(--shadow-card)] focus:outline-none">
+        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 flex max-h-[88vh] w-[calc(100vw-2rem)] max-w-6xl -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-3xl border border-border bg-background shadow-[var(--shadow-card)] focus:outline-none">
           <div className="flex items-start justify-between gap-4 border-b border-border bg-surface p-5 sm:p-6">
             <div>
               <Dialog.Title className="text-2xl font-bold text-foreground">{category?.name ?? "Services"}</Dialog.Title>
@@ -115,7 +145,16 @@ function CategoryServicesDialog({
               </Button>
             </Dialog.Close>
           </div>
-          <div className="overflow-y-auto p-5 sm:p-6">
+          <div className="grid min-h-0 overflow-hidden md:grid-cols-[220px_1fr]">
+            <aside className="hidden border-r border-border bg-muted p-5 md:block">
+              <p className="text-xs font-bold uppercase tracking-wide text-primary">Category</p>
+              <h3 className="mt-2 text-lg font-bold text-foreground">{category?.name}</h3>
+              <p className="mt-3 text-sm leading-6 text-secondary">{categoryServices.length} services available</p>
+              <Button asChild variant="outline" className="mt-5 w-full">
+                <Link href={category ? `/services?category=${encodeURIComponent(category.slug)}` : routes.services}>View category</Link>
+              </Button>
+            </aside>
+            <div className="overflow-y-auto p-5 sm:p-6">
             {categoryServices.length ? (
               <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
                 {categoryServices.map((service) => (
@@ -128,6 +167,7 @@ function CategoryServicesDialog({
                 <p className="mt-2 text-sm leading-6 text-secondary">Add active services to this category from the backend admin.</p>
               </div>
             )}
+            </div>
           </div>
           <div className="flex flex-col gap-3 border-t border-border bg-surface p-5 sm:flex-row sm:justify-between sm:p-6">
             <Button asChild variant="outline">
@@ -227,12 +267,15 @@ export function HomeDiscovery() {
       <CategoryServicesDialog category={selectedCategory} services={allServices} onClose={() => setSelectedCategory(null)} />
 
       <section className="mx-auto max-w-7xl space-y-5 px-4 py-8 sm:px-6 lg:px-8">
-        <SectionHeading
+        <MarketplaceSectionTitle
           eyebrow="Most booked"
           title="Most booked services"
           description="Popular repairs and cleaning jobs ready for quick booking."
-          href={routes.services}
-          linkLabel="Open full catalogue"
+          action={
+            <Button asChild variant="outline">
+              <Link href={routes.services}>Open full catalogue</Link>
+            </Button>
+          }
         />
         {services.isLoading || featured.isLoading ? <ServiceCardSkeletonGrid /> : null}
         {services.isError ? <ErrorState error={services.error} onRetry={() => services.refetch()} /> : null}
@@ -289,7 +332,7 @@ export function HomeDiscovery() {
       </section>
 
       <section className="mx-auto max-w-7xl space-y-5 px-4 py-8 sm:px-6 lg:px-8">
-        <SectionHeading eyebrow="Appliance Service & Repair" title="Home appliance experts" />
+        <MarketplaceSectionTitle eyebrow="Appliance Service & Repair" title="Home appliance experts" />
         <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
             {repairServices.slice(0, 6).map((service) => (
