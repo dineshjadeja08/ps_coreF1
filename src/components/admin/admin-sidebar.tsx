@@ -33,10 +33,10 @@ const sections = [
     title: "Main",
     items: [
       { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
-      { label: "Leads", href: "/admin/leads", icon: ClipboardList, badge: "API needed" },
-      { label: "Customers", href: "/admin/customers", icon: Users, badge: "API needed" },
+      { label: "Leads", href: "/admin/leads", icon: ClipboardList },
+      { label: "Customers", href: "/admin/customers", icon: Users },
       { label: "Bookings", href: "/admin/bookings", icon: CalendarCheck },
-      { label: "Payments", href: "/admin/payments", icon: CreditCard, badge: "API needed" },
+      { label: "Payments", href: "/admin/payments", icon: CreditCard, badge: "Refunds next" },
       { label: "Technicians", href: "/admin/technicians", icon: Wrench },
       { label: "Assignments", href: "/admin/assignments", icon: ListChecks },
     ],
@@ -44,7 +44,7 @@ const sections = [
   {
     title: "Communication",
     items: [
-      { label: "Notifications", href: "/admin/notifications", icon: Bell, badge: "API needed" },
+      { label: "Notifications", href: "/admin/notifications", icon: Bell },
       { label: "Reviews", href: "/admin/reviews", icon: Star, badge: "API needed" },
     ],
   },

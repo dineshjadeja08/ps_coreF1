@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 
-import { AdminSectionPlaceholder } from "@/components/admin/admin-section-placeholder";
+import { AdminLeadsScreen } from "@/features/admin/components/admin-live-backlog-screens";
 
 export const metadata: Metadata = { title: "Admin Leads" };
 
 export default function AdminLeadsPage() {
-  return <AdminSectionPlaceholder title="Leads" description="Lead intake, follow-up, and conversion." missing="Missing backend API: leads list/create/update/detail/convert." />;
+  return <AdminLeadsScreen />;
 }

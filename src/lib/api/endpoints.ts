@@ -5,6 +5,7 @@ import type {
   AdminService,
   AdminServiceCategory,
   AdminServiceImage,
+  AdminCustomer,
   BalanceCollectionRequest,
   Booking,
   AuthLoginResponse,
@@ -28,6 +29,9 @@ import type {
   BookingCreateRequest,
   BookingOperationRequest,
   BookingRescheduleRequest,
+  Lead,
+  Notification,
+  Payment,
 } from "@/types/api";
 
 export const apiPaths = {
@@ -68,6 +72,18 @@ export const apiPaths = {
   adminBookingCancel: (id: UUID) => `/api/v1/admin/bookings/${id}/cancel/`,
   adminBookingRecordBalance: (id: UUID) => `/api/v1/admin/bookings/${id}/record-balance/`,
   adminTechnicians: "/api/v1/admin/technicians/",
+  adminLeads: "/api/v1/admin/leads/",
+  adminLeadDetail: (id: UUID) => `/api/v1/admin/leads/${id}/`,
+  adminLeadConvert: (id: UUID) => `/api/v1/admin/leads/${id}/convert/`,
+  adminCustomers: "/api/v1/admin/customers/",
+  adminCustomerDetail: (id: UUID) => `/api/v1/admin/customers/${id}/`,
+  adminCustomerSupportNotes: (id: UUID) => `/api/v1/admin/customers/${id}/support-notes/`,
+  adminPayments: "/api/v1/admin/payments/",
+  adminPaymentAdvanceOrder: (bookingId: UUID) => `/api/v1/admin/payments/booking/${bookingId}/advance-order/`,
+  adminNotifications: "/api/v1/admin/notifications/",
+  adminNotificationCancel: (id: UUID) => `/api/v1/admin/notifications/${id}/cancel/`,
+  adminNotificationRetry: (id: UUID) => `/api/v1/admin/notifications/${id}/retry/`,
+  adminNotificationSend: (id: UUID) => `/api/v1/admin/notifications/${id}/send/`,
 };
 
 export const catalogueApi = {
@@ -279,4 +295,48 @@ export const adminApi = {
       auth: true,
     }),
   listTechnicians: (query?: { booking_id?: UUID }) => apiRequest<TechnicianProfile[]>(apiPaths.adminTechnicians, { auth: true, query }),
+  listLeads: (query?: { page?: number; page_size?: number; status?: string; search?: string }) =>
+    apiRequest<PaginatedResponse<Lead>>(apiPaths.adminLeads, { auth: true, query }),
+  createLead: (body: Partial<Lead>) =>
+    apiRequest<Lead>(apiPaths.adminLeads, {
+      method: "POST",
+      body,
+      auth: true,
+    }),
+  convertLead: (id: UUID, body: { booking_id: UUID; notes?: string }) =>
+    apiRequest<Lead>(apiPaths.adminLeadConvert(id), {
+      method: "POST",
+      body,
+      auth: true,
+    }),
+  listCustomers: (query?: { page?: number; page_size?: number; search?: string }) =>
+    apiRequest<PaginatedResponse<AdminCustomer>>(apiPaths.adminCustomers, { auth: true, query }),
+  getCustomer: (id: UUID) => apiRequest<AdminCustomer>(apiPaths.adminCustomerDetail(id), { auth: true }),
+  addCustomerSupportNote: (id: UUID, body: { note: string }) =>
+    apiRequest(apiPaths.adminCustomerSupportNotes(id), {
+      method: "POST",
+      body,
+      auth: true,
+    }),
+  listPayments: (query?: { page?: number; page_size?: number; status?: string; payment_type?: string; search?: string }) =>
+    apiRequest<PaginatedResponse<Payment>>(apiPaths.adminPayments, { auth: true, query }),
+  createPaymentLink: (bookingId: UUID) =>
+    apiRequest<PaymentOrder>(apiPaths.adminPaymentAdvanceOrder(bookingId), {
+      method: "POST",
+      auth: true,
+    }),
+  listNotifications: (query?: { page?: number; page_size?: number; status?: string; event?: string; channel?: string; search?: string }) =>
+    apiRequest<PaginatedResponse<Notification>>(apiPaths.adminNotifications, { auth: true, query }),
+  retryNotification: (id: UUID) =>
+    apiRequest<Notification>(apiPaths.adminNotificationRetry(id), {
+      method: "POST",
+      body: {},
+      auth: true,
+    }),
+  cancelNotification: (id: UUID, reason?: string) =>
+    apiRequest<Notification>(apiPaths.adminNotificationCancel(id), {
+      method: "POST",
+      body: { reason },
+      auth: true,
+    }),
 };

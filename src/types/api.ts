@@ -314,6 +314,73 @@ export type AdminDashboardSummary = {
   missing: string[];
 };
 
+export type Lead = {
+  id: UUID;
+  customer_name: string;
+  primary_mobile: string;
+  alternate_mobile?: string;
+  email?: string;
+  required_service: UUID | null;
+  package: string;
+  address: string;
+  city: string;
+  pincode: string;
+  source: string;
+  status: string;
+  assigned_staff: UUID | null;
+  preferred_callback_at: ISODateTime | null;
+  follow_up_at: ISODateTime | null;
+  customer_notes: string;
+  internal_notes: string;
+  converted_booking: UUID | null;
+  created_at: ISODateTime;
+  updated_at: ISODateTime;
+};
+
+export type AdminCustomer = User & {
+  is_active: boolean;
+  total_bookings: number;
+  total_amount_spent: DecimalString | null;
+  last_booking_at: ISODateTime | null;
+};
+
+export type Payment = {
+  id: UUID;
+  booking: UUID;
+  booking_number: string;
+  customer_phone: string;
+  provider: string;
+  provider_order_id: string | null;
+  provider_payment_id: string | null;
+  amount: DecimalString;
+  currency: string;
+  payment_type: string;
+  status: string;
+  signature_verified: boolean;
+  paid_at: ISODateTime | null;
+  created_at: ISODateTime;
+  updated_at: ISODateTime;
+};
+
+export type Notification = {
+  id: UUID;
+  recipient: UUID | null;
+  recipient_phone: string;
+  booking: UUID | null;
+  booking_number: string;
+  event: string;
+  channel: string;
+  status: string;
+  title: string;
+  message: string;
+  provider: string;
+  provider_message_id: string;
+  send_attempts: number;
+  sent_at: ISODateTime | null;
+  created_at: ISODateTime;
+  updated_at: ISODateTime;
+};
+
 export type UserProfileUpdateRequest = {
   first_name?: string;
   last_name?: string;
