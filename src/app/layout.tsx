@@ -2,9 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import type { ReactNode } from "react";
 
-import { Footer } from "@/components/layout/footer";
-import { Header } from "@/components/layout/header";
-import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
+import { AppChrome } from "@/components/layout/app-chrome";
 import { Providers } from "@/components/providers";
 import { siteConfig } from "@/config/site";
 
@@ -37,10 +35,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
     >
       <body className="flex min-h-full flex-col">
         <Providers>
-          <Header />
-          <main className="flex-1">{children}</main>
-          <Footer />
-          <MobileBottomNav />
+          <AppChrome>{children}</AppChrome>
         </Providers>
       </body>
     </html>

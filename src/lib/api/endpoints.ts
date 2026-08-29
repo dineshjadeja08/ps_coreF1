@@ -62,6 +62,7 @@ export const apiPaths = {
   adminBookings: "/api/v1/admin/bookings/",
   adminBookingDetail: (id: UUID) => `/api/v1/admin/bookings/${id}/`,
   adminBookingAssignTechnician: (id: UUID) => `/api/v1/admin/bookings/${id}/assign-technician/`,
+  adminBookingRemoveTechnician: (id: UUID) => `/api/v1/admin/bookings/${id}/remove-technician/`,
   adminBookingStart: (id: UUID) => `/api/v1/admin/bookings/${id}/start/`,
   adminBookingComplete: (id: UUID) => `/api/v1/admin/bookings/${id}/complete/`,
   adminBookingCancel: (id: UUID) => `/api/v1/admin/bookings/${id}/cancel/`,
@@ -241,8 +242,14 @@ export const adminApi = {
     }),
   listBookings: (query?: { page?: number; page_size?: number; status?: string; search?: string }) =>
     apiRequest<PaginatedResponse<Booking>>(apiPaths.adminBookings, { auth: true, query }),
-  assignTechnician: (bookingId: UUID, body: { technician_id: UUID; notes?: string }) =>
+  assignTechnician: (bookingId: UUID, body: { technician_id: UUID; notes?: string; reason?: string }) =>
     apiRequest<Booking>(apiPaths.adminBookingAssignTechnician(bookingId), {
+      method: "POST",
+      body,
+      auth: true,
+    }),
+  removeTechnician: (bookingId: UUID, body: { notes?: string } = {}) =>
+    apiRequest<Booking>(apiPaths.adminBookingRemoveTechnician(bookingId), {
       method: "POST",
       body,
       auth: true,
@@ -271,5 +278,5 @@ export const adminApi = {
       body,
       auth: true,
     }),
-  listTechnicians: () => apiRequest<TechnicianProfile[]>(apiPaths.adminTechnicians, { auth: true }),
+  listTechnicians: (query?: { booking_id?: UUID }) => apiRequest<TechnicianProfile[]>(apiPaths.adminTechnicians, { auth: true, query }),
 };

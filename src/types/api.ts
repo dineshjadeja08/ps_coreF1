@@ -273,12 +273,45 @@ export type TechnicianProfile = {
   id: UUID;
   employee_code: string;
   display_name: string;
+  profile_photo_url?: string;
   phone: string;
+  alternate_phone?: string;
+  email?: string;
+  technician_type?: "EMPLOYEE" | "CONTRACT" | "PARTNER";
+  employment_status?: "ACTIVE" | "INACTIVE" | "LEFT";
+  city?: string;
+  pincode?: string;
   skills: Array<{ id: UUID; name: string; description?: string }>;
   service_areas: Array<{ id: UUID; name: string; postal_code: string; city: string }>;
+  supported_services?: Array<{ id: UUID; name: string; slug: string; category: string }>;
+  experience_years?: DecimalString;
+  languages?: string[];
+  background_verification_status?: "PENDING" | "UNDER_REVIEW" | "VERIFIED" | "REJECTED" | "SUSPENDED";
+  availability_status?: "AVAILABLE" | "BUSY" | "ON_LEAVE" | "OFFLINE" | "SUSPENDED";
+  average_rating?: DecimalString;
+  completed_job_count?: number;
+  cancellation_count?: number;
   is_available: boolean;
   is_active: boolean;
   joined_at: ISODate | null;
+  id_document_available?: boolean;
+  address_document_available?: boolean;
+};
+
+export type AdminDashboardSummary = {
+  leadsToday: number | null;
+  followUpsDue: number | null;
+  bookingsToday: number;
+  confirmedBookings: number;
+  paymentPendingBookings: number;
+  revenueToday: number | null;
+  unassignedBookings: number;
+  upcomingServices: number;
+  recentBookings: Booking[];
+  pendingPayments: Booking[];
+  unassigned: Booking[];
+  failedNotifications: unknown[];
+  missing: string[];
 };
 
 export type UserProfileUpdateRequest = {

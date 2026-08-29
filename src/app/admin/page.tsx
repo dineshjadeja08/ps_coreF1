@@ -1,12 +1,5 @@
-import type { Metadata } from "next";
-
-import { AdminDashboard } from "@/features/admin/components/admin-dashboard";
-
-export const metadata: Metadata = {
-  title: "Admin Dashboard",
-  description: "Manage Purple Squad catalogue, bookings, technicians, payments, and reviews.",
-};
+import { redirect } from "next/navigation";
 
 export default function AdminPage() {
-  return <AdminDashboard />;
+  redirect("/admin/dashboard");
 }
