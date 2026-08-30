@@ -54,14 +54,14 @@ export function AdminDashboardHome() {
       />
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <AdminMetricCard icon={Users} label="Leads today" value={data?.leadsToday ?? "API needed"} href="/admin/leads" />
+        <AdminMetricCard icon={Users} label="Leads today" value={data?.leadsToday ?? 0} href="/admin/leads" />
         <AdminMetricCard icon={CalendarCheck} label="Bookings today" value={data?.bookingsToday ?? 0} href="/admin/bookings" />
         <AdminMetricCard icon={CreditCard} label="Payment pending" value={data?.paymentPendingBookings ?? 0} href="/admin/bookings?payment_status=UNPAID" />
         <AdminMetricCard icon={Wrench} label="Unassigned" value={data?.unassignedBookings ?? 0} href="/admin/assignments" />
         <AdminMetricCard icon={CalendarCheck} label="Confirmed" value={data?.confirmedBookings ?? 0} href="/admin/bookings?status=CONFIRMED" />
         <AdminMetricCard icon={CalendarCheck} label="Upcoming services" value={data?.upcomingServices ?? 0} href="/admin/bookings" />
-        <AdminMetricCard icon={Users} label="Follow-ups due" value={data?.followUpsDue ?? "API needed"} href="/admin/leads" />
-        <AdminMetricCard icon={CreditCard} label="Revenue today" value={data?.revenueToday === null ? "API needed" : money(data?.revenueToday)} href="/admin/payments" />
+        <AdminMetricCard icon={Users} label="Follow-ups due" value={data?.followUpsDue ?? 0} href="/admin/leads" />
+        <AdminMetricCard icon={CreditCard} label="Revenue today" value={money(data?.revenueToday)} href="/admin/payments" />
       </div>
 
       {data?.missing.length ? (

@@ -6,6 +6,7 @@ import type {
   AdminServiceCategory,
   AdminServiceImage,
   AdminCustomer,
+  AdminReportSummary,
   BalanceCollectionRequest,
   Booking,
   AuthLoginResponse,
@@ -29,9 +30,16 @@ import type {
   BookingCreateRequest,
   BookingOperationRequest,
   BookingRescheduleRequest,
+  AuditLog,
+  FAQ,
+  HomepageBanner,
   Lead,
   Notification,
   Payment,
+  AdminSettings,
+  AdminStaff,
+  AdminReview,
+  StaffGroup,
 } from "@/types/api";
 
 export const apiPaths = {
@@ -84,6 +92,18 @@ export const apiPaths = {
   adminNotificationCancel: (id: UUID) => `/api/v1/admin/notifications/${id}/cancel/`,
   adminNotificationRetry: (id: UUID) => `/api/v1/admin/notifications/${id}/retry/`,
   adminNotificationSend: (id: UUID) => `/api/v1/admin/notifications/${id}/send/`,
+  adminFaqs: "/api/v1/admin/faqs/",
+  adminFaqDetail: (id: UUID) => `/api/v1/admin/faqs/${id}/`,
+  adminHomepageBanners: "/api/v1/admin/homepage-banners/",
+  adminHomepageBannerDetail: (id: UUID) => `/api/v1/admin/homepage-banners/${id}/`,
+  adminReportsSummary: "/api/v1/admin/reports/summary/",
+  adminStaff: "/api/v1/admin/staff/",
+  adminStaffDetail: (id: UUID) => `/api/v1/admin/staff/${id}/`,
+  adminStaffGroups: "/api/v1/admin/staff-groups/",
+  adminAuditLogs: "/api/v1/admin/audit-logs/",
+  adminSettings: "/api/v1/admin/settings/",
+  adminReviews: "/api/v1/admin/reviews/",
+  adminReviewDetail: (id: UUID) => `/api/v1/admin/reviews/${id}/`,
 };
 
 export const catalogueApi = {
@@ -337,6 +357,66 @@ export const adminApi = {
     apiRequest<Notification>(apiPaths.adminNotificationCancel(id), {
       method: "POST",
       body: { reason },
+      auth: true,
+    }),
+  listFaqs: (query?: { page?: number; page_size?: number; search?: string }) =>
+    apiRequest<PaginatedResponse<FAQ>>(apiPaths.adminFaqs, { auth: true, query }),
+  createFaq: (body: Partial<FAQ>) =>
+    apiRequest<FAQ>(apiPaths.adminFaqs, {
+      method: "POST",
+      body,
+      auth: true,
+    }),
+  updateFaq: (id: UUID, body: Partial<FAQ>) =>
+    apiRequest<FAQ>(apiPaths.adminFaqDetail(id), {
+      method: "PATCH",
+      body,
+      auth: true,
+    }),
+  removeFaq: (id: UUID) =>
+    apiRequest<void>(apiPaths.adminFaqDetail(id), {
+      method: "DELETE",
+      auth: true,
+    }),
+  listHomepageBanners: (query?: { page?: number; page_size?: number; placement?: string; is_active?: boolean }) =>
+    apiRequest<PaginatedResponse<HomepageBanner>>(apiPaths.adminHomepageBanners, { auth: true, query }),
+  createHomepageBanner: (body: FormData) =>
+    apiRequest<HomepageBanner>(apiPaths.adminHomepageBanners, {
+      method: "POST",
+      body,
+      auth: true,
+    }),
+  updateHomepageBanner: (id: UUID, body: FormData | Partial<HomepageBanner>) =>
+    apiRequest<HomepageBanner>(apiPaths.adminHomepageBannerDetail(id), {
+      method: "PATCH",
+      body,
+      auth: true,
+    }),
+  removeHomepageBanner: (id: UUID) =>
+    apiRequest<void>(apiPaths.adminHomepageBannerDetail(id), {
+      method: "DELETE",
+      auth: true,
+    }),
+  getReportsSummary: (query?: { date_from?: string; date_to?: string }) =>
+    apiRequest<AdminReportSummary>(apiPaths.adminReportsSummary, { auth: true, query }),
+  listStaff: (query?: { page?: number; page_size?: number; search?: string; role?: string }) =>
+    apiRequest<PaginatedResponse<AdminStaff>>(apiPaths.adminStaff, { auth: true, query }),
+  updateStaff: (id: UUID, body: Partial<AdminStaff>) =>
+    apiRequest<AdminStaff>(apiPaths.adminStaffDetail(id), {
+      method: "PATCH",
+      body,
+      auth: true,
+    }),
+  listStaffGroups: () => apiRequest<StaffGroup[]>(apiPaths.adminStaffGroups, { auth: true }),
+  listAuditLogs: (query?: { page?: number; page_size?: number; action?: string; resource_type?: string; search?: string }) =>
+    apiRequest<PaginatedResponse<AuditLog>>(apiPaths.adminAuditLogs, { auth: true, query }),
+  getSettings: () => apiRequest<AdminSettings>(apiPaths.adminSettings, { auth: true }),
+  listReviews: (query?: { page?: number; page_size?: number; search?: string; is_visible?: boolean }) =>
+    apiRequest<PaginatedResponse<AdminReview>>(apiPaths.adminReviews, { auth: true, query }),
+  updateReview: (id: UUID, body: Partial<AdminReview>) =>
+    apiRequest<AdminReview>(apiPaths.adminReviewDetail(id), {
+      method: "PATCH",
+      body,
       auth: true,
     }),
 };

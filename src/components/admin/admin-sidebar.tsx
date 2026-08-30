@@ -36,7 +36,7 @@ const sections = [
       { label: "Leads", href: "/admin/leads", icon: ClipboardList },
       { label: "Customers", href: "/admin/customers", icon: Users },
       { label: "Bookings", href: "/admin/bookings", icon: CalendarCheck },
-      { label: "Payments", href: "/admin/payments", icon: CreditCard, badge: "Refunds next" },
+      { label: "Payments", href: "/admin/payments", icon: CreditCard },
       { label: "Technicians", href: "/admin/technicians", icon: Wrench },
       { label: "Assignments", href: "/admin/assignments", icon: ListChecks },
     ],
@@ -45,7 +45,7 @@ const sections = [
     title: "Communication",
     items: [
       { label: "Notifications", href: "/admin/notifications", icon: Bell },
-      { label: "Reviews", href: "/admin/reviews", icon: Star, badge: "API needed" },
+      { label: "Reviews", href: "/admin/reviews", icon: Star },
     ],
   },
   {
@@ -53,28 +53,28 @@ const sections = [
     items: [
       { label: "Categories", href: "/admin/catalogue/categories", icon: BookOpen },
       { label: "Services", href: "/admin/catalogue/services", icon: Package },
-      { label: "Packages", href: "/admin/catalogue/packages", icon: SlidersHorizontal, badge: "Model needed" },
-      { label: "FAQs", href: "/admin/catalogue/faqs", icon: MessageSquareText, badge: "API needed" },
+      { label: "Packages", href: "/admin/catalogue/packages", icon: SlidersHorizontal },
+      { label: "FAQs", href: "/admin/catalogue/faqs", icon: MessageSquareText },
     ],
   },
   {
     title: "Website",
     items: [
-      { label: "Homepage Banners", href: "/admin/content/banners", icon: Image, badge: "API needed" },
-      { label: "Carousel", href: "/admin/content/carousel", icon: Image, badge: "API needed" },
+      { label: "Homepage Banners", href: "/admin/content/banners", icon: Image },
+      { label: "Carousel", href: "/admin/content/carousel", icon: Image },
     ],
   },
   {
     title: "Business",
     items: [
-      { label: "Reports", href: "/admin/reports", icon: FileBarChart, badge: "API needed" },
-      { label: "Staff and Roles", href: "/admin/staff", icon: Shield, badge: "API needed" },
-      { label: "Audit Logs", href: "/admin/audit-logs", icon: FileClock, badge: "API needed" },
+      { label: "Reports", href: "/admin/reports", icon: FileBarChart },
+      { label: "Staff and Roles", href: "/admin/staff", icon: Shield },
+      { label: "Audit Logs", href: "/admin/audit-logs", icon: FileClock },
     ],
   },
   {
     title: "System",
-    items: [{ label: "Settings", href: "/admin/settings", icon: Settings, badge: "API needed" }],
+    items: [{ label: "Settings", href: "/admin/settings", icon: Settings }],
   },
 ];
 
@@ -89,21 +89,21 @@ export function AdminSidebar() {
   }
 
   return (
-    <aside className="hidden h-screen w-72 shrink-0 border-r border-slate-800 bg-slate-950 text-white lg:sticky lg:top-0 lg:block">
+    <aside className="hidden h-screen w-72 shrink-0 border-r border-slate-200 bg-white text-slate-950 lg:sticky lg:top-0 lg:block">
       <div className="flex h-full flex-col">
-        <div className="border-b border-slate-800 px-5 py-5">
+        <div className="border-b border-slate-200 px-5 py-5">
           <Link href="/admin/dashboard" className="flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-600 text-sm font-black">PS</span>
+            <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-950 text-sm font-black text-white">PS</span>
             <span>
               <span className="block text-sm font-bold">Purple Squad</span>
-              <span className="block text-xs text-slate-400">Operations Portal</span>
+              <span className="block text-xs text-slate-500">Operations Portal</span>
             </span>
           </Link>
         </div>
         <nav className="flex-1 space-y-5 overflow-y-auto px-3 py-4">
           {sections.map((section) => (
             <div key={section.title}>
-              <p className="px-3 text-[11px] font-bold uppercase text-slate-500">{section.title}</p>
+              <p className="px-3 text-[11px] font-bold uppercase text-slate-400">{section.title}</p>
               <div className="mt-2 space-y-1">
                 {section.items.map((item) => {
                   const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
@@ -113,12 +113,11 @@ export function AdminSidebar() {
                       key={item.href}
                       href={item.href}
                       className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold transition ${
-                        active ? "bg-violet-600 text-white" : "text-slate-300 hover:bg-slate-900 hover:text-white"
+                        active ? "bg-slate-950 text-white" : "text-slate-600 hover:bg-slate-100 hover:text-slate-950"
                       }`}
                     >
                       <Icon className="h-4 w-4" />
                       <span className="flex-1">{item.label}</span>
-                      {item.badge ? <span className="rounded bg-slate-800 px-1.5 py-0.5 text-[10px] text-slate-300">{item.badge}</span> : null}
                     </Link>
                   );
                 })}
@@ -126,12 +125,12 @@ export function AdminSidebar() {
             </div>
           ))}
         </nav>
-        <div className="border-t border-slate-800 p-3">
-          <Button type="button" variant="outline" className="w-full border-slate-700 bg-slate-900 text-white hover:bg-slate-800" onClick={handleLogout}>
+        <div className="border-t border-slate-200 p-3">
+          <Button type="button" variant="outline" className="w-full" onClick={handleLogout}>
             <LogOut className="h-4 w-4" />
             Logout
           </Button>
-          <Button asChild type="button" variant="ghost" className="mt-2 w-full text-slate-300 hover:bg-slate-900 hover:text-white">
+          <Button asChild type="button" variant="ghost" className="mt-2 w-full text-slate-600">
             <Link href="/">
               <Home className="h-4 w-4" />
               Customer site

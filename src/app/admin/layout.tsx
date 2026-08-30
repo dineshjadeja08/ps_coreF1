@@ -16,11 +16,11 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
   return (
     <PermissionGuard>
-      <div className="flex min-h-screen bg-slate-100">
+      <div className="flex min-h-screen bg-slate-50">
         <AdminSidebar />
         <div className="min-w-0 flex-1">
           <AdminTopbar />
-          <div className="px-4 py-6 lg:px-6">{children}</div>
+          <div className="px-4 py-6 lg:px-8">{children}</div>
         </div>
       </div>
     </PermissionGuard>

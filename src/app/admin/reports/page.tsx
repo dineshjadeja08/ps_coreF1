@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 
-import { AdminSectionPlaceholder } from "@/components/admin/admin-section-placeholder";
+import { AdminReportsScreen } from "@/features/admin/components/admin-system-screens";
 
 export const metadata: Metadata = { title: "Admin Reports" };
 
 export default function AdminReportsPage() {
-  return <AdminSectionPlaceholder title="Reports" description="Operational and finance reporting." missing="Missing backend API: report metrics and CSV exports." />;
+  return <AdminReportsScreen />;
 }

@@ -65,7 +65,7 @@ function CategoryShowcaseCard({
     <button
       type="button"
       onClick={() => onSelect(category)}
-      className="group block overflow-hidden rounded-2xl border border-border bg-surface text-left shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[var(--shadow-card)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      className="group block overflow-hidden rounded-lg border border-border bg-surface text-left shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[var(--shadow-card)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
     >
       <ServiceImage
         src={sampleService?.cover_image}
@@ -86,7 +86,7 @@ function CompactServiceCard({ service }: { service: ServiceListItem }) {
   const showOffer = hasOfferPrice(service) && basePrice;
 
   return (
-    <article className="group overflow-hidden rounded-2xl border border-border bg-surface shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[var(--shadow-card)]">
+    <article className="group overflow-hidden rounded-lg border border-border bg-surface shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[var(--shadow-card)]">
       <Link href={routes.serviceDetail(service.slug)} aria-label={`View ${service.name}`}>
         <ServiceImage src={service.cover_image} alt={service.name} className="aspect-[4/3] rounded-none" />
       </Link>
@@ -131,7 +131,7 @@ function CategoryServicesDialog({
     <Dialog.Root open={Boolean(category)} onOpenChange={(open) => !open && onClose()}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/45 backdrop-blur-sm" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 flex max-h-[88vh] w-[calc(100vw-2rem)] max-w-6xl -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-3xl border border-border bg-background shadow-[var(--shadow-card)] focus:outline-none">
+        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 flex max-h-[88vh] w-[calc(100vw-2rem)] max-w-6xl -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-lg border border-border bg-background shadow-[var(--shadow-card)] focus:outline-none">
           <div className="flex items-start justify-between gap-4 border-b border-border bg-surface p-5 sm:p-6">
             <div>
               <Dialog.Title className="text-2xl font-bold text-foreground">{category?.name ?? "Services"}</Dialog.Title>
@@ -162,7 +162,7 @@ function CategoryServicesDialog({
                 ))}
               </div>
             ) : (
-              <div className="rounded-2xl border border-border bg-surface p-6 text-center">
+              <div className="rounded-lg border border-border bg-surface p-6 text-center">
                 <h3 className="text-lg font-bold text-foreground">No services published yet</h3>
                 <p className="mt-2 text-sm leading-6 text-secondary">Add active services to this category from the backend admin.</p>
               </div>
@@ -199,19 +199,19 @@ export function HomeDiscovery() {
 
   return (
     <div className="bg-background">
-      <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-10">
+      <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35 }}
           className="mx-auto max-w-4xl text-center"
         >
-          <Badge className="mx-auto w-fit">Live in Chennai, Bangalore & Coimbatore</Badge>
+          <Badge className="mx-auto w-fit">Chennai, Bangalore and Coimbatore</Badge>
           <h1 className="mt-5 text-4xl font-bold leading-tight text-foreground sm:text-5xl">
-            Experience finest home services
+            Book reliable home services near you
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-secondary sm:text-lg">
-            Home cleaning, AC service and appliance repair by trained Purple Squad professionals.
+            Choose a service, pick a slot, and track the visit from your account. No long enquiry forms.
           </p>
           <div className="mt-5 flex flex-wrap justify-center gap-2">
             {serviceCities.map((city) => (
@@ -224,7 +224,7 @@ export function HomeDiscovery() {
 
         <div className="mx-auto mt-7 grid max-w-5xl gap-3 lg:grid-cols-[0.82fr_1.18fr]">
           <LocationSelector />
-          <div className="rounded-2xl border border-border bg-surface p-4 shadow-sm">
+          <div className="rounded-lg border border-border bg-surface p-4 shadow-sm">
             <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
               <Search className="h-4 w-4 text-primary" />
               Search and book a service
@@ -270,7 +270,7 @@ export function HomeDiscovery() {
         <MarketplaceSectionTitle
           eyebrow="Most booked"
           title="Most booked services"
-          description="Popular repairs and cleaning jobs ready for quick booking."
+          description="The services customers book most often, with prices pulled from the live catalogue."
           action={
             <Button asChild variant="outline">
               <Link href={routes.services}>Open full catalogue</Link>
@@ -289,7 +289,7 @@ export function HomeDiscovery() {
       </section>
 
       <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="grid overflow-hidden rounded-3xl border border-border bg-surface shadow-[var(--shadow-card)] lg:grid-cols-[0.9fr_1.1fr]">
+        <div className="grid overflow-hidden rounded-lg border border-border bg-surface shadow-[var(--shadow-card)] lg:grid-cols-[0.9fr_1.1fr]">
           <div className="relative min-h-80 bg-primary-subtle">
             <Image
               src="/images/hero/purple-squad-home-services-hero.png"
@@ -303,9 +303,9 @@ export function HomeDiscovery() {
           </div>
           <div className="flex flex-col justify-center p-6 sm:p-8 lg:p-10">
             <Badge className="w-fit">Purple Squad now live</Badge>
-            <h2 className="mt-4 text-3xl font-bold leading-tight text-foreground sm:text-4xl">Rediscover clean</h2>
+            <h2 className="mt-4 text-3xl font-bold leading-tight text-foreground sm:text-4xl">Cleaning and repairs handled properly</h2>
             <p className="mt-4 max-w-2xl text-base leading-7 text-secondary">
-              Professional deep cleaning for homes, bathrooms, kitchens and water tanks by trusted experts across Chennai, Bangalore and Coimbatore.
+              AC service, appliance repair, bathroom cleaning, full-house cleaning, water tank cleaning and more, staged for the cities Purple Squad currently serves.
             </p>
             <div className="mt-6 grid gap-3 sm:grid-cols-3">
               {[
@@ -313,7 +313,7 @@ export function HomeDiscovery() {
                 { title: "Pristine kitchens", text: "Grease and stain focus" },
                 { title: "Sparkling bathrooms", text: "Tiles, mirrors and fittings" },
               ].map((item) => (
-                <div key={item.title} className="rounded-2xl bg-muted p-4">
+                <div key={item.title} className="rounded-lg bg-muted p-4">
                   <h3 className="text-sm font-bold text-foreground">{item.title}</h3>
                   <p className="mt-1 text-xs leading-5 text-secondary">{item.text}</p>
                 </div>
@@ -321,7 +321,7 @@ export function HomeDiscovery() {
             </div>
             <div className="mt-7 flex flex-col gap-3 sm:flex-row">
               <Button asChild size="lg">
-                <Link href="/services?q=cleaning">Get a Free Quote</Link>
+                <Link href="/services?q=cleaning">Find a service</Link>
               </Button>
               <Button asChild variant="outline" size="lg">
                 <Link href={routes.services}>Browse services</Link>
@@ -339,7 +339,7 @@ export function HomeDiscovery() {
               <CompactServiceCard key={service.id} service={service} />
             ))}
           </div>
-          <div className="flex flex-col justify-between rounded-3xl border border-border bg-muted p-6">
+          <div className="flex flex-col justify-between rounded-lg border border-border bg-muted p-6">
             <div>
               <Badge className="w-fit">Verified technicians</Badge>
               <h2 className="mt-4 text-2xl font-bold text-foreground">AC, refrigerator, TV, geyser and purifier support</h2>
@@ -358,7 +358,7 @@ export function HomeDiscovery() {
       </section>
 
       <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <div className="grid gap-4 rounded-3xl border border-border bg-muted p-6 md:grid-cols-[1fr_auto] md:items-center">
+        <div className="grid gap-4 rounded-lg border border-border bg-muted p-6 md:grid-cols-[1fr_auto] md:items-center">
           <div>
             <p className="text-sm font-semibold uppercase tracking-wide text-primary">Support</p>
             <h2 className="mt-2 text-2xl font-bold text-foreground">We have a team dedicated to support you</h2>

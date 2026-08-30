@@ -48,6 +48,6 @@ export async function getAdminDashboardSummary(): Promise<AdminDashboardSummary>
     pendingPayments: pendingPayments.slice(0, 6),
     unassigned: unassigned.slice(0, 6),
     failedNotifications: notificationPayload.results,
-    missing: ["Reports API", "Refund workflow API", "Review moderation API"],
+    missing: ["Refund workflow API"],
   };
 }

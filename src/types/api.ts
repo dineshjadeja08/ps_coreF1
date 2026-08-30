@@ -55,6 +55,11 @@ export type Review = {
   updated_at: ISODateTime;
 };
 
+export type AdminReview = Review & {
+  booking_number: string;
+  service_name: string;
+};
+
 export type ReviewCreateRequest = {
   rating: number;
   comment: string;
@@ -94,6 +99,67 @@ export type AdminService = Omit<ServiceDetail, "category" | "effective_price"> &
   is_active: boolean;
   created_at: ISODateTime;
   updated_at: ISODateTime;
+};
+
+export type FAQ = {
+  id: UUID;
+  question: string;
+  answer: string;
+  category: UUID | null;
+  service: UUID | null;
+  package: string;
+  display_order: number;
+  is_active: boolean;
+  created_at: ISODateTime;
+  updated_at: ISODateTime;
+};
+
+export type HomepageBanner = {
+  id: UUID;
+  title: string;
+  description: string;
+  desktop_image: string;
+  desktop_image_url: string;
+  mobile_image: string;
+  mobile_image_url: string;
+  image_alt_text: string;
+  button_text: string;
+  button_link: string;
+  placement: "MAIN" | "PROMOTIONAL_CAROUSEL" | "CATEGORY" | "SERVICE_PAGE";
+  display_order: number;
+  starts_at: ISODateTime | null;
+  ends_at: ISODateTime | null;
+  is_active: boolean;
+  created_at: ISODateTime;
+  updated_at: ISODateTime;
+};
+
+export type AdminReportSummary = {
+  date_from?: ISODate;
+  date_to?: ISODate;
+  daily_bookings: number;
+  completed_services: number;
+  cancelled_bookings: number;
+  payment_pending_bookings: number;
+  revenue_collected: DecimalString;
+  advance_payments: DecimalString;
+  balance_payments: DecimalString;
+  refunds: DecimalString;
+  unassigned_bookings: number;
+  average_rating: number;
+};
+
+export type AdminSettings = {
+  debug: boolean;
+  allowed_hosts: string[];
+  cors_allowed_origins: string[];
+  csrf_trusted_origins: string[];
+  otp_provider: string;
+  notification_provider: string;
+  razorpay_configured: boolean;
+  msg91_configured: boolean;
+  firebase_configured: boolean;
+  booking_require_balance_before_completion: boolean;
 };
 
 export type Address = {
@@ -342,6 +408,32 @@ export type AdminCustomer = User & {
   total_bookings: number;
   total_amount_spent: DecimalString | null;
   last_booking_at: ISODateTime | null;
+};
+
+export type AdminStaff = User & {
+  is_active: boolean;
+  is_staff: boolean;
+  is_superuser: boolean;
+  groups: StaffGroup[];
+  last_login: ISODateTime | null;
+};
+
+export type StaffGroup = {
+  id: number;
+  name: string;
+};
+
+export type AuditLog = {
+  id: UUID;
+  actor: UUID | null;
+  actor_phone: string;
+  action: string;
+  resource_type: string;
+  resource_id: string;
+  ip_address: string | null;
+  user_agent: string;
+  metadata: Record<string, unknown>;
+  created_at: ISODateTime;
 };
 
 export type Payment = {

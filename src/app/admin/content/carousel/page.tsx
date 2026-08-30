@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 
-import { AdminSectionPlaceholder } from "@/components/admin/admin-section-placeholder";
+import { AdminBannersScreen } from "@/features/admin/components/admin-catalogue-screens";
 
 export const metadata: Metadata = { title: "Admin Carousel" };
 
 export default function AdminCarouselPage() {
-  return <AdminSectionPlaceholder title="Carousel" description="Homepage carousel slide management." missing="Missing backend API/model: carousel slides." />;
+  return <AdminBannersScreen placement="PROMOTIONAL_CAROUSEL" title="Carousel" />;
 }
