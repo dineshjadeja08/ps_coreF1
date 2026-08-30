@@ -1,28 +1,21 @@
 "use client";
 
-import { BriefcaseBusiness, CalendarCheck, LogOut, MapPin, Search, UserRound } from "lucide-react";
+import { BriefcaseBusiness, CalendarCheck, LogOut, UserRound } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
 
 import { Brand } from "@/components/layout/brand";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { routes } from "@/constants/routes";
 import { useAuth } from "@/features/auth/hooks";
+import { ServiceSearch } from "@/features/catalogue/components/service-search";
+import { useServices } from "@/features/catalogue/queries";
 
 export function Header() {
   const router = useRouter();
   const { user, isAuthenticated, logout } = useAuth();
-  const [desktopSearch, setDesktopSearch] = useState("");
-  const [mobileSearch, setMobileSearch] = useState("");
+  const services = useServices({ page_size: 40 });
   const displayName = user?.customer_profile?.display_name || user?.first_name || "Profile";
-
-  function submitSearch(event: FormEvent<HTMLFormElement>, value: string) {
-    event.preventDefault();
-    const query = value.trim();
-    router.push(query ? `/services?q=${encodeURIComponent(query)}` : routes.services);
-  }
 
   async function handleLogout() {
     await logout();
@@ -34,29 +27,15 @@ export function Header() {
       <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3 sm:px-6 lg:px-8">
         <Brand />
 
-        <button className="hidden h-10 items-center gap-2 rounded-xl border border-border bg-primary-subtle px-3 text-sm font-semibold text-foreground transition-colors hover:border-primary/30 md:flex">
-          <MapPin className="h-4 w-4 text-primary" />
-          Chennai · Bangalore · Coimbatore
-        </button>
-
-        <form onSubmit={(event) => submitSearch(event, desktopSearch)} className="relative hidden flex-1 lg:block">
-          <label className="sr-only" htmlFor="desktop-header-search">
-            Search services
-          </label>
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            id="desktop-header-search"
-            value={desktopSearch}
-            onChange={(event) => setDesktopSearch(event.target.value)}
-            className="h-10 bg-background pl-9"
-            placeholder="Search for AC repair, cleaning, installation..."
-          />
-        </form>
+        <ServiceSearch
+          services={services.data?.results ?? []}
+          className="hidden max-w-xl flex-1 lg:block"
+          compact
+          inputId="desktop-header-search"
+          placeholder="Search services"
+        />
 
         <nav className="ml-auto hidden items-center gap-1 md:flex">
-          <Button asChild variant="ghost" size="sm">
-            <Link href={routes.home}>Home</Link>
-          </Button>
           <Button asChild variant="ghost" size="sm">
             <Link href={routes.services}>Services</Link>
           </Button>
@@ -104,25 +83,13 @@ export function Header() {
       </div>
 
       <div className="border-t border-border bg-surface px-4 py-3 md:hidden">
-        <div className="mx-auto flex max-w-7xl items-center gap-2">
-          <button className="flex h-11 items-center gap-2 rounded-xl border border-border bg-primary-subtle px-3 text-sm font-semibold">
-            <MapPin className="h-4 w-4 text-primary" />
-            Chennai · Bangalore · Coimbatore
-          </button>
-          <form onSubmit={(event) => submitSearch(event, mobileSearch)} className="relative min-w-0 flex-1">
-            <label className="sr-only" htmlFor="mobile-header-search">
-              Search services
-            </label>
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              id="mobile-header-search"
-              value={mobileSearch}
-              onChange={(event) => setMobileSearch(event.target.value)}
-              className="pl-9"
-              placeholder="Search services..."
-            />
-          </form>
-        </div>
+        <ServiceSearch
+          services={services.data?.results ?? []}
+          className="mx-auto max-w-7xl"
+          compact
+          inputId="mobile-header-search"
+          placeholder="Search services"
+        />
       </div>
     </header>
   );

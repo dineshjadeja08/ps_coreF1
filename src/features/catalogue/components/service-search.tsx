@@ -16,9 +16,18 @@ type ServiceSearchProps = {
   initialValue?: string;
   className?: string;
   compact?: boolean;
+  inputId?: string;
+  placeholder?: string;
 };
 
-export function ServiceSearch({ services, initialValue = "", className, compact = false }: ServiceSearchProps) {
+export function ServiceSearch({
+  services,
+  initialValue = "",
+  className,
+  compact = false,
+  inputId = "service-search",
+  placeholder = "Search for AC repair, cleaning, installation...",
+}: ServiceSearchProps) {
   const router = useRouter();
   const [query, setQuery] = useState(initialValue);
   const [focused, setFocused] = useState(false);
@@ -46,18 +55,18 @@ export function ServiceSearch({ services, initialValue = "", className, compact 
 
   return (
     <form onSubmit={handleSubmit} className={cn("relative", className)}>
-      <label className="sr-only" htmlFor="service-search">
+      <label className="sr-only" htmlFor={inputId}>
         Search services
       </label>
       <Search className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
       <Input
-        id="service-search"
+        id={inputId}
         value={query}
         onChange={(event) => setQuery(event.target.value)}
         onFocus={() => setFocused(true)}
         onBlur={() => window.setTimeout(() => setFocused(false), 120)}
-        placeholder="Search for AC repair, cleaning, installation..."
-        className={cn("pl-9", compact ? "h-11" : "h-12 text-base")}
+        placeholder={placeholder}
+        className={cn("rounded-lg pl-9", compact ? "h-10" : "h-12 text-base")}
         autoComplete="off"
       />
       {focused && suggestions.length > 0 ? (

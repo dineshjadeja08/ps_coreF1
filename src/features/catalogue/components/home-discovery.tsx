@@ -2,7 +2,7 @@
 
 import * as Dialog from "@radix-ui/react-dialog";
 import { motion } from "framer-motion";
-import { ArrowRight, Search, Star, X } from "lucide-react";
+import { ArrowRight, Star, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
@@ -15,9 +15,7 @@ import { Button } from "@/components/ui/button";
 import { env } from "@/config/env";
 import { routes } from "@/constants/routes";
 import { AuthActionLink } from "@/features/auth/components/auth-action-link";
-import { LocationSelector } from "@/features/catalogue/components/location-selector";
 import { ServiceImage } from "@/features/catalogue/components/service-image";
-import { ServiceSearch } from "@/features/catalogue/components/service-search";
 import { CategorySkeletonGrid, ServiceCardSkeletonGrid } from "@/features/catalogue/components/skeletons";
 import { useServiceCategories, useServices } from "@/features/catalogue/queries";
 import type { ServiceCategory, ServiceListItem } from "@/features/catalogue/types";
@@ -222,29 +220,19 @@ export function HomeDiscovery() {
           </div>
         </motion.div>
 
-        <div className="mx-auto mt-7 grid max-w-5xl gap-3 lg:grid-cols-[0.82fr_1.18fr]">
-          <LocationSelector />
-          <div className="rounded-lg border border-border bg-surface p-4 shadow-sm">
-            <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
-              <Search className="h-4 w-4 text-primary" />
-              Search and book a service
-            </div>
-            <ServiceSearch services={allServices} />
-            <div className="mt-4 flex flex-wrap gap-2">
-              {quickServices.map((service) => (
-                <Link
-                  key={service}
-                  href={`/services?q=${encodeURIComponent(service)}`}
-                  className="rounded-full bg-primary-subtle px-3 py-1 text-xs font-semibold text-primary transition hover:bg-primary hover:text-primary-foreground"
-                >
-                  {service}
-                </Link>
-              ))}
-            </div>
-          </div>
+        <div className="mx-auto mt-7 flex max-w-5xl flex-wrap justify-center gap-2">
+          {quickServices.map((service) => (
+            <Link
+              key={service}
+              href={`/services?q=${encodeURIComponent(service)}`}
+              className="rounded-full border border-border bg-surface px-3 py-1 text-xs font-semibold text-secondary transition hover:border-primary/30 hover:text-primary"
+            >
+              {service}
+            </Link>
+          ))}
         </div>
 
-        <div className="mt-9">
+        <div className="mt-8">
           {categories.isLoading ? <CategorySkeletonGrid /> : null}
           {categories.isError ? <ErrorState error={categories.error} onRetry={() => categories.refetch()} /> : null}
           {categories.data?.length ? (
