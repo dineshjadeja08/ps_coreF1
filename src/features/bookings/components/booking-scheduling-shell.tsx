@@ -146,12 +146,11 @@ export function BookingSchedulingShell() {
   }
 
   return (
-    <section className="mx-auto max-w-6xl px-4 py-6 pb-28 sm:px-6 lg:px-8">
-      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+    <section className="mx-auto max-w-6xl px-4 py-5 pb-28 sm:px-6 lg:px-8">
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-sm font-semibold uppercase tracking-wide text-primary">Book service</p>
-          <h1 className="mt-1 text-3xl font-bold tracking-normal text-foreground">Confirm your visit</h1>
-          <p className="mt-2 text-sm leading-6 text-secondary">Address, date, and earliest slot are preselected. Change only what you need.</p>
+          <h1 className="mt-1 text-2xl font-bold tracking-normal text-foreground">Confirm your visit</h1>
         </div>
         <Button asChild variant="ghost" size="sm">
           <Link href={routes.services}>Change service</Link>
@@ -159,13 +158,12 @@ export function BookingSchedulingShell() {
       </div>
 
       {service.data ? (
-        <section className="mb-5 grid overflow-hidden rounded-lg border border-border bg-surface shadow-sm md:grid-cols-[180px_1fr_auto] md:items-center">
-          <ServiceImage src={service.data.cover_image} alt={service.data.name} className="aspect-[16/10] rounded-none md:aspect-square" />
-          <div className="p-4">
+        <section className="mb-4 grid overflow-hidden rounded-lg border border-border bg-surface shadow-sm md:grid-cols-[120px_1fr_auto] md:items-center">
+          <ServiceImage src={service.data.cover_image} alt={service.data.name} className="aspect-[16/9] rounded-none md:aspect-square" />
+          <div className="p-3">
             <p className="text-xs font-bold uppercase text-primary">{service.data.category.name}</p>
-            <h2 className="mt-1 text-xl font-bold text-foreground">{service.data.name}</h2>
-            {service.data.short_description ? <p className="mt-1 max-w-2xl text-sm leading-6 text-secondary">{service.data.short_description}</p> : null}
-            <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-secondary">
+            <h2 className="mt-1 text-lg font-bold text-foreground">{service.data.name}</h2>
+            <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-secondary">
               {duration ? (
                 <span className="inline-flex items-center gap-1.5">
                   <Clock className="h-4 w-4 text-primary" />
@@ -178,7 +176,7 @@ export function BookingSchedulingShell() {
               </span>
             </div>
           </div>
-          <div className="border-t border-border p-4 md:border-l md:border-t-0">
+          <div className="border-t border-border p-3 md:border-l md:border-t-0">
             <PriceDisplay service={service.data} compact />
           </div>
         </section>
@@ -186,13 +184,12 @@ export function BookingSchedulingShell() {
         <div className="mb-5 h-40 animate-pulse rounded-lg bg-muted" />
       ) : null}
 
-      <div className="grid gap-5 lg:grid-cols-[1fr_320px] lg:items-start">
-        <div className="space-y-5">
-          <section className="rounded-lg border border-border bg-surface p-5 shadow-sm">
+      <div className="grid gap-4 lg:grid-cols-[1fr_320px] lg:items-start">
+        <div className="space-y-4">
+          <section className="rounded-lg border border-border bg-surface p-4 shadow-sm">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h2 className="text-lg font-bold text-foreground">Address</h2>
-                <p className="mt-1 text-sm text-secondary">Pick where the technician should visit.</p>
               </div>
               {serviceability.data?.is_supported ? (
                 <span className="rounded-full bg-green-50 px-3 py-1 text-xs font-bold text-green-700">Serviceable</span>
@@ -203,7 +200,7 @@ export function BookingSchedulingShell() {
             {addresses.isError ? <ErrorState title="We could not load your addresses" error={addresses.error} onRetry={() => addresses.refetch()} /> : null}
             {addresses.data?.results?.length ? (
               <div className="mt-4 grid gap-3 md:grid-cols-2">
-                {addresses.data.results.map((address) => {
+                {addresses.data.results.slice(0, 2).map((address) => {
                   const selected = effectiveAddressId === address.id;
                   return (
                     <button
@@ -212,7 +209,7 @@ export function BookingSchedulingShell() {
                       aria-pressed={selected}
                       onClick={() => selectAddress(address)}
                       className={cn(
-                        "min-h-28 rounded-lg border bg-surface p-4 text-left transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
+                        "min-h-20 rounded-lg border bg-surface p-3 text-left transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
                         selected ? "border-slate-950 bg-slate-50 ring-2 ring-slate-950/10" : "border-border hover:border-primary/30 hover:bg-slate-50",
                       )}
                     >
@@ -220,7 +217,7 @@ export function BookingSchedulingShell() {
                         {selected ? <CheckCircle2 className="h-4 w-4 text-success" /> : <MapPin className="h-4 w-4 text-primary" />}
                         {address.label}
                       </span>
-                      <span className="mt-2 block text-sm leading-6 text-secondary">
+                      <span className="mt-1 line-clamp-2 block text-sm leading-5 text-secondary">
                         {address.address_line_1}, {address.city}, {address.state} {address.postal_code}
                       </span>
                     </button>
@@ -231,7 +228,7 @@ export function BookingSchedulingShell() {
             {addresses.data && addresses.data.results.length === 0 ? <AddressManager compact /> : null}
 
             {selectedAddress ? (
-              <div className="mt-4 rounded-lg bg-slate-50 px-4 py-3" aria-live="polite">
+              <div className="mt-3 rounded-lg bg-slate-50 px-3 py-2" aria-live="polite">
                 {serviceability.isFetching ? (
                   <p className="text-sm text-secondary">Checking serviceability...</p>
                 ) : serviceability.data?.is_supported ? (
@@ -251,12 +248,11 @@ export function BookingSchedulingShell() {
             ) : null}
           </section>
 
-          <section className="rounded-lg border border-border bg-surface p-5 shadow-sm">
+          <section className="rounded-lg border border-border bg-surface p-4 shadow-sm">
             <div>
               <h2 className="text-lg font-bold text-foreground">Date and time</h2>
-              <p className="mt-1 text-sm text-secondary">Choose a day and a two-hour arrival window.</p>
             </div>
-            <div className="mt-4">
+            <div className="mt-3">
               <DateSelector selectedDate={selectedDate} onSelectDate={selectDate} />
             </div>
             {slotConflict ? <p className="mt-3 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{slotConflict}</p> : null}
@@ -278,30 +274,6 @@ export function BookingSchedulingShell() {
               </div>
             )}
           </section>
-
-          <section className="rounded-lg border border-border bg-surface p-5 shadow-sm">
-            <label htmlFor="problem-description" className="text-sm font-semibold text-foreground">
-              Add instructions
-            </label>
-            <p className="mt-1 text-sm text-secondary">Optional. We already know which service you selected.</p>
-            <textarea
-              id="problem-description"
-              value={problemDescription}
-              onChange={(event) => setProblemDescription(event.target.value)}
-              placeholder={defaultProblemDescription}
-              className="mt-2 min-h-24 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none transition focus:border-primary focus:ring-3 focus:ring-primary/15"
-            />
-            <label htmlFor="customer-notes" className="mt-4 block text-sm font-semibold text-foreground">
-              Technician instructions
-            </label>
-            <textarea
-              id="customer-notes"
-              value={customerNotes}
-              onChange={(event) => setCustomerNotes(event.target.value)}
-              placeholder="Flat number, landmark, preferred call time, or other instructions."
-              className="mt-2 min-h-20 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none transition focus:border-primary focus:ring-3 focus:ring-primary/15"
-            />
-          </section>
         </div>
 
         <aside className="rounded-lg border border-border bg-surface p-5 shadow-sm lg:sticky lg:top-28">
@@ -314,6 +286,19 @@ export function BookingSchedulingShell() {
               value={selectedSlot ? `${formatSlotTime(selectedSlot.start_time)} - ${formatSlotTime(selectedSlot.end_time)}` : "Select slot"}
             />
           </div>
+          <label htmlFor="customer-notes" className="mt-4 block text-sm font-semibold text-foreground">
+            Note
+          </label>
+          <textarea
+            id="customer-notes"
+            value={customerNotes}
+            onChange={(event) => {
+              setCustomerNotes(event.target.value);
+              setProblemDescription(event.target.value);
+            }}
+            placeholder="Optional instructions"
+            className="mt-2 min-h-20 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none transition focus:border-primary focus:ring-3 focus:ring-primary/15"
+          />
           {submitError ? <p className="mt-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{submitError}</p> : null}
           <p className="mt-4 flex gap-2 rounded-lg bg-primary-soft p-3 text-sm leading-6 text-primary">
             <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
