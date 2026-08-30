@@ -12,7 +12,6 @@ import { routes } from "@/constants/routes";
 import { AddressManager } from "@/features/addresses/components/address-manager";
 import { useAddresses, useAddressServiceability } from "@/features/addresses/queries";
 import type { Address } from "@/features/addresses/types";
-import { BookingStepIndicator } from "@/features/bookings/components/booking-step-indicator";
 import { DateSelector } from "@/features/bookings/components/date-selector";
 import { SlotPicker } from "@/features/bookings/components/slot-picker";
 import { useCreateBooking } from "@/features/bookings/mutations";
@@ -147,33 +146,63 @@ export function BookingSchedulingShell() {
   }
 
   return (
-    <section className="mx-auto max-w-7xl px-4 py-8 pb-28 sm:px-6 lg:px-8">
-      <BookingStepIndicator currentStep={0} />
-      <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_360px] lg:items-start">
-        <div className="space-y-6">
-          <section className="rounded-lg border border-border bg-surface p-5 shadow-sm">
-            <p className="text-sm font-semibold uppercase tracking-wide text-primary">Quick booking</p>
-            <h1 className="mt-2 text-2xl font-bold text-foreground">Book your visit</h1>
-            <p className="mt-2 text-sm leading-6 text-secondary">Default address and earliest slot are selected automatically. You can change them before payment.</p>
-            <div className="mt-4 grid gap-2 sm:grid-cols-3">
-              {["Choose address", "Pick slot", "Pay advance"].map((item, index) => (
-                <div key={item} className="rounded-lg bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700">
-                  {index + 1}. {item}
-                </div>
-              ))}
-            </div>
-          </section>
+    <section className="mx-auto max-w-6xl px-4 py-6 pb-28 sm:px-6 lg:px-8">
+      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-wide text-primary">Book service</p>
+          <h1 className="mt-1 text-3xl font-bold tracking-normal text-foreground">Confirm your visit</h1>
+          <p className="mt-2 text-sm leading-6 text-secondary">Address, date, and earliest slot are preselected. Change only what you need.</p>
+        </div>
+        <Button asChild variant="ghost" size="sm">
+          <Link href={routes.services}>Change service</Link>
+        </Button>
+      </div>
 
+      {service.data ? (
+        <section className="mb-5 grid overflow-hidden rounded-lg border border-border bg-surface shadow-sm md:grid-cols-[180px_1fr_auto] md:items-center">
+          <ServiceImage src={service.data.cover_image} alt={service.data.name} className="aspect-[16/10] rounded-none md:aspect-square" />
+          <div className="p-4">
+            <p className="text-xs font-bold uppercase text-primary">{service.data.category.name}</p>
+            <h2 className="mt-1 text-xl font-bold text-foreground">{service.data.name}</h2>
+            {service.data.short_description ? <p className="mt-1 max-w-2xl text-sm leading-6 text-secondary">{service.data.short_description}</p> : null}
+            <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-secondary">
+              {duration ? (
+                <span className="inline-flex items-center gap-1.5">
+                  <Clock className="h-4 w-4 text-primary" />
+                  {duration}
+                </span>
+              ) : null}
+              <span className="inline-flex items-center gap-1.5">
+                <ShieldCheck className="h-4 w-4 text-primary" />
+                Verified technician
+              </span>
+            </div>
+          </div>
+          <div className="border-t border-border p-4 md:border-l md:border-t-0">
+            <PriceDisplay service={service.data} compact />
+          </div>
+        </section>
+      ) : service.isLoading ? (
+        <div className="mb-5 h-40 animate-pulse rounded-lg bg-muted" />
+      ) : null}
+
+      <div className="grid gap-5 lg:grid-cols-[1fr_320px] lg:items-start">
+        <div className="space-y-5">
           <section className="rounded-lg border border-border bg-surface p-5 shadow-sm">
-            <div>
-              <h2 className="text-xl font-bold text-foreground">1. Visit address</h2>
-              <p className="mt-1 text-sm text-secondary">Your default saved address is selected automatically.</p>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-lg font-bold text-foreground">Address</h2>
+                <p className="mt-1 text-sm text-secondary">Pick where the technician should visit.</p>
+              </div>
+              {serviceability.data?.is_supported ? (
+                <span className="rounded-full bg-green-50 px-3 py-1 text-xs font-bold text-green-700">Serviceable</span>
+              ) : null}
             </div>
 
-            {addresses.isLoading ? <div className="mt-4 h-32 animate-pulse rounded-lg bg-muted" /> : null}
+            {addresses.isLoading ? <div className="mt-4 h-24 animate-pulse rounded-lg bg-muted" /> : null}
             {addresses.isError ? <ErrorState title="We could not load your addresses" error={addresses.error} onRetry={() => addresses.refetch()} /> : null}
             {addresses.data?.results?.length ? (
-              <div className="mt-4 grid gap-3">
+              <div className="mt-4 grid gap-3 md:grid-cols-2">
                 {addresses.data.results.map((address) => {
                   const selected = effectiveAddressId === address.id;
                   return (
@@ -183,8 +212,8 @@ export function BookingSchedulingShell() {
                       aria-pressed={selected}
                       onClick={() => selectAddress(address)}
                       className={cn(
-                        "rounded-lg border bg-surface p-4 text-left transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
-                        selected ? "border-slate-950 bg-slate-50 ring-2 ring-slate-950/10" : "border-border hover:border-primary/30 hover:bg-primary-subtle",
+                        "min-h-28 rounded-lg border bg-surface p-4 text-left transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
+                        selected ? "border-slate-950 bg-slate-50 ring-2 ring-slate-950/10" : "border-border hover:border-primary/30 hover:bg-slate-50",
                       )}
                     >
                       <span className="flex items-center gap-2 font-semibold text-foreground">
@@ -202,7 +231,7 @@ export function BookingSchedulingShell() {
             {addresses.data && addresses.data.results.length === 0 ? <AddressManager compact /> : null}
 
             {selectedAddress ? (
-              <div className="mt-4 rounded-lg border border-border bg-slate-50 p-4" aria-live="polite">
+              <div className="mt-4 rounded-lg bg-slate-50 px-4 py-3" aria-live="polite">
                 {serviceability.isFetching ? (
                   <p className="text-sm text-secondary">Checking serviceability...</p>
                 ) : serviceability.data?.is_supported ? (
@@ -224,17 +253,11 @@ export function BookingSchedulingShell() {
 
           <section className="rounded-lg border border-border bg-surface p-5 shadow-sm">
             <div>
-              <h2 className="text-xl font-bold text-foreground">2. Date and time</h2>
-              <p className="mt-1 text-sm text-secondary">All standard slots are available daily for supported areas.</p>
+              <h2 className="text-lg font-bold text-foreground">Date and time</h2>
+              <p className="mt-1 text-sm text-secondary">Choose a day and a two-hour arrival window.</p>
             </div>
             <div className="mt-4">
               <DateSelector selectedDate={selectedDate} onSelectDate={selectDate} />
-            </div>
-            <div className="mt-5 flex items-center justify-between gap-3">
-              <div>
-                <h3 className="text-base font-bold text-foreground">Time slot</h3>
-                <p className="mt-1 text-sm text-secondary">Earliest available slot is selected automatically when possible.</p>
-              </div>
             </div>
             {slotConflict ? <p className="mt-3 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{slotConflict}</p> : null}
             {!selectedAddress ? (
@@ -258,8 +281,9 @@ export function BookingSchedulingShell() {
 
           <section className="rounded-lg border border-border bg-surface p-5 shadow-sm">
             <label htmlFor="problem-description" className="text-sm font-semibold text-foreground">
-              3. Service note
+              Add instructions
             </label>
+            <p className="mt-1 text-sm text-secondary">Optional. We already know which service you selected.</p>
             <textarea
               id="problem-description"
               value={problemDescription}
@@ -280,85 +304,62 @@ export function BookingSchedulingShell() {
           </section>
         </div>
 
-        <aside className="rounded-lg border border-border bg-surface p-4 shadow-[var(--shadow-card)] lg:sticky lg:top-28">
-          {service.isLoading ? (
-            <div className="h-72 animate-pulse rounded-2xl bg-muted" />
-          ) : service.data ? (
-            <div>
-              <ServiceImage src={service.data.cover_image} alt={service.data.name} className="aspect-[4/3]" />
-              <h2 className="mt-4 text-xl font-bold text-foreground">{service.data.name}</h2>
-              <p className="mt-1 text-sm text-secondary">{service.data.category.name}</p>
-              {service.data.short_description ? <p className="mt-3 text-sm leading-6 text-secondary">{service.data.short_description}</p> : null}
-              <div className="mt-4">
-                <PriceDisplay service={service.data} compact />
-              </div>
-              {duration ? (
-                <p className="mt-3 flex items-center gap-2 text-sm text-secondary">
-                  <Clock className="h-4 w-4 text-primary" />
-                  {duration}
-                </p>
-              ) : null}
-              {selectedSlot ? (
-              <p className="mt-4 rounded-lg bg-primary-soft p-3 text-sm font-semibold text-primary">
-                  Selected: {formatSlotTime(selectedSlot.start_time)} - {formatSlotTime(selectedSlot.end_time)}
-                </p>
-              ) : null}
-              {submitError ? <p className="mt-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{submitError}</p> : null}
-              <p className="mt-4 flex gap-2 rounded-lg bg-primary-soft p-3 text-sm leading-6 text-primary">
-                <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
-                You will review the payment amount before Razorpay opens.
-              </p>
-              <Button
-                type="button"
-                className="mt-5 w-full"
-                disabled={!canContinue || createBooking.isPending}
-                onClick={() => void createFastBooking()}
-              >
-                {createBooking.isPending ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Creating booking...
-                  </>
-                ) : (
-                  "Confirm booking"
-                )}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                className="mt-2 w-full"
-                disabled={!canContinue}
-                onClick={() => {
-                  if (!service.data || !selectedAddress || !selectedSlot) return;
-                  router.push(
-                    `/book/review?service=${encodeURIComponent(service.data.slug)}&address=${encodeURIComponent(selectedAddress.id)}&date=${encodeURIComponent(selectedDate)}&slot=${encodeURIComponent(selectedSlot.id)}`,
-                  );
-                }}
-              >
-                Review details first
-              </Button>
-              <Button asChild variant="ghost" className="mt-2 w-full">
-                <Link href={routes.services}>Change service</Link>
-              </Button>
-            </div>
-          ) : null}
+        <aside className="rounded-lg border border-border bg-surface p-5 shadow-sm lg:sticky lg:top-28">
+          <h2 className="text-lg font-bold text-foreground">Booking summary</h2>
+          <div className="mt-4 space-y-4 text-sm">
+            <SummaryLine label="Address" value={selectedAddress ? `${selectedAddress.label}, ${selectedAddress.postal_code}` : "Select address"} />
+            <SummaryLine label="Date" value={selectedDate ? new Date(`${selectedDate}T00:00:00`).toLocaleDateString("en-IN", { day: "numeric", month: "short", weekday: "short" }) : "Select date"} />
+            <SummaryLine
+              label="Time"
+              value={selectedSlot ? `${formatSlotTime(selectedSlot.start_time)} - ${formatSlotTime(selectedSlot.end_time)}` : "Select slot"}
+            />
+          </div>
+          {submitError ? <p className="mt-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{submitError}</p> : null}
+          <p className="mt-4 flex gap-2 rounded-lg bg-primary-soft p-3 text-sm leading-6 text-primary">
+            <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
+            Final amount is confirmed before Razorpay opens.
+          </p>
+          <Button
+            type="button"
+            className="mt-5 w-full"
+            disabled={!canContinue || createBooking.isPending}
+            onClick={() => void createFastBooking()}
+          >
+            {createBooking.isPending ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Creating booking...
+              </>
+            ) : (
+              "Continue to payment"
+            )}
+          </Button>
         </aside>
       </div>
 
       <div className="fixed inset-x-0 bottom-16 z-30 border-t border-border bg-surface p-3 shadow-lg md:hidden">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
           <p className="min-w-0 text-sm font-semibold text-foreground">
-            {selectedSlot ? `Selected: ${formatSlotTime(selectedSlot.start_time)}` : "Choose a time slot"}
+            {selectedSlot ? `${formatSlotTime(selectedSlot.start_time)} selected` : "Choose a time slot"}
           </p>
           <Button
             type="button"
             disabled={!canContinue || createBooking.isPending}
             onClick={() => void createFastBooking()}
           >
-            {createBooking.isPending ? "Booking..." : "Book"}
+            {createBooking.isPending ? "Booking..." : "Pay"}
           </Button>
         </div>
       </div>
     </section>
+  );
+}
+
+function SummaryLine({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-3 last:border-b-0 last:pb-0">
+      <span className="text-secondary">{label}</span>
+      <span className="max-w-44 text-right font-semibold text-foreground">{value}</span>
+    </div>
   );
 }
