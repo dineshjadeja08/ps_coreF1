@@ -149,24 +149,31 @@ export function BookingSchedulingShell() {
   return (
     <section className="mx-auto max-w-7xl px-4 py-8 pb-28 sm:px-6 lg:px-8">
       <BookingStepIndicator currentStep={0} />
-      <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_380px] lg:items-start">
-        <div className="space-y-8">
-          <section className="rounded-3xl border border-border bg-surface p-5 shadow-sm">
+      <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_360px] lg:items-start">
+        <div className="space-y-6">
+          <section className="rounded-lg border border-border bg-surface p-5 shadow-sm">
             <p className="text-sm font-semibold uppercase tracking-wide text-primary">Quick booking</p>
-            <h1 className="mt-2 text-2xl font-bold text-foreground">Book in a few taps</h1>
-            <p className="mt-2 text-sm leading-6 text-secondary">We preselect your first saved address and earliest available slot. Change anything before paying.</p>
+            <h1 className="mt-2 text-2xl font-bold text-foreground">Book your visit</h1>
+            <p className="mt-2 text-sm leading-6 text-secondary">Default address and earliest slot are selected automatically. You can change them before payment.</p>
+            <div className="mt-4 grid gap-2 sm:grid-cols-3">
+              {["Choose address", "Pick slot", "Pay advance"].map((item, index) => (
+                <div key={item} className="rounded-lg bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700">
+                  {index + 1}. {item}
+                </div>
+              ))}
+            </div>
           </section>
 
-          <section className="space-y-4">
+          <section className="rounded-lg border border-border bg-surface p-5 shadow-sm">
             <div>
-              <h2 className="text-xl font-bold text-foreground">Visit address</h2>
+              <h2 className="text-xl font-bold text-foreground">1. Visit address</h2>
               <p className="mt-1 text-sm text-secondary">Your default saved address is selected automatically.</p>
             </div>
 
-            {addresses.isLoading ? <div className="h-32 animate-pulse rounded-2xl bg-muted" /> : null}
+            {addresses.isLoading ? <div className="mt-4 h-32 animate-pulse rounded-lg bg-muted" /> : null}
             {addresses.isError ? <ErrorState title="We could not load your addresses" error={addresses.error} onRetry={() => addresses.refetch()} /> : null}
             {addresses.data?.results?.length ? (
-              <div className="grid gap-3">
+              <div className="mt-4 grid gap-3">
                 {addresses.data.results.map((address) => {
                   const selected = effectiveAddressId === address.id;
                   return (
@@ -176,8 +183,8 @@ export function BookingSchedulingShell() {
                       aria-pressed={selected}
                       onClick={() => selectAddress(address)}
                       className={cn(
-                        "rounded-2xl border bg-surface p-4 text-left transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
-                        selected ? "border-primary bg-primary-subtle ring-2 ring-primary/15" : "border-border hover:border-primary/30 hover:bg-primary-subtle",
+                        "rounded-lg border bg-surface p-4 text-left transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
+                        selected ? "border-slate-950 bg-slate-50 ring-2 ring-slate-950/10" : "border-border hover:border-primary/30 hover:bg-primary-subtle",
                       )}
                     >
                       <span className="flex items-center gap-2 font-semibold text-foreground">
@@ -195,7 +202,7 @@ export function BookingSchedulingShell() {
             {addresses.data && addresses.data.results.length === 0 ? <AddressManager compact /> : null}
 
             {selectedAddress ? (
-              <div className="rounded-2xl border border-border bg-surface p-4" aria-live="polite">
+              <div className="mt-4 rounded-lg border border-border bg-slate-50 p-4" aria-live="polite">
                 {serviceability.isFetching ? (
                   <p className="text-sm text-secondary">Checking serviceability...</p>
                 ) : serviceability.data?.is_supported ? (
@@ -215,47 +222,50 @@ export function BookingSchedulingShell() {
             ) : null}
           </section>
 
-          <section className="space-y-4">
+          <section className="rounded-lg border border-border bg-surface p-5 shadow-sm">
             <div>
-              <h2 className="text-xl font-bold text-foreground">Date</h2>
-              <p className="mt-1 text-sm text-secondary">Choose a convenient day.</p>
+              <h2 className="text-xl font-bold text-foreground">2. Date and time</h2>
+              <p className="mt-1 text-sm text-secondary">All standard slots are available daily for supported areas.</p>
             </div>
-            <DateSelector selectedDate={selectedDate} onSelectDate={selectDate} />
-          </section>
-
-          <section className="space-y-4">
-            <div>
-              <h2 className="text-xl font-bold text-foreground">Time slot</h2>
-              <p className="mt-1 text-sm text-secondary">Earliest available slot is selected automatically when possible.</p>
+            <div className="mt-4">
+              <DateSelector selectedDate={selectedDate} onSelectDate={selectDate} />
             </div>
-            {slotConflict ? <p className="rounded-2xl bg-destructive/10 p-3 text-sm text-destructive">{slotConflict}</p> : null}
+            <div className="mt-5 flex items-center justify-between gap-3">
+              <div>
+                <h3 className="text-base font-bold text-foreground">Time slot</h3>
+                <p className="mt-1 text-sm text-secondary">Earliest available slot is selected automatically when possible.</p>
+              </div>
+            </div>
+            {slotConflict ? <p className="mt-3 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{slotConflict}</p> : null}
             {!selectedAddress ? (
-              <p className="rounded-2xl border border-border bg-surface p-4 text-sm text-secondary">Select a saved address to load available slots.</p>
+              <p className="mt-3 rounded-lg border border-border bg-surface p-4 text-sm text-secondary">Select a saved address to load available slots.</p>
             ) : serviceability.data?.is_supported === false ? (
-              <p className="rounded-2xl border border-border bg-surface p-4 text-sm text-destructive">Slots are blocked because this address is not serviceable.</p>
+              <p className="mt-3 rounded-lg border border-border bg-surface p-4 text-sm text-destructive">Slots are blocked because this address is not serviceable.</p>
             ) : (
-              <SlotPicker
-                slots={slots.data ?? []}
-                selectedSlotId={selectedSlot?.id ?? selectedSlotId}
-                loading={slots.isLoading || slots.isFetching}
-                error={slots.isError ? slots.error : undefined}
-                onRetry={() => slots.refetch()}
-                onSelectSlot={selectSlot}
-                onClearDate={() => selectDate(getUpcomingDates(1)[0].value)}
-              />
+              <div className="mt-3">
+                <SlotPicker
+                  slots={slots.data ?? []}
+                  selectedSlotId={selectedSlot?.id ?? selectedSlotId}
+                  loading={slots.isLoading || slots.isFetching}
+                  error={slots.isError ? slots.error : undefined}
+                  onRetry={() => slots.refetch()}
+                  onSelectSlot={selectSlot}
+                  onClearDate={() => selectDate(getUpcomingDates(1)[0].value)}
+                />
+              </div>
             )}
           </section>
 
-          <section className="rounded-3xl border border-border bg-surface p-5 shadow-sm">
+          <section className="rounded-lg border border-border bg-surface p-5 shadow-sm">
             <label htmlFor="problem-description" className="text-sm font-semibold text-foreground">
-              Service note
+              3. Service note
             </label>
             <textarea
               id="problem-description"
               value={problemDescription}
               onChange={(event) => setProblemDescription(event.target.value)}
               placeholder={defaultProblemDescription}
-              className="mt-2 min-h-24 w-full rounded-2xl border border-border bg-background px-3 py-2 text-sm text-foreground outline-none transition focus:border-primary focus:ring-3 focus:ring-primary/15"
+              className="mt-2 min-h-24 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none transition focus:border-primary focus:ring-3 focus:ring-primary/15"
             />
             <label htmlFor="customer-notes" className="mt-4 block text-sm font-semibold text-foreground">
               Technician instructions
@@ -265,12 +275,12 @@ export function BookingSchedulingShell() {
               value={customerNotes}
               onChange={(event) => setCustomerNotes(event.target.value)}
               placeholder="Flat number, landmark, preferred call time, or other instructions."
-              className="mt-2 min-h-20 w-full rounded-2xl border border-border bg-background px-3 py-2 text-sm text-foreground outline-none transition focus:border-primary focus:ring-3 focus:ring-primary/15"
+              className="mt-2 min-h-20 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none transition focus:border-primary focus:ring-3 focus:ring-primary/15"
             />
           </section>
         </div>
 
-        <aside className="rounded-3xl border border-border bg-surface p-4 shadow-[var(--shadow-card)] lg:sticky lg:top-28">
+        <aside className="rounded-lg border border-border bg-surface p-4 shadow-[var(--shadow-card)] lg:sticky lg:top-28">
           {service.isLoading ? (
             <div className="h-72 animate-pulse rounded-2xl bg-muted" />
           ) : service.data ? (
@@ -289,12 +299,12 @@ export function BookingSchedulingShell() {
                 </p>
               ) : null}
               {selectedSlot ? (
-                <p className="mt-4 rounded-2xl bg-primary-soft p-3 text-sm font-semibold text-primary">
+              <p className="mt-4 rounded-lg bg-primary-soft p-3 text-sm font-semibold text-primary">
                   Selected: {formatSlotTime(selectedSlot.start_time)} - {formatSlotTime(selectedSlot.end_time)}
                 </p>
               ) : null}
-              {submitError ? <p className="mt-4 rounded-2xl bg-destructive/10 p-3 text-sm text-destructive">{submitError}</p> : null}
-              <p className="mt-4 flex gap-2 rounded-2xl bg-primary-soft p-3 text-sm leading-6 text-primary">
+              {submitError ? <p className="mt-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{submitError}</p> : null}
+              <p className="mt-4 flex gap-2 rounded-lg bg-primary-soft p-3 text-sm leading-6 text-primary">
                 <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
                 You will review the payment amount before Razorpay opens.
               </p>
@@ -310,7 +320,7 @@ export function BookingSchedulingShell() {
                     Creating booking...
                   </>
                 ) : (
-                  "Book this slot"
+                  "Confirm booking"
                 )}
               </Button>
               <Button
