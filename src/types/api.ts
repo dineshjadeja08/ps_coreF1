@@ -487,6 +487,19 @@ export type AuthLoginResponse = {
   created: boolean;
 };
 
+export type PasswordSignupRequest = {
+  phone_number: string;
+  password: string;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+};
+
+export type PasswordLoginRequest = {
+  phone_number: string;
+  password: string;
+};
+
 export type OtpSendResponse = {
   phone_number: string;
   request_id: string;

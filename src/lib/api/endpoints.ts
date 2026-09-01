@@ -12,6 +12,8 @@ import type {
   AuthLoginResponse,
   OtpSendResponse,
   PaginatedResponse,
+  PasswordLoginRequest,
+  PasswordSignupRequest,
   PaymentOrder,
   PaymentVerifyRequest,
   PaymentVerifyResponse,
@@ -46,6 +48,8 @@ export const apiPaths = {
   health: "/api/v1/health/",
   otpSend: "/api/v1/auth/otp/send/",
   otpVerify: "/api/v1/auth/otp/verify/",
+  passwordSignup: "/api/v1/auth/password/signup/",
+  passwordLogin: "/api/v1/auth/password/login/",
   devPhoneAuth: "/api/v1/auth/dev-phone/",
   refreshAuth: "/api/v1/auth/refresh/",
   logout: "/api/v1/auth/logout/",
@@ -190,6 +194,16 @@ export const paymentApi = {
 };
 
 export const authApi = {
+  passwordSignup: (body: PasswordSignupRequest) =>
+    apiRequest<AuthLoginResponse>(apiPaths.passwordSignup, {
+      method: "POST",
+      body,
+    }),
+  passwordLogin: (body: PasswordLoginRequest) =>
+    apiRequest<AuthLoginResponse>(apiPaths.passwordLogin, {
+      method: "POST",
+      body,
+    }),
   devPhoneLogin: (phoneNumber: string) =>
     apiRequest<AuthLoginResponse>(apiPaths.devPhoneAuth, {
       method: "POST",

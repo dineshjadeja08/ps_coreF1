@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { mapOtpAuthError } from "@/features/auth/errors";
 import { ApiError } from "@/lib/api/errors";
-import { maskPhone, normalizeIndianPhone, otpSchema, phoneLoginSchema } from "@/features/auth/schema";
+import { maskPhone, normalizeIndianPhone, otpSchema, passwordLoginSchema, passwordSignupSchema, phoneLoginSchema } from "@/features/auth/schema";
 
 describe("auth schema and errors", () => {
   it("validates Indian phone numbers and normalizes them for backend OTP", () => {
@@ -17,6 +17,20 @@ describe("auth schema and errors", () => {
     expect(otpSchema.safeParse({ otp: "123456" }).success).toBe(true);
     expect(otpSchema.safeParse({ otp: "12345" }).success).toBe(false);
     expect(otpSchema.safeParse({ otp: "abcdef" }).success).toBe(false);
+  });
+
+  it("validates temporary password account forms", () => {
+    expect(passwordLoginSchema.safeParse({ phone: "9876543210", password: "StrongPass123" }).success).toBe(true);
+    expect(passwordLoginSchema.safeParse({ phone: "9876543210", password: "short" }).success).toBe(false);
+    expect(
+      passwordSignupSchema.safeParse({
+        phone: "9876543210",
+        password: "StrongPass123",
+        firstName: "Viknesh",
+        lastName: "",
+        email: "",
+      }).success,
+    ).toBe(true);
   });
 
   it("masks phone numbers without exposing the full number", () => {

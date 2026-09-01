@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, Loader2, ShieldCheck } from "lucide-react";
+import { ArrowLeft, KeyRound, Loader2, ShieldCheck, UserPlus } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -12,13 +12,25 @@ import { env } from "@/config/env";
 import { backendAuthApi } from "@/features/auth/api";
 import { useAuth } from "@/features/auth/hooks";
 import { mapBackendAuthError, mapOtpAuthError } from "@/features/auth/errors";
-import { maskPhone, normalizeIndianPhone, otpSchema, phoneLoginSchema, type OtpFormValues, type PhoneLoginFormValues } from "@/features/auth/schema";
+import {
+  maskPhone,
+  normalizeIndianPhone,
+  otpSchema,
+  passwordLoginSchema,
+  passwordSignupSchema,
+  phoneLoginSchema,
+  type OtpFormValues,
+  type PasswordLoginFormValues,
+  type PasswordSignupFormValues,
+  type PhoneLoginFormValues,
+} from "@/features/auth/schema";
 
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { loginWithOtp, loginWithDevPhone, consumeReturnPath } = useAuth();
-  const [step, setStep] = useState<"phone" | "otp" | "success">("phone");
+  const { loginWithOtp, loginWithPassword, signupWithPassword, loginWithDevPhone, consumeReturnPath } = useAuth();
+  const [mode, setMode] = useState<"login" | "signup" | "otp">("login");
+  const [step, setStep] = useState<"password" | "phone" | "otp" | "success">("password");
   const [normalizedPhone, setNormalizedPhone] = useState("");
   const [message, setMessage] = useState("");
   const [cooldown, setCooldown] = useState(0);
@@ -29,6 +41,14 @@ export function LoginForm() {
     resolver: zodResolver(phoneLoginSchema),
     defaultValues: { phone: "" },
   });
+  const passwordLoginForm = useForm<PasswordLoginFormValues>({
+    resolver: zodResolver(passwordLoginSchema),
+    defaultValues: { phone: "", password: "" },
+  });
+  const passwordSignupForm = useForm<PasswordSignupFormValues>({
+    resolver: zodResolver(passwordSignupSchema),
+    defaultValues: { phone: "", password: "", firstName: "", lastName: "", email: "" },
+  });
   const otpForm = useForm<OtpFormValues>({
     resolver: zodResolver(otpSchema),
     defaultValues: { otp: "" },
@@ -36,6 +56,14 @@ export function LoginForm() {
 
   const returnTo = useMemo(() => searchParams.get("returnTo") || undefined, [searchParams]);
   const canUseDevLogin = env.devPhoneLogin.enabled && Boolean(env.devPhoneLogin.phone);
+  const isBusy = isSending || isVerifying;
+  const fallback = returnTo && returnTo.startsWith("/") ? returnTo : "/";
+
+  function chooseMode(nextMode: "login" | "signup" | "otp") {
+    setMode(nextMode);
+    setStep(nextMode === "otp" ? "phone" : "password");
+    setMessage("");
+  }
 
   useEffect(() => {
     if (cooldown <= 0) return;
@@ -82,10 +110,55 @@ export function LoginForm() {
     try {
       await loginWithOtp(normalizedPhone, values.otp);
       setStep("success");
-      const fallback = returnTo && returnTo.startsWith("/") ? returnTo : "/";
       router.replace(consumeReturnPath(fallback));
     } catch (error) {
       setMessage(mapOtpAuthError(error));
+    } finally {
+      setIsVerifying(false);
+    }
+  }
+
+  async function passwordLogin(values: PasswordLoginFormValues) {
+    const normalized = normalizeIndianPhone(values.phone);
+    if (!normalized) {
+      passwordLoginForm.setError("phone", { message: "Enter a valid Indian mobile number." });
+      return;
+    }
+
+    setIsVerifying(true);
+    setMessage("");
+    try {
+      await loginWithPassword(normalized, values.password);
+      setStep("success");
+      router.replace(consumeReturnPath(fallback));
+    } catch (error) {
+      setMessage(mapBackendAuthError(error));
+    } finally {
+      setIsVerifying(false);
+    }
+  }
+
+  async function passwordSignup(values: PasswordSignupFormValues) {
+    const normalized = normalizeIndianPhone(values.phone);
+    if (!normalized) {
+      passwordSignupForm.setError("phone", { message: "Enter a valid Indian mobile number." });
+      return;
+    }
+
+    setIsVerifying(true);
+    setMessage("");
+    try {
+      await signupWithPassword({
+        phone_number: normalized,
+        password: values.password,
+        first_name: values.firstName || "",
+        last_name: values.lastName || "",
+        email: values.email || "",
+      });
+      setStep("success");
+      router.replace(consumeReturnPath(fallback));
+    } catch (error) {
+      setMessage(mapBackendAuthError(error));
     } finally {
       setIsVerifying(false);
     }
@@ -102,7 +175,6 @@ export function LoginForm() {
     setMessage("");
     try {
       await loginWithDevPhone(normalized);
-      const fallback = returnTo && returnTo.startsWith("/") ? returnTo : "/";
       router.replace(consumeReturnPath(fallback));
     } catch (error) {
       setMessage(mapBackendAuthError(error));
@@ -119,9 +191,156 @@ export function LoginForm() {
         </div>
         <div>
           <h1 className="text-2xl font-bold text-foreground">Welcome to Purple Squad</h1>
-          <p className="mt-1 text-sm leading-6 text-secondary">Login with phone OTP to continue securely.</p>
+          <p className="mt-1 text-sm leading-6 text-secondary">Create an account or login with your mobile number.</p>
         </div>
       </div>
+
+      <div className="mb-5 grid grid-cols-3 rounded-lg bg-muted p-1 text-sm font-semibold">
+        <button
+          type="button"
+          className={`rounded-md px-3 py-2 ${mode === "login" ? "bg-surface text-foreground shadow-sm" : "text-secondary"}`}
+          onClick={() => chooseMode("login")}
+        >
+          Login
+        </button>
+        <button
+          type="button"
+          className={`rounded-md px-3 py-2 ${mode === "signup" ? "bg-surface text-foreground shadow-sm" : "text-secondary"}`}
+          onClick={() => chooseMode("signup")}
+        >
+          Create
+        </button>
+        <button
+          type="button"
+          className={`rounded-md px-3 py-2 ${mode === "otp" ? "bg-surface text-foreground shadow-sm" : "text-secondary"}`}
+          onClick={() => chooseMode("otp")}
+        >
+          OTP
+        </button>
+      </div>
+
+      {step === "password" && mode === "login" ? (
+        <form onSubmit={passwordLoginForm.handleSubmit(passwordLogin)} className="space-y-4">
+          <div>
+            <label htmlFor="password-login-phone" className="text-sm font-semibold text-foreground">
+              Mobile number
+            </label>
+            <div className="mt-2 grid grid-cols-[72px_1fr] gap-2">
+              <div className="grid h-11 place-items-center rounded-lg border border-border bg-muted text-sm font-semibold text-secondary">+91</div>
+              <Input
+                id="password-login-phone"
+                inputMode="tel"
+                autoComplete="tel"
+                placeholder="98765 43210"
+                aria-invalid={Boolean(passwordLoginForm.formState.errors.phone)}
+                {...passwordLoginForm.register("phone")}
+              />
+            </div>
+            {passwordLoginForm.formState.errors.phone ? (
+              <p className="mt-2 text-sm text-destructive" role="alert">
+                {passwordLoginForm.formState.errors.phone.message}
+              </p>
+            ) : null}
+          </div>
+          <div>
+            <label htmlFor="password-login-password" className="text-sm font-semibold text-foreground">
+              Password
+            </label>
+            <Input
+              id="password-login-password"
+              type="password"
+              autoComplete="current-password"
+              placeholder="Enter password"
+              className="mt-2"
+              aria-invalid={Boolean(passwordLoginForm.formState.errors.password)}
+              {...passwordLoginForm.register("password")}
+            />
+            {passwordLoginForm.formState.errors.password ? (
+              <p className="mt-2 text-sm text-destructive" role="alert">
+                {passwordLoginForm.formState.errors.password.message}
+              </p>
+            ) : null}
+          </div>
+          <Button type="submit" className="w-full" disabled={isBusy}>
+            {isVerifying ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
+            Login
+          </Button>
+        </form>
+      ) : null}
+
+      {step === "password" && mode === "signup" ? (
+        <form onSubmit={passwordSignupForm.handleSubmit(passwordSignup)} className="space-y-4">
+          <div>
+            <label htmlFor="password-signup-phone" className="text-sm font-semibold text-foreground">
+              Mobile number
+            </label>
+            <div className="mt-2 grid grid-cols-[72px_1fr] gap-2">
+              <div className="grid h-11 place-items-center rounded-lg border border-border bg-muted text-sm font-semibold text-secondary">+91</div>
+              <Input
+                id="password-signup-phone"
+                inputMode="tel"
+                autoComplete="tel"
+                placeholder="98765 43210"
+                aria-invalid={Boolean(passwordSignupForm.formState.errors.phone)}
+                {...passwordSignupForm.register("phone")}
+              />
+            </div>
+            {passwordSignupForm.formState.errors.phone ? (
+              <p className="mt-2 text-sm text-destructive" role="alert">
+                {passwordSignupForm.formState.errors.phone.message}
+              </p>
+            ) : null}
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label htmlFor="signup-first-name" className="text-sm font-semibold text-foreground">
+                First name
+              </label>
+              <Input id="signup-first-name" autoComplete="given-name" className="mt-2" {...passwordSignupForm.register("firstName")} />
+            </div>
+            <div>
+              <label htmlFor="signup-last-name" className="text-sm font-semibold text-foreground">
+                Last name
+              </label>
+              <Input id="signup-last-name" autoComplete="family-name" className="mt-2" {...passwordSignupForm.register("lastName")} />
+            </div>
+          </div>
+          <div>
+            <label htmlFor="signup-email" className="text-sm font-semibold text-foreground">
+              Email
+            </label>
+            <Input id="signup-email" type="email" autoComplete="email" placeholder="Optional" className="mt-2" {...passwordSignupForm.register("email")} />
+            {passwordSignupForm.formState.errors.email ? (
+              <p className="mt-2 text-sm text-destructive" role="alert">
+                {passwordSignupForm.formState.errors.email.message}
+              </p>
+            ) : null}
+          </div>
+          <div>
+            <label htmlFor="password-signup-password" className="text-sm font-semibold text-foreground">
+              Password
+            </label>
+            <Input
+              id="password-signup-password"
+              type="password"
+              autoComplete="new-password"
+              placeholder="At least 8 characters"
+              className="mt-2"
+              aria-invalid={Boolean(passwordSignupForm.formState.errors.password)}
+              {...passwordSignupForm.register("password")}
+            />
+            {passwordSignupForm.formState.errors.password ? (
+              <p className="mt-2 text-sm text-destructive" role="alert">
+                {passwordSignupForm.formState.errors.password.message}
+              </p>
+            ) : null}
+          </div>
+          <Button type="submit" className="w-full" disabled={isBusy}>
+            {isVerifying ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
+            Create account
+          </Button>
+        </form>
+      ) : null}
 
       {step === "phone" ? (
         <form onSubmit={phoneForm.handleSubmit((values) => sendOtp(values.phone))} className="space-y-4">
@@ -150,18 +369,8 @@ export function LoginForm() {
           </div>
           <Button type="submit" className="w-full" disabled={isSending}>
             {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-            Continue
+            Send OTP
           </Button>
-          {canUseDevLogin ? (
-            <div className="rounded-lg border border-dashed border-primary/40 bg-primary-soft/40 p-3">
-              <p className="text-sm font-semibold text-foreground">Developer access</p>
-              <p className="mt-1 text-sm text-secondary">Use the local test profile without OTP.</p>
-              <Button type="button" variant="secondary" className="mt-3 w-full" disabled={isSending} onClick={devLogin}>
-                {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                Continue as dev user
-              </Button>
-            </div>
-          ) : null}
         </form>
       ) : null}
 
@@ -210,6 +419,17 @@ export function LoginForm() {
       ) : null}
 
       {step === "success" ? <p className="text-sm text-success">Login successful. Taking you back...</p> : null}
+
+      {canUseDevLogin ? (
+        <div className="mt-5 rounded-lg border border-dashed border-primary/40 bg-primary-soft/40 p-3">
+          <p className="text-sm font-semibold text-foreground">Developer access</p>
+          <p className="mt-1 text-sm text-secondary">Use the local test profile without OTP.</p>
+          <Button type="button" variant="secondary" className="mt-3 w-full" disabled={isBusy} onClick={devLogin}>
+            {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+            Continue as dev user
+          </Button>
+        </div>
+      ) : null}
 
       {message ? (
         <p className="mt-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive" role="alert">

@@ -21,6 +21,8 @@ type AuthContextValue = {
   isAuthenticated: boolean;
   isLoading: boolean;
   loginWithOtp: (phoneNumber: string, otp: string) => Promise<AuthUser>;
+  loginWithPassword: (phoneNumber: string, password: string) => Promise<AuthUser>;
+  signupWithPassword: (body: { phone_number: string; password: string; first_name?: string; last_name?: string; email?: string }) => Promise<AuthUser>;
   loginWithDevPhone: (phoneNumber: string) => Promise<AuthUser>;
   restoreSession: () => Promise<AuthUser | null>;
   updateCurrentUser: (body: UserProfileUpdateRequest) => Promise<AuthUser>;
@@ -97,6 +99,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return response.user;
   }, []);
 
+  const loginWithPassword = useCallback(async (phoneNumber: string, password: string) => {
+    const response = await backendAuthApi.passwordLogin({ phone_number: phoneNumber, password });
+    setAuthTokens(response.tokens);
+    setStoredUser(response.user);
+    setUser(response.user);
+    return response.user;
+  }, []);
+
+  const signupWithPassword = useCallback(
+    async (body: { phone_number: string; password: string; first_name?: string; last_name?: string; email?: string }) => {
+      const response = await backendAuthApi.passwordSignup(body);
+      setAuthTokens(response.tokens);
+      setStoredUser(response.user);
+      setUser(response.user);
+      return response.user;
+    },
+    [],
+  );
+
   const updateCurrentUser = useCallback(async (body: UserProfileUpdateRequest) => {
     const updatedUser = await backendAuthApi.updateMe(body);
     setStoredUser(updatedUser);
@@ -130,13 +151,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAuthenticated: Boolean(user),
       isLoading,
       loginWithOtp,
+      loginWithPassword,
+      signupWithPassword,
       loginWithDevPhone,
       restoreSession,
       updateCurrentUser,
       logout,
       consumeReturnPath,
     }),
-    [consumeReturnPath, isLoading, loginWithDevPhone, loginWithOtp, logout, restoreSession, updateCurrentUser, user],
+    [consumeReturnPath, isLoading, loginWithDevPhone, loginWithOtp, loginWithPassword, logout, restoreSession, signupWithPassword, updateCurrentUser, user],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

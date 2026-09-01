@@ -15,8 +15,20 @@ export const otpSchema = z.object({
     .regex(/^\d{6}$/, "Enter the 6 digit OTP."),
 });
 
+export const passwordLoginSchema = phoneLoginSchema.extend({
+  password: z.string().min(8, "Password must be at least 8 characters."),
+});
+
+export const passwordSignupSchema = passwordLoginSchema.extend({
+  firstName: z.string().trim().max(150, "Name is too long.").optional(),
+  lastName: z.string().trim().max(150, "Name is too long.").optional(),
+  email: z.string().trim().email("Enter a valid email address.").optional().or(z.literal("")),
+});
+
 export type PhoneLoginFormValues = z.infer<typeof phoneLoginSchema>;
 export type OtpFormValues = z.infer<typeof otpSchema>;
+export type PasswordLoginFormValues = z.infer<typeof passwordLoginSchema>;
+export type PasswordSignupFormValues = z.infer<typeof passwordSignupSchema>;
 
 export function normalizeIndianPhone(phone: string) {
   const digits = phone.replace(/\D/g, "");
