@@ -5,12 +5,12 @@ export function getOrderCreationErrorMessage(error: unknown) {
     return "We couldn't start the payment. Please try again.";
   }
 
-  if (error.status === 400) return "This booking can no longer accept payment.";
+  if (error.status === 400) return error.message || "This booking can no longer accept payment.";
   if (error.status === 401) return "Please log in again before paying.";
   if (error.status === 403) return "This booking cannot be paid from your account.";
   if (error.status === 409) return "This booking has already been paid or is no longer payable.";
   if (error.status === 429) return "Too many payment attempts. Please wait a moment and try again.";
-  if (error.status >= 500) return "We couldn't start the payment. Please try again.";
+  if (error.status >= 500) return "We couldn't start the payment gateway. Please try again shortly.";
 
   return "We couldn't start the payment. Please try again.";
 }

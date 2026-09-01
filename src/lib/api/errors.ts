@@ -36,9 +36,17 @@ export function parseApiErrorPayload(payload: unknown) {
 
   const record = payload as Record<string, unknown>;
   const detail = record.detail;
+  const error = record.error;
 
   if (typeof detail === "string") {
     return { message: detail, fieldErrors: undefined };
+  }
+
+  if (error && typeof error === "object") {
+    const nestedMessage = (error as Record<string, unknown>).message;
+    if (typeof nestedMessage === "string") {
+      return { message: nestedMessage, fieldErrors: undefined };
+    }
   }
 
   const fieldErrors: ApiFieldErrors = {};

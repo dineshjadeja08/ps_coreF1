@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import type { Booking } from "@/features/bookings/types";
+import { ApiError } from "@/lib/api/errors";
 
+import { getOrderCreationErrorMessage } from "./error-map";
 import { buildPaymentSummary, buildVerifyPaymentPayload, getBookingPayability, getCheckoutAmountLabel } from "./utils";
 
 const booking = (overrides: Partial<Booking> = {}): Booking => ({
@@ -88,5 +90,11 @@ describe("payment utilities", () => {
       razorpay_payment_id: "pay_123",
       razorpay_signature: "signature",
     });
+  });
+
+  it("does not describe gateway failures as stale bookings", () => {
+    expect(getOrderCreationErrorMessage(new ApiError("Razorpay rejected the order request.", 502))).toBe(
+      "We couldn't start the payment gateway. Please try again shortly.",
+    );
   });
 });
