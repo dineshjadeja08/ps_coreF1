@@ -159,6 +159,8 @@ export type AdminSettings = {
   razorpay_configured: boolean;
   msg91_configured: boolean;
   firebase_configured: boolean;
+  cloudinary_media_enabled: boolean;
+  cloudinary_media_configured: boolean;
   booking_require_balance_before_completion: boolean;
 };
 

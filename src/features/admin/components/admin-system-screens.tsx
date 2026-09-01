@@ -132,6 +132,7 @@ export function AdminSettingsScreen() {
             <Flag label="Razorpay" active={Boolean(query.data?.razorpay_configured)} />
             <Flag label="MSG91" active={Boolean(query.data?.msg91_configured)} />
             <Flag label="Firebase Admin" active={Boolean(query.data?.firebase_configured)} />
+            <Flag label="Cloudinary media" active={Boolean(query.data?.cloudinary_media_enabled && query.data?.cloudinary_media_configured)} />
             <Flag label="Balance before completion" active={Boolean(query.data?.booking_require_balance_before_completion)} />
           </div>
           <div className="grid gap-4 lg:grid-cols-3">
@@ -141,6 +142,7 @@ export function AdminSettingsScreen() {
               <p className="mt-2 text-sm text-slate-600">DEBUG: {String(query.data?.debug)}</p>
               <p className="text-sm text-slate-600">OTP: {query.data?.otp_provider}</p>
               <p className="text-sm text-slate-600">Notifications: {query.data?.notification_provider}</p>
+              <p className="text-sm text-slate-600">Cloudinary media: {query.data?.cloudinary_media_enabled ? "Enabled" : "Disabled"}</p>
             </section>
             {[
               ["Allowed hosts", query.data?.allowed_hosts],
