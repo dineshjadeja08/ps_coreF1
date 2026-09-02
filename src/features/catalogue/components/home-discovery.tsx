@@ -361,8 +361,8 @@ function CategoryServicesDialog({
     <Dialog.Root open={Boolean(category)} onOpenChange={(open) => !open && closeDialog()}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/45 backdrop-blur-sm" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 flex max-h-[88vh] w-[calc(100vw-2rem)] max-w-5xl -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-lg border border-border bg-background shadow-[var(--shadow-card)] focus:outline-none lg:grid lg:grid-cols-[280px_1fr]">
-          <aside className="shrink-0 border-b border-border bg-white p-5 lg:border-b-0 lg:border-r">
+        <Dialog.Content className="fixed inset-x-3 bottom-3 top-3 z-50 mx-auto flex max-w-5xl flex-col overflow-hidden rounded-lg border border-border bg-background shadow-[var(--shadow-card)] focus:outline-none sm:inset-x-6 sm:bottom-6 sm:top-6 lg:grid lg:grid-cols-[280px_minmax(0,1fr)]">
+          <aside className="shrink-0 border-b border-border bg-white p-4 sm:p-5 lg:min-h-0 lg:overflow-y-auto lg:border-b-0 lg:border-r">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <Dialog.Title className="text-2xl font-bold text-foreground">{category?.name ?? "Services"}</Dialog.Title>
@@ -392,7 +392,7 @@ function CategoryServicesDialog({
             </div>
           </aside>
 
-          <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-5">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-5 [-webkit-overflow-scrolling:touch]">
             <div className="mb-4 flex items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-bold text-secondary">

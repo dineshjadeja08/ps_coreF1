@@ -48,7 +48,7 @@ const fallbackPhotos: Record<string, FallbackVisual> = {
   microwave: {
     title: "Microwave Oven",
     accent: "Heating repair",
-    image: "https://images.unsplash.com/photo-1585659722983-3a681dabfc3d?auto=format&fit=crop&w=960&q=80",
+    image: "https://images.unsplash.com/photo-1556911220-bff31c812dba?auto=format&fit=crop&w=960&q=80",
   },
   dishwasher: {
     title: "Dishwasher",
