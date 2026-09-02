@@ -243,13 +243,13 @@ export const authApi = {
 
 export const adminApi = {
   listCategories: () => apiRequest<PaginatedResponse<AdminServiceCategory>>(apiPaths.adminCategories, { auth: true }),
-  createCategory: (body: Partial<AdminServiceCategory>) =>
+  createCategory: (body: FormData | Partial<AdminServiceCategory>) =>
     apiRequest<AdminServiceCategory>(apiPaths.adminCategories, {
       method: "POST",
       body,
       auth: true,
     }),
-  updateCategory: (id: UUID, body: Partial<AdminServiceCategory>) =>
+  updateCategory: (id: UUID, body: FormData | Partial<AdminServiceCategory>) =>
     apiRequest<AdminServiceCategory>(apiPaths.adminCategoryDetail(id), {
       method: "PATCH",
       body,

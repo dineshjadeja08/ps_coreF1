@@ -30,6 +30,14 @@ export function getFriendlyApiMessage(error: unknown) {
 }
 
 export function parseApiErrorPayload(payload: unknown) {
+  if (typeof payload === "string") {
+    const trimmed = payload.trim();
+    return {
+      message: trimmed ? trimmed.slice(0, 240) : "Request failed.",
+      fieldErrors: undefined,
+    };
+  }
+
   if (!payload || typeof payload !== "object") {
     return { message: "Request failed.", fieldErrors: undefined };
   }

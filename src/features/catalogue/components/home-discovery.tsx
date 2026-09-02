@@ -286,13 +286,21 @@ function CategoryTile({
     <button
       type="button"
       onClick={() => onSelect(category)}
-      className="group min-h-36 rounded-lg border border-border bg-white p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-[var(--shadow-card)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      className="group overflow-hidden rounded-lg border border-border bg-white text-left shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-[var(--shadow-card)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
     >
-      <span className="grid h-12 w-12 place-items-center rounded-lg bg-primary-soft text-primary transition group-hover:bg-primary group-hover:text-primary-foreground">
-        <CategoryIcon name={category.name} className="h-6 w-6" />
+      <span className="relative block aspect-[4/3] bg-primary-soft">
+        {category.image_url ? (
+          <Image src={category.image_url} alt={category.name} fill unoptimized className="object-cover transition duration-300 group-hover:scale-105" />
+        ) : (
+          <span className="grid h-full w-full place-items-center text-primary">
+            <CategoryIcon name={category.name} className="h-9 w-9" />
+          </span>
+        )}
       </span>
-      <span className="mt-4 block text-sm font-bold leading-5 text-foreground">{category.name}</span>
-      <span className="mt-2 block text-xs font-semibold text-secondary">{count || "New"} services</span>
+      <span className="block p-3">
+        <span className="block text-sm font-bold leading-5 text-foreground">{category.name}</span>
+        <span className="mt-1 block text-xs font-semibold text-secondary">{count || "New"} services</span>
+      </span>
     </button>
   );
 }

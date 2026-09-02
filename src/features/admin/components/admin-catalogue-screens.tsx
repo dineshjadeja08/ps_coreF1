@@ -189,21 +189,23 @@ function Panel({ title, children, onClose }: { title: string; children: React.Re
 export function AdminCategoriesScreen() {
   const queryClient = useQueryClient();
   const [form, setForm] = useState<CategoryForm | null>(null);
+  const [categoryImage, setCategoryImage] = useState<File | null>(null);
   const query = useQuery({ queryKey: ["admin", "categories"], queryFn: adminApi.listCategories });
   const save = useMutation({
     mutationFn: (payload: CategoryForm) => {
-      const body = {
-        name: payload.name,
-        slug: payload.slug,
-        description: payload.description,
-        image_url: payload.image_url,
-        display_order: Number(payload.display_order || 0),
-        is_active: payload.is_active,
-      };
+      const body = new FormData();
+      body.set("name", payload.name);
+      body.set("slug", payload.slug);
+      body.set("description", payload.description);
+      body.set("external_image_url", payload.image_url);
+      body.set("display_order", payload.display_order || "0");
+      body.set("is_active", String(payload.is_active));
+      if (categoryImage) body.set("image", categoryImage);
       return payload.id ? adminApi.updateCategory(payload.id, body) : adminApi.createCategory(body);
     },
     onSuccess: async () => {
       setForm(null);
+      setCategoryImage(null);
       await queryClient.invalidateQueries({ queryKey: ["admin", "categories"] });
     },
   });
@@ -230,7 +232,7 @@ export function AdminCategoriesScreen() {
         }
       />
       {form ? (
-        <Panel title={form.id ? "Edit category" : "New category"} onClose={() => setForm(null)}>
+        <Panel title={form.id ? "Edit category" : "New category"} onClose={() => { setForm(null); setCategoryImage(null); }}>
           <form className="grid gap-4 md:grid-cols-2" onSubmit={submit}>
             <Field label="Name">
               <Input className={fieldClass} value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value, slug: form.slug || slugify(event.target.value) })} required />
@@ -241,6 +243,17 @@ export function AdminCategoriesScreen() {
             <Field label="Image URL">
               <Input className={fieldClass} value={form.image_url} onChange={(event) => setForm({ ...form, image_url: event.target.value })} />
             </Field>
+            <Field label="Upload category image">
+              <Input className={fieldClass} type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => setCategoryImage(event.target.files?.[0] ?? null)} />
+            </Field>
+            {form.image_url ? (
+              <div className="md:col-span-2">
+                <p className={labelClass}>Current image</p>
+                <div className="relative mt-2 h-36 max-w-sm overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
+                  <Image src={form.image_url} alt={form.name || "Category image"} fill unoptimized className="object-cover" />
+                </div>
+              </div>
+            ) : null}
             <Field label="Order">
               <Input className={fieldClass} type="number" value={form.display_order} onChange={(event) => setForm({ ...form, display_order: event.target.value })} />
             </Field>
@@ -270,7 +283,18 @@ export function AdminCategoriesScreen() {
             emptyTitle="No categories"
             emptyMessage="Create your first customer-facing category."
             columns={[
-              { key: "name", header: "Name", render: (category) => <span className="font-semibold text-slate-950">{category.name}</span> },
+              {
+                key: "name",
+                header: "Name",
+                render: (category) => (
+                  <div className="flex items-center gap-3">
+                    <div className="relative h-12 w-16 overflow-hidden rounded-lg bg-slate-100">
+                      {category.image_url ? <Image src={category.image_url} alt={category.name} fill unoptimized className="object-cover" /> : null}
+                    </div>
+                    <span className="font-semibold text-slate-950">{category.name}</span>
+                  </div>
+                ),
+              },
               { key: "slug", header: "Slug", render: (category) => category.slug },
               { key: "order", header: "Order", render: (category) => category.display_order ?? 0 },
               { key: "status", header: "Status", render: (category) => <AdminStatusBadge status={category.is_active ? "ACTIVE" : "INACTIVE"} /> },

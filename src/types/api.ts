@@ -16,6 +16,7 @@ export type ServiceCategory = {
   name: string;
   slug: string;
   description?: string;
+  image?: string;
   image_url?: string;
   display_order?: number;
 };
