@@ -37,9 +37,6 @@ export function Footer() {
         <div className="space-y-3">
           <Brand />
           <p className="max-w-sm text-sm leading-6 text-secondary">Purple Squad Care for clear pricing, trusted technicians, and simple home-service booking.</p>
-          <p className="text-xs font-semibold uppercase tracking-wide text-primary">
-            Chennai · Bangalore · Coimbatore · Build 2026.08.24.1
-          </p>
           {env.supportEmail || env.supportPhone ? (
             <p className="text-sm leading-6 text-secondary">
               {env.supportEmail ? env.supportEmail : null}
@@ -54,7 +51,7 @@ export function Footer() {
               <h2 className="text-sm font-bold text-foreground">{group.title}</h2>
               <div className="mt-3 grid gap-2">
                 {group.links.map((link) => (
-                  <Link key={link.href} href={link.href} className="text-sm font-medium text-secondary hover:text-primary">
+                  <Link key={`${link.label}-${link.href}`} href={link.href} className="text-sm font-medium text-secondary hover:text-primary">
                     {link.label}
                   </Link>
                 ))}

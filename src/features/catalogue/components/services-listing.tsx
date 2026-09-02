@@ -1,7 +1,7 @@
 "use client";
 
 import * as Dialog from "@radix-ui/react-dialog";
-import { ArrowRight, CheckCircle2, Clock, Grid2X2, ListFilter, Search, ShieldCheck, Star, X } from "lucide-react";
+import { ArrowRight, CheckCircle2, Clock, Grid2X2, ListFilter, MapPin, Search, ShieldCheck, Star, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useMemo, useState } from "react";
@@ -21,6 +21,7 @@ import { formatDuration, formatPrice, getCategoryName, getCurrentPrice, hasOffer
 import { cn } from "@/lib/utils";
 
 const popularSearches = ["AC Service", "Bathroom Cleaning", "Washing Machine", "Refrigerator", "Water Purifier", "CCTV"];
+const cityOptions = ["Chennai", "Bangalore", "Coimbatore"];
 
 export function ServicesListing() {
   const searchParams = useSearchParams();
@@ -29,6 +30,7 @@ export function ServicesListing() {
   const query = searchParams.get("q") ?? "";
   const [searchText, setSearchText] = useState(query);
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
+  const [city, setCity] = useState(cityOptions[0]);
 
   const categories = useServiceCategories();
   const services = useServices({
@@ -57,30 +59,52 @@ export function ServicesListing() {
 
   return (
     <div className="bg-background">
-      <section className="border-b border-border bg-surface">
-        <div className="mx-auto grid max-w-7xl gap-5 px-4 py-6 sm:px-6 lg:grid-cols-[1fr_380px] lg:px-8">
+      <section className="border-b border-border bg-white">
+        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
           <div>
             <Badge className="w-fit">Book in a few clicks</Badge>
             <h1 className="mt-3 text-3xl font-bold leading-tight text-foreground sm:text-4xl">
-              Select a category, choose your service
+              Find and book a service package
             </h1>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-secondary sm:text-base">
-              Browse Purple Squad services with live pricing, verified technicians and quick booking for Chennai, Bangalore and Coimbatore.
+              Search by need, choose a category, compare packages, then book directly.
             </p>
           </div>
-          <form onSubmit={submitSearch} className="self-end">
-            <label htmlFor="service-marketplace-search" className="sr-only">
-              Search services
-            </label>
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                id="service-marketplace-search"
-                value={searchText}
-                onChange={(event) => setSearchText(event.target.value)}
-                placeholder="Search AC, cleaning, purifier..."
-                className="h-12 rounded-lg pl-9"
-              />
+
+          <form onSubmit={submitSearch} className="mt-5 rounded-lg border border-border bg-surface p-3 shadow-sm">
+            <div className="grid gap-3 md:grid-cols-[190px_1fr_auto] md:items-center">
+              <div className="rounded-lg border border-border bg-muted px-3 py-2">
+                <label htmlFor="services-city" className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-secondary">
+                  <MapPin className="h-3.5 w-3.5 text-primary" />
+                  Select city
+                </label>
+                <select
+                  id="services-city"
+                  value={city}
+                  onChange={(event) => setCity(event.target.value)}
+                  className="mt-1 w-full bg-transparent text-sm font-bold text-foreground outline-none"
+                >
+                  {cityOptions.map((item) => (
+                    <option key={item}>{item}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="relative">
+                <label htmlFor="service-marketplace-search" className="sr-only">
+                  Search services
+                </label>
+                <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  id="service-marketplace-search"
+                  value={searchText}
+                  onChange={(event) => setSearchText(event.target.value)}
+                  placeholder="What service do you need?"
+                  className="h-14 rounded-lg pl-12 text-base"
+                />
+              </div>
+              <Button type="submit" size="lg">
+                Search
+              </Button>
             </div>
             <div className="mt-3 flex flex-wrap gap-2">
               {popularSearches.map((item) => (
