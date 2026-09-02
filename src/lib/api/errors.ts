@@ -51,12 +51,33 @@ export function parseApiErrorPayload(payload: unknown) {
   }
 
   if (error && typeof error === "object") {
-    const nestedMessage = (error as Record<string, unknown>).message;
+    const nested = error as Record<string, unknown>;
+    const nestedMessage = nested.message;
+    const nestedDetails = nested.details;
     if (typeof nestedMessage === "string") {
-      return { message: nestedMessage, fieldErrors: undefined };
+      const detailErrors = extractFieldErrors(nestedDetails);
+      const detailedMessage = detailErrors ? Object.values(detailErrors).flat()[0] : undefined;
+      return { message: detailedMessage ?? nestedMessage, fieldErrors: detailErrors };
     }
   }
 
+  const nestedFieldErrors = extractFieldErrors(record);
+  if (nestedFieldErrors) {
+    return {
+      message: Object.values(nestedFieldErrors).flat()[0] ?? "Please check the details and try again.",
+      fieldErrors: nestedFieldErrors,
+    };
+  }
+
+  return { message: "Please check the details and try again.", fieldErrors: undefined };
+}
+
+function extractFieldErrors(payload: unknown) {
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    return undefined;
+  }
+
+  const record = payload as Record<string, unknown>;
   const fieldErrors: ApiFieldErrors = {};
   for (const [key, value] of Object.entries(record)) {
     if (Array.isArray(value)) {
@@ -66,8 +87,5 @@ export function parseApiErrorPayload(payload: unknown) {
     }
   }
 
-  return {
-    message: Object.values(fieldErrors).flat()[0] ?? "Please check the details and try again.",
-    fieldErrors: Object.keys(fieldErrors).length ? fieldErrors : undefined,
-  };
+  return Object.keys(fieldErrors).length ? fieldErrors : undefined;
 }
