@@ -15,7 +15,7 @@ export function ServiceCard({ service }: { service: ServiceListItem }) {
   const duration = formatDuration(service.estimated_duration_minutes);
 
   return (
-    <article className="group overflow-hidden rounded-2xl border border-border bg-surface shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-[var(--shadow-card)]">
+    <article className="group overflow-hidden rounded-md border border-border bg-surface shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-[var(--shadow-card)]">
       <Link href={routes.serviceDetail(service.slug)} aria-label={`View ${service.name}`}>
         <ServiceImage src={service.cover_image} alt={service.name} className="aspect-[4/3] rounded-none" />
       </Link>

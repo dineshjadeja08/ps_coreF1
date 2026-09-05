@@ -36,6 +36,8 @@ import type {
   FAQ,
   HomepageBanner,
   Lead,
+  LeadActivity,
+  LeadSummary,
   Notification,
   Payment,
   AdminSettings,
@@ -86,7 +88,12 @@ export const apiPaths = {
   adminTechnicians: "/api/v1/admin/technicians/",
   adminLeads: "/api/v1/admin/leads/",
   adminLeadDetail: (id: UUID) => `/api/v1/admin/leads/${id}/`,
-  adminLeadConvert: (id: UUID) => `/api/v1/admin/leads/${id}/convert/`,
+  adminLeadConvert: (id: UUID) => `/api/v1/admin/leads/${id}/convert-to-booking/`,
+  adminLeadActivities: (id: UUID) => `/api/v1/admin/leads/${id}/activities/`,
+  adminLeadSummary: "/api/v1/admin/leads/summary/",
+  adminLeadSendPaymentLink: (id: UUID) => `/api/v1/admin/leads/${id}/send-payment-link/`,
+  adminLeadRecordContact: (id: UUID) => `/api/v1/admin/leads/${id}/record-contact/`,
+  adminLeadRecordManualPayment: (id: UUID) => `/api/v1/admin/leads/${id}/record-manual-payment/`,
   adminCustomers: "/api/v1/admin/customers/",
   adminCustomerDetail: (id: UUID) => `/api/v1/admin/customers/${id}/`,
   adminCustomerSupportNotes: (id: UUID) => `/api/v1/admin/customers/${id}/support-notes/`,
@@ -329,16 +336,60 @@ export const adminApi = {
       auth: true,
     }),
   listTechnicians: (query?: { booking_id?: UUID }) => apiRequest<TechnicianProfile[]>(apiPaths.adminTechnicians, { auth: true, query }),
-  listLeads: (query?: { page?: number; page_size?: number; status?: string; search?: string }) =>
+  listLeads: (query?: {
+    page?: number;
+    page_size?: number;
+    status?: string;
+    funnel_status?: string;
+    payment_status?: string;
+    source?: string;
+    assigned_to?: UUID;
+    service?: UUID;
+    created_from?: string;
+    created_to?: string;
+    follow_up_date?: string;
+    ordering?: string;
+    search?: string;
+  }) =>
     apiRequest<PaginatedResponse<Lead>>(apiPaths.adminLeads, { auth: true, query }),
+  getLead: (id: UUID) => apiRequest<Lead>(apiPaths.adminLeadDetail(id), { auth: true }),
+  getLeadSummary: () => apiRequest<LeadSummary>(apiPaths.adminLeadSummary, { auth: true }),
+  listLeadActivities: (id: UUID) => apiRequest<LeadActivity[]>(apiPaths.adminLeadActivities(id), { auth: true }),
   createLead: (body: Partial<Lead>) =>
     apiRequest<Lead>(apiPaths.adminLeads, {
       method: "POST",
       body,
       auth: true,
     }),
+  updateLead: (id: UUID, body: Partial<Lead>) =>
+    apiRequest<Lead>(apiPaths.adminLeadDetail(id), {
+      method: "PATCH",
+      body,
+      auth: true,
+    }),
   convertLead: (id: UUID, body: { booking_id: UUID; notes?: string }) =>
     apiRequest<Lead>(apiPaths.adminLeadConvert(id), {
+      method: "POST",
+      body,
+      auth: true,
+    }),
+  sendLeadPaymentLink: (id: UUID, body: { channel: "SMS" | "WHATSAPP" }) =>
+    apiRequest<Lead & { payment_link_created?: boolean }>(apiPaths.adminLeadSendPaymentLink(id), {
+      method: "POST",
+      body,
+      auth: true,
+    }),
+  recordLeadContact: (id: UUID, body: { note: string; next_follow_up_at?: string }) =>
+    apiRequest<Lead>(apiPaths.adminLeadRecordContact(id), {
+      method: "POST",
+      body,
+      auth: true,
+    }),
+  recordLeadManualPayment: (
+    id: UUID,
+    body: { amount: string; method: "MANUAL_CASH" | "MANUAL_UPI" | "MANUAL_CARD" | "MANUAL_BANK_TRANSFER"; reference?: string; payment_date: string; note?: string; confirm: boolean },
+  ) =>
+    apiRequest<Lead>(apiPaths.adminLeadRecordManualPayment(id), {
       method: "POST",
       body,
       auth: true,

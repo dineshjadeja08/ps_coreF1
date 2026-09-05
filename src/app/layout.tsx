@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist_Mono, Manrope } from "next/font/google";
 import type { ReactNode } from "react";
 
 import { AppChrome } from "@/components/layout/app-chrome";
@@ -10,14 +10,16 @@ import "./globals.css";
 
 const siteUrl = process.env.NEXT_PUBLIC_APP_URL || siteConfig.url;
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const manrope = Manrope({
+  variable: "--font-manrope",
   subsets: ["latin"],
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -58,7 +60,10 @@ export const metadata: Metadata = {
     images: ["/images/hero/purple-squad-home-services-hero.png"],
   },
   icons: {
-    icon: "/favicon.ico",
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/ps-favicon.png", type: "image/png", sizes: "512x512" },
+    ],
     apple: "/apple-icon.png",
   },
 };
@@ -67,7 +72,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${manrope.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
         <Providers>

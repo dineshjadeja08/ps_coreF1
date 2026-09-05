@@ -9,7 +9,7 @@ export type DemoReview = {
 
 export function ReviewCard({ review }: { review: DemoReview }) {
   return (
-    <article className="rounded-2xl border border-border bg-surface p-5 shadow-sm">
+    <article className="rounded-md border border-border bg-surface p-5 shadow-sm">
       <div className="flex items-center gap-1 text-warning" aria-label="5 star demo review">
         {Array.from({ length: 5 }).map((_, index) => (
           <Star key={index} className="h-4 w-4 fill-current" />

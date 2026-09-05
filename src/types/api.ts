@@ -385,25 +385,68 @@ export type AdminDashboardSummary = {
 
 export type Lead = {
   id: UUID;
+  customer: UUID | null;
   customer_name: string;
   primary_mobile: string;
   alternate_mobile?: string;
   email?: string;
   required_service: UUID | null;
+  service_name?: string;
   package: string;
   address: string;
   city: string;
   pincode: string;
   source: string;
   status: string;
+  funnel_status: string;
+  payment_status: string;
+  lead_temperature: string;
   assigned_staff: UUID | null;
+  assigned_staff_phone?: string;
   preferred_callback_at: ISODateTime | null;
+  preferred_date: ISODate | null;
+  preferred_slot: string;
+  quoted_amount: DecimalString | null;
+  advance_amount: DecimalString | null;
+  balance_amount: DecimalString | null;
+  payment_link_url: string;
+  payment_link_provider_id: string;
+  payment_link_expires_at: ISODateTime | null;
+  last_contacted_at: ISODateTime | null;
   follow_up_at: ISODateTime | null;
   customer_notes: string;
   internal_notes: string;
+  admin_notes: string;
+  lost_reason: string;
+  first_seen_at: ISODateTime;
+  last_activity_at: ISODateTime;
   converted_booking: UUID | null;
+  booking_number?: string;
   created_at: ISODateTime;
   updated_at: ISODateTime;
+  activities?: LeadActivity[];
+};
+
+export type LeadActivity = {
+  id: UUID;
+  action: string;
+  previous_value: Record<string, unknown>;
+  new_value: Record<string, unknown>;
+  note: string;
+  performed_by: UUID | null;
+  performed_by_phone?: string;
+  ip_address: string | null;
+  created_at: ISODateTime;
+};
+
+export type LeadSummary = {
+  all_leads: number;
+  visited: number;
+  cart_added: number;
+  unpaid: number;
+  paid: number;
+  booked: number;
+  follow_ups_due_today: number;
 };
 
 export type AdminCustomer = User & {

@@ -13,7 +13,7 @@ export function CategoryFilter({ categories, activeCategory, query }: { categori
       <Link
         href={query ? `/services?q=${encodeURIComponent(query)}` : "/services"}
         className={cn(
-          "whitespace-nowrap rounded-full border px-4 py-2 text-sm font-semibold transition",
+          "whitespace-nowrap rounded-sm border px-4 py-2 text-sm font-semibold transition",
           !activeCategory ? "border-primary bg-primary text-primary-foreground shadow-[var(--shadow-soft)]" : "border-border bg-surface text-secondary hover:border-primary/30 hover:text-primary",
         )}
       >
@@ -24,7 +24,7 @@ export function CategoryFilter({ categories, activeCategory, query }: { categori
           key={category.id}
           href={`/services?category=${encodeURIComponent(category.slug)}${queryPart}`}
           className={cn(
-            "whitespace-nowrap rounded-full border px-4 py-2 text-sm font-semibold transition",
+            "whitespace-nowrap rounded-sm border px-4 py-2 text-sm font-semibold transition",
             activeCategory === category.slug ? "border-primary bg-primary text-primary-foreground shadow-[var(--shadow-soft)]" : "border-border bg-surface text-secondary hover:border-primary/30 hover:text-primary",
           )}
         >

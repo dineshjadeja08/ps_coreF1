@@ -146,11 +146,11 @@ export function BookingSchedulingShell() {
   }
 
   return (
-    <section className="mx-auto max-w-6xl px-4 py-5 pb-28 sm:px-6 lg:px-8">
+    <section className="mx-auto max-w-6xl px-4 py-4 pb-28 sm:px-6 lg:px-8">
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-sm font-semibold uppercase tracking-wide text-primary">Book service</p>
-          <h1 className="mt-1 text-2xl font-bold tracking-normal text-foreground">Confirm your visit</h1>
+          <h1 className="mt-1 text-2xl font-bold tracking-normal text-foreground">Address and slot</h1>
         </div>
         <Button asChild variant="ghost" size="sm">
           <Link href={routes.services}>Change service</Link>
@@ -189,10 +189,10 @@ export function BookingSchedulingShell() {
           <section className="rounded-lg border border-border bg-surface p-4 shadow-sm">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h2 className="text-lg font-bold text-foreground">Address</h2>
+                <h2 className="text-lg font-bold text-foreground">1. Select address</h2>
               </div>
               {serviceability.data?.is_supported ? (
-                <span className="rounded-full bg-green-50 px-3 py-1 text-xs font-bold text-green-700">Serviceable</span>
+                <span className="rounded-sm bg-green-50 px-3 py-1 text-xs font-bold text-green-700">Serviceable</span>
               ) : null}
             </div>
 
@@ -250,7 +250,7 @@ export function BookingSchedulingShell() {
 
           <section className="rounded-lg border border-border bg-surface p-4 shadow-sm">
             <div>
-              <h2 className="text-lg font-bold text-foreground">Date and time</h2>
+              <h2 className="text-lg font-bold text-foreground">2. Pick date and time</h2>
             </div>
             <div className="mt-3">
               <DateSelector selectedDate={selectedDate} onSelectDate={selectDate} />
@@ -276,8 +276,8 @@ export function BookingSchedulingShell() {
           </section>
         </div>
 
-        <aside className="rounded-lg border border-border bg-surface p-5 shadow-sm lg:sticky lg:top-28">
-          <h2 className="text-lg font-bold text-foreground">Booking summary</h2>
+        <aside className="rounded-lg border border-border bg-surface p-5 shadow-[0_18px_55px_rgba(18,18,20,0.08)] lg:sticky lg:top-28">
+          <h2 className="text-lg font-bold text-foreground">Confirm booking</h2>
           <div className="mt-4 space-y-4 text-sm">
             <SummaryLine label="Address" value={selectedAddress ? `${selectedAddress.label}, ${selectedAddress.postal_code}` : "Select address"} />
             <SummaryLine label="Date" value={selectedDate ? new Date(`${selectedDate}T00:00:00`).toLocaleDateString("en-IN", { day: "numeric", month: "short", weekday: "short" }) : "Select date"} />
@@ -287,7 +287,7 @@ export function BookingSchedulingShell() {
             />
           </div>
           <label htmlFor="customer-notes" className="mt-4 block text-sm font-semibold text-foreground">
-            Note
+            Any instruction?
           </label>
           <textarea
             id="customer-notes"
@@ -296,13 +296,13 @@ export function BookingSchedulingShell() {
               setCustomerNotes(event.target.value);
               setProblemDescription(event.target.value);
             }}
-            placeholder="Optional instructions"
+            placeholder="Optional, like appliance issue or access instructions"
             className="mt-2 min-h-20 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none transition focus:border-primary focus:ring-3 focus:ring-primary/15"
           />
           {submitError ? <p className="mt-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{submitError}</p> : null}
           <p className="mt-4 flex gap-2 rounded-lg bg-primary-soft p-3 text-sm leading-6 text-primary">
             <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
-            Final amount is confirmed before Razorpay opens.
+            You only pay after the booking details are ready.
           </p>
           <Button
             type="button"

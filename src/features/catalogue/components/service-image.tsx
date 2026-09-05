@@ -127,7 +127,7 @@ export function ServiceImage({ src, alt, className, priority }: ServiceImageProp
   const imageSrc = hasUploadedImage ? src ?? "" : fallback.image;
 
   return (
-    <div className={cn("relative overflow-hidden rounded-2xl bg-primary-subtle", className)}>
+    <div className={cn("relative overflow-hidden rounded-md bg-primary-subtle", className)}>
       <Image
         src={imageSrc}
         alt={hasUploadedImage ? alt : fallback.title}
@@ -141,7 +141,7 @@ export function ServiceImage({ src, alt, className, priority }: ServiceImageProp
       {!hasUploadedImage ? (
         <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent">
           <div className="absolute bottom-3 left-3 right-3">
-            <p className="inline-flex items-center gap-1 rounded-full bg-white/95 px-2.5 py-1 text-xs font-bold text-primary shadow-sm">
+            <p className="inline-flex items-center gap-1 rounded-sm bg-white/95 px-2.5 py-1 text-xs font-bold text-primary shadow-sm">
               <ShieldCheck className="h-3 w-3" />
               PS Verified
             </p>

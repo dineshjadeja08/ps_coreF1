@@ -17,8 +17,8 @@ export function PromotionBanner({
   icon: LucideIcon;
 }) {
   return (
-    <article className="min-w-[280px] overflow-hidden rounded-2xl border border-border bg-surface p-5 shadow-sm sm:min-w-[360px]">
-      <div className="grid h-20 w-20 place-items-center rounded-2xl bg-primary-subtle text-primary">
+    <article className="min-w-[280px] overflow-hidden rounded-md border border-border bg-surface p-5 shadow-sm sm:min-w-[360px]">
+      <div className="grid h-20 w-20 place-items-center rounded-md bg-primary-subtle text-primary">
         <Icon className="h-9 w-9" />
       </div>
       <h3 className="mt-5 text-lg font-bold text-foreground">{title}</h3>

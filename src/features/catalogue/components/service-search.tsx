@@ -3,7 +3,7 @@
 import { Search } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 
 import { Input } from "@/components/ui/input";
 import { routes } from "@/constants/routes";
@@ -31,6 +31,17 @@ export function ServiceSearch({
   const router = useRouter();
   const [query, setQuery] = useState(initialValue);
   const [focused, setFocused] = useState(false);
+  const [placeholderIndex, setPlaceholderIndex] = useState(0);
+
+  const rotatingPlaceholders = useMemo(() => {
+    const names = services
+      .map((service) => service.name)
+      .filter(Boolean)
+      .slice(0, 6);
+
+    const fallback = ["AC service", "Washing machine repair", "Refrigerator repair", "Bathroom cleaning", "Water purifier service", "TV repair"];
+    return (names.length ? names : fallback).map((name) => `Search for ${name}`);
+  }, [services]);
 
   const suggestions = useMemo(() => {
     const term = query.trim().toLowerCase();
@@ -47,10 +58,20 @@ export function ServiceSearch({
       .slice(0, 5);
   }, [query, services]);
 
+  useEffect(() => {
+    if (query.trim() || rotatingPlaceholders.length <= 1) return;
+
+    const timer = window.setInterval(() => {
+      setPlaceholderIndex((current) => (current + 1) % rotatingPlaceholders.length);
+    }, 2200);
+
+    return () => window.clearInterval(timer);
+  }, [query, rotatingPlaceholders.length]);
+
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const trimmed = query.trim();
-    router.push(trimmed ? `/services?q=${encodeURIComponent(trimmed)}` : routes.services);
+    router.push(trimmed ? `${routes.search}?q=${encodeURIComponent(trimmed)}` : routes.search);
   }
 
   return (
@@ -65,12 +86,12 @@ export function ServiceSearch({
         onChange={(event) => setQuery(event.target.value)}
         onFocus={() => setFocused(true)}
         onBlur={() => window.setTimeout(() => setFocused(false), 120)}
-        placeholder={placeholder}
+        placeholder={query ? placeholder : rotatingPlaceholders[placeholderIndex] ?? placeholder}
         className={cn("rounded-lg pl-9", compact ? "h-10" : "h-12 text-base")}
         autoComplete="off"
       />
       {focused && suggestions.length > 0 ? (
-        <div className="absolute left-0 right-0 top-full z-30 mt-2 overflow-hidden rounded-2xl border border-border bg-surface shadow-[var(--shadow-card)]">
+        <div className="absolute left-0 right-0 top-full z-30 mt-2 overflow-hidden rounded-md border border-border bg-surface shadow-[var(--shadow-card)]">
           {suggestions.map((service) => (
             <Link
               key={service.id}

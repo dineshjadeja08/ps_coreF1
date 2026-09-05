@@ -62,14 +62,14 @@ export function ProfileForm() {
   ];
 
   return (
-    <form onSubmit={form.handleSubmit(handleSubmit)} className="rounded-3xl border border-border bg-surface p-6 shadow-[var(--shadow-card)]">
+    <form onSubmit={form.handleSubmit(handleSubmit)} className="rounded-md border border-border bg-surface p-6 shadow-[var(--shadow-card)]">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="text-sm font-semibold uppercase tracking-wide text-primary">Account</p>
           <h1 className="mt-2 text-2xl font-bold text-foreground">Profile details</h1>
           <p className="mt-2 text-sm text-secondary">Primary phone stays locked to the verified login number.</p>
         </div>
-        <span className="inline-flex w-fit items-center gap-2 rounded-full bg-success/10 px-3 py-1 text-sm font-semibold text-success">
+        <span className="inline-flex w-fit items-center gap-2 rounded-sm bg-success/10 px-3 py-1 text-sm font-semibold text-success">
           <CheckCircle2 className="h-4 w-4" />
           {user?.is_verified ? "Verified" : "Not verified"}
         </span>
@@ -93,7 +93,7 @@ export function ProfileForm() {
         ))}
       </div>
 
-      {message ? <p className="mt-4 rounded-2xl bg-destructive/10 p-3 text-sm text-destructive">{message}</p> : null}
+      {message ? <p className="mt-4 rounded-md bg-destructive/10 p-3 text-sm text-destructive">{message}</p> : null}
       {saved ? <p className="mt-4 text-sm font-medium text-success">Profile saved.</p> : null}
 
       <Button type="submit" className="mt-5" disabled={form.formState.isSubmitting}>

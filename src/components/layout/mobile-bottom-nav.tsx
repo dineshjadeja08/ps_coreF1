@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarCheck, Headphones, Home, LayoutGrid, UserRound } from "lucide-react";
+import { CalendarCheck, Home, LayoutGrid, UserRound } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -9,10 +9,9 @@ import { cn } from "@/lib/utils";
 
 const items = [
   { href: routes.home, label: "Home", icon: Home },
-  { href: routes.services, label: "Services", icon: LayoutGrid },
+  { href: routes.services, label: "Categories", icon: LayoutGrid },
   { href: routes.bookings, label: "Bookings", icon: CalendarCheck },
-  { href: routes.support, label: "Help", icon: Headphones },
-  { href: routes.profile, label: "Profile", icon: UserRound },
+  { href: routes.profile, label: "Account", icon: UserRound },
 ];
 
 export function MobileBottomNav() {
@@ -25,22 +24,24 @@ export function MobileBottomNav() {
   }
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-surface md:hidden">
-      <div className="grid h-16 grid-cols-5">
+    <nav className="fixed inset-x-0 bottom-0 z-[var(--z-mobile-nav)] border-t border-border bg-surface/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_20px_rgba(24,24,27,0.06)] backdrop-blur md:hidden">
+      <div className="grid min-h-[var(--mobile-nav-height)] grid-cols-4">
         {items.map((item) => {
           const Icon = item.icon;
-          const active = pathname === item.href;
+          const active = pathname === item.href || (item.href !== routes.home && pathname.startsWith(item.href));
 
           return (
             <Link
               key={item.href}
               href={item.href}
               className={cn(
-                "flex flex-col items-center justify-center gap-1 text-xs font-medium text-muted-foreground",
+                "touch-target flex flex-col items-center justify-center gap-1 text-xs font-bold text-muted-foreground",
                 active && "text-primary",
               )}
             >
-              <Icon className="h-5 w-5" />
+              <span className={cn("rounded-sm px-3 py-1", active && "bg-primary-soft")}>
+                <Icon className="h-5 w-5" />
+              </span>
               {item.label}
             </Link>
           );

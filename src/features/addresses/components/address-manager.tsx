@@ -79,7 +79,7 @@ export function AddressManager({ compact = false }: { compact?: boolean }) {
         </Button>
       </div>
 
-      {message ? <p className="rounded-2xl bg-destructive/10 p-3 text-sm text-destructive">{message}</p> : null}
+      {message ? <p className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{message}</p> : null}
 
       {showForm || editing ? (
         <AddressForm
@@ -93,7 +93,7 @@ export function AddressManager({ compact = false }: { compact?: boolean }) {
       {addresses.isLoading ? (
         <div className="grid gap-3">
           {Array.from({ length: 2 }).map((_, index) => (
-            <div key={index} className="h-36 animate-pulse rounded-2xl border border-border bg-surface" />
+            <div key={index} className="h-36 animate-pulse rounded-md border border-border bg-surface" />
           ))}
         </div>
       ) : null}
@@ -121,7 +121,7 @@ export function AddressManager({ compact = false }: { compact?: boolean }) {
       ) : null}
 
       {addresses.data && items.length === 0 && !showForm ? (
-        <div className="rounded-2xl border border-dashed border-border bg-surface p-8 text-center">
+        <div className="rounded-md border border-dashed border-border bg-surface p-8 text-center">
           <h3 className="text-lg font-semibold text-foreground">No saved addresses</h3>
           <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-secondary">
             Add a serviceable address now so the next booking phase can move faster.

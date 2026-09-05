@@ -2,6 +2,7 @@
 
 import * as Dialog from "@radix-ui/react-dialog";
 import { ArrowRight, CheckCircle2, Clock, Grid2X2, ListFilter, MapPin, Search, ShieldCheck, Star, X } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useMemo, useState } from "react";
@@ -11,8 +12,10 @@ import { ErrorState } from "@/components/common/error-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { serviceCities } from "@/config/design";
 import { routes } from "@/constants/routes";
 import { AuthActionLink } from "@/features/auth/components/auth-action-link";
+import { ServiceIcon } from "@/features/catalogue/components/service-icon";
 import { ServiceImage } from "@/features/catalogue/components/service-image";
 import { CategorySkeletonGrid, ServiceCardSkeletonGrid } from "@/features/catalogue/components/skeletons";
 import { useServiceCategories, useServices } from "@/features/catalogue/queries";
@@ -21,16 +24,19 @@ import { formatDuration, formatPrice, getCategoryName, getCurrentPrice, hasOffer
 import { cn } from "@/lib/utils";
 
 const popularSearches = ["AC Service", "Bathroom Cleaning", "Washing Machine", "Refrigerator", "Water Purifier", "CCTV"];
-const cityOptions = ["Chennai", "Bangalore", "Coimbatore"];
 
-export function ServicesListing() {
+type ServicesListingProps = {
+  mode?: "browse" | "search";
+};
+
+export function ServicesListing({ mode = "browse" }: ServicesListingProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const category = searchParams.get("category");
   const query = searchParams.get("q") ?? "";
   const [searchText, setSearchText] = useState(query);
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
-  const [city, setCity] = useState(cityOptions[0]);
+  const [city, setCity] = useState<string>(serviceCities[0]);
 
   const categories = useServiceCategories();
   const services = useServices({
@@ -54,7 +60,8 @@ export function ServicesListing() {
     const params = new URLSearchParams();
     if (category) params.set("category", category);
     if (searchText.trim()) params.set("q", searchText.trim());
-    router.push(params.toString() ? `/services?${params.toString()}` : routes.services);
+    const basePath = mode === "search" ? routes.search : routes.services;
+    router.push(params.toString() ? `${basePath}?${params.toString()}` : basePath);
   }
 
   return (
@@ -62,12 +69,14 @@ export function ServicesListing() {
       <section className="border-b border-border bg-white">
         <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
           <div>
-            <Badge className="w-fit">Book in a few clicks</Badge>
+            <Badge className="w-fit">{mode === "search" ? "Search Purple Squad" : "Book in a few clicks"}</Badge>
             <h1 className="mt-3 text-3xl font-bold leading-tight text-foreground sm:text-4xl">
-              Find and book a service package
+              {mode === "search" ? "Search home services near you" : "Find and book a service package"}
             </h1>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-secondary sm:text-base">
-              Search by need, choose a category, compare packages, then book directly.
+              {mode === "search"
+                ? "Type a service, appliance, or category, then choose the right package."
+                : "Search by need, choose a category, compare packages, then book directly."}
             </p>
           </div>
 
@@ -84,7 +93,7 @@ export function ServicesListing() {
                   onChange={(event) => setCity(event.target.value)}
                   className="mt-1 w-full bg-transparent text-sm font-bold text-foreground outline-none"
                 >
-                  {cityOptions.map((item) => (
+                  {serviceCities.map((item) => (
                     <option key={item}>{item}</option>
                   ))}
                 </select>
@@ -110,8 +119,8 @@ export function ServicesListing() {
               {popularSearches.map((item) => (
                 <Link
                   key={item}
-                  href={`/services?q=${encodeURIComponent(item)}`}
-                  className="rounded-full border border-border px-3 py-1 text-xs font-semibold text-secondary transition hover:border-primary/40 hover:text-primary"
+                  href={`${mode === "search" ? routes.search : routes.services}?q=${encodeURIComponent(item)}`}
+                  className="rounded-sm border border-border px-3 py-1 text-xs font-semibold text-secondary transition hover:border-primary/40 hover:text-primary"
                 >
                   {item}
                 </Link>
@@ -238,6 +247,7 @@ function CategoryPanel({
             href={buildCategoryHref(category.slug, query)}
             active={activeCategory === category.slug}
             count={serviceCounts.get(category.slug) ?? 0}
+            visualSrc={getCategoryVisualSrc(category)}
           />
         ))}
       </div>
@@ -263,9 +273,9 @@ function CategoryDialog({
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/45" />
-        <Dialog.Content className="fixed inset-x-4 top-16 z-50 max-h-[80vh] overflow-y-auto rounded-lg border border-border bg-background p-4 shadow-[var(--shadow-card)] focus:outline-none">
-          <div className="mb-3 flex items-start justify-between gap-3">
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm" />
+        <Dialog.Content className="fixed inset-x-0 bottom-0 z-50 max-h-[86dvh] overflow-hidden rounded-t-lg border border-border bg-background shadow-[0_-20px_70px_rgba(0,0,0,0.24)] focus:outline-none sm:inset-x-4 sm:bottom-auto sm:top-16 sm:mx-auto sm:max-w-2xl sm:rounded-lg">
+          <div className="flex items-start justify-between gap-3 border-b border-border bg-white p-4">
             <div>
               <Dialog.Title className="text-xl font-bold text-foreground">Choose category</Dialog.Title>
               <Dialog.Description className="mt-1 text-sm text-secondary">Select a category to see matching services.</Dialog.Description>
@@ -276,7 +286,7 @@ function CategoryDialog({
               </Button>
             </Dialog.Close>
           </div>
-          <div className="space-y-2">
+          <div className="max-h-[68dvh] space-y-2 overflow-y-auto overscroll-contain p-4 [-webkit-overflow-scrolling:touch]">
             <CategoryLink label="All services" href={query ? `/services?q=${encodeURIComponent(query)}` : routes.services} active={!activeCategory} count={sumCounts(serviceCounts)} />
             {categories.map((category) => (
               <CategoryLink
@@ -285,6 +295,7 @@ function CategoryDialog({
                 href={buildCategoryHref(category.slug, query)}
                 active={activeCategory === category.slug}
                 count={serviceCounts.get(category.slug) ?? 0}
+                visualSrc={getCategoryVisualSrc(category)}
               />
             ))}
           </div>
@@ -294,7 +305,16 @@ function CategoryDialog({
   );
 }
 
-function CategoryLink({ label, href, active, count }: { label: string; href: string; active: boolean; count: number }) {
+function getCategoryVisualSrc(category: ServiceCategory) {
+  const text = `${category.name} ${category.slug}`.toLowerCase();
+  if (text.includes("clean")) return "/images/categories/cleaning.png";
+  if (text.includes("appliance") || text.includes("repair") || text.includes("home")) {
+    return "/images/categories/home-appliances-repair.png";
+  }
+  return category.image_url ?? null;
+}
+
+function CategoryLink({ label, href, active, count, visualSrc }: { label: string; href: string; active: boolean; count: number; visualSrc?: string | null }) {
   return (
     <Link
       href={href}
@@ -303,8 +323,15 @@ function CategoryLink({ label, href, active, count }: { label: string; href: str
         active ? "bg-primary text-primary-foreground shadow-[var(--shadow-soft)]" : "text-secondary hover:bg-muted hover:text-foreground",
       )}
     >
-      <span>{label}</span>
-      <span className={cn("rounded-full px-2 py-0.5 text-xs", active ? "bg-white/20 text-white" : "bg-muted text-muted-foreground")}>
+      <span className="flex min-w-0 items-center gap-3">
+        {visualSrc ? (
+          <span className="relative h-9 w-9 shrink-0 overflow-hidden rounded-md bg-white/80">
+            <Image src={visualSrc} alt="" fill unoptimized={visualSrc.startsWith("http")} className="object-cover" />
+          </span>
+        ) : null}
+        <span className="min-w-0">{label}</span>
+      </span>
+      <span className={cn("rounded-sm px-2 py-0.5 text-xs", active ? "bg-white/20 text-white" : "bg-muted text-muted-foreground")}>
         {count}
       </span>
     </Link>
@@ -320,15 +347,15 @@ function ServicePackageRow({ service, highlight }: { service: ServiceListItem; h
   return (
     <article
       className={cn(
-        "grid gap-0 overflow-hidden rounded-lg border bg-surface shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[var(--shadow-card)] sm:grid-cols-[156px_1fr]",
+        "grid gap-0 overflow-hidden rounded-lg border bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[var(--shadow-card)] sm:grid-cols-[178px_minmax(0,1fr)]",
         highlight ? "border-primary/40 ring-2 ring-primary/10" : "border-border",
       )}
     >
-      <Link href={routes.serviceDetail(service.slug)} aria-label={`View ${service.name}`} className="block">
-        <ServiceImage src={service.cover_image} alt={service.name} className="aspect-[16/10] rounded-none sm:h-full sm:min-h-40" />
+      <Link href={routes.serviceDetail(service.slug)} aria-label={`View ${service.name}`} className="relative block w-full sm:w-[178px]">
+        <ServiceImage src={service.cover_image} alt={service.name} className="h-44 w-full rounded-none sm:h-full sm:min-h-44" />
       </Link>
-      <div className="grid gap-4 p-4 md:grid-cols-[1fr_190px] md:items-center">
-        <div>
+      <div className="relative z-10 grid min-w-0 gap-4 bg-white p-4 md:grid-cols-[minmax(0,1fr)_190px] md:items-center">
+        <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <Badge>
               <ShieldCheck className="h-3 w-3" />
@@ -336,13 +363,18 @@ function ServicePackageRow({ service, highlight }: { service: ServiceListItem; h
             </Badge>
             {highlight ? <Badge className="bg-warning/10 text-warning">Popular choice</Badge> : null}
           </div>
-          <h3 className="mt-3 text-xl font-bold text-foreground">
-            <Link href={routes.serviceDetail(service.slug)} className="hover:text-primary">
-              {service.name}
-            </Link>
-          </h3>
-          <p className="mt-2 line-clamp-2 text-sm leading-6 text-secondary">{service.short_description || service.category.name}</p>
-          <div className="mt-3 flex flex-wrap gap-3 text-sm text-secondary">
+          <div className="mt-3 flex items-start gap-3">
+            <ServiceIcon label={service.name} className="hidden h-12 w-12 shrink-0 sm:grid" imageClassName="p-1.5" />
+            <div className="min-w-0">
+              <h3 className="text-2xl font-bold leading-tight text-foreground">
+                <Link href={routes.serviceDetail(service.slug)} className="hover:text-primary">
+                  {service.name}
+                </Link>
+              </h3>
+              <p className="mt-2 text-base font-medium leading-7 text-[#4b5563] md:line-clamp-none">{service.short_description || service.category.name}</p>
+            </div>
+          </div>
+          <div className="mt-3 flex flex-wrap gap-3 text-sm font-semibold text-[#52525b]">
             {duration ? (
               <span className="inline-flex items-center gap-1.5">
                 <Clock className="h-4 w-4 text-primary" />
@@ -387,7 +419,7 @@ function BookingHelpPanel() {
       <div className="mt-3 space-y-3">
         {["Select service", "Confirm address", "Pick slot", "Pay advance"].map((step, index) => (
           <div key={step} className="flex gap-3">
-            <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-surface text-xs font-bold text-primary">
+            <span className="grid h-7 w-7 shrink-0 place-items-center rounded-sm bg-surface text-xs font-bold text-primary">
               {index + 1}
             </span>
             <div>

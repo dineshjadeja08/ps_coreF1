@@ -1,5 +1,6 @@
 export const routes = {
   home: "/",
+  search: "/search",
   services: "/services",
   serviceDetail: (slug: string) => `/services/${slug}`,
   book: "/book",
@@ -9,7 +10,11 @@ export const routes = {
   bookingDetail: (id: string) => `/bookings/${id}`,
   profile: "/profile",
   admin: "/admin",
+  about: "/about",
   support: "/support",
+  joinAsTechnician: "/join-as-technician",
+  partnerSupport: "/partner-support",
+  serviceStandards: "/service-standards",
   faq: "/faq",
   privacy: "/privacy-policy",
   terms: "/terms",

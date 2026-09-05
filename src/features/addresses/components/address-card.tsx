@@ -14,17 +14,17 @@ type AddressCardProps = {
 
 export function AddressCard({ address, onEdit, onDelete, onSetDefault, deleting, settingDefault }: AddressCardProps) {
   return (
-    <article className="rounded-2xl border border-border bg-surface p-4 shadow-sm">
+    <article className="rounded-md border border-border bg-surface p-4 shadow-sm">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3">
-          <div className="grid h-10 w-10 place-items-center rounded-xl bg-primary-soft text-primary">
+          <div className="grid h-10 w-10 place-items-center rounded-md bg-primary-soft text-primary">
             <Home className="h-5 w-5" />
           </div>
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <h3 className="font-semibold text-foreground">{address.label}</h3>
               {address.is_default ? (
-                <span className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-1 text-xs font-semibold text-success">
+                <span className="inline-flex items-center gap-1 rounded-sm bg-success/10 px-2 py-1 text-xs font-semibold text-success">
                   <CheckCircle2 className="h-3 w-3" />
                   Default
                 </span>

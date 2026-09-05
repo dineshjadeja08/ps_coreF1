@@ -4,54 +4,32 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { motion } from "framer-motion";
 import {
   ArrowRight,
-  BadgeCheck,
   ChevronLeft,
   CheckCircle2,
-  Droplets,
-  Fan,
-  Home,
-  MapPin,
-  Search,
   ShieldCheck,
-  Sparkles,
   Star,
-  Tv,
-  WashingMachine,
-  Wrench,
   X,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { FormEvent, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import { EmptyState } from "@/components/common/empty-state";
 import { ErrorState } from "@/components/common/error-state";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { trustPromises } from "@/config/design";
 import { env } from "@/config/env";
 import { routes } from "@/constants/routes";
 import { AuthActionLink } from "@/features/auth/components/auth-action-link";
+import { ServiceIcon } from "@/features/catalogue/components/service-icon";
 import { ServiceImage } from "@/features/catalogue/components/service-image";
 import { CategorySkeletonGrid, ServiceCardSkeletonGrid } from "@/features/catalogue/components/skeletons";
 import { useServiceCategories, useServices } from "@/features/catalogue/queries";
 import type { ServiceCategory, ServiceListItem } from "@/features/catalogue/types";
 import { formatDuration, formatPrice, getCurrentPrice, hasOfferPrice } from "@/features/catalogue/utils";
 
-const cityOptions = ["Chennai", "Bangalore", "Coimbatore"];
 const popularSearches = ["AC Service", "Bathroom Cleaning", "Washing Machine", "Refrigerator", "Water Purifier", "Chimney"];
-
-function CategoryIcon({ name, className }: { name: string; className?: string }) {
-  const text = name.toLowerCase();
-  if (text.includes("clean")) return <Sparkles className={className} />;
-  if (text.includes("ac")) return <Fan className={className} />;
-  if (text.includes("washing")) return <WashingMachine className={className} />;
-  if (text.includes("tv")) return <Tv className={className} />;
-  if (text.includes("purifier") || text.includes("tank")) return <Droplets className={className} />;
-  if (text.includes("home") || text.includes("appliance")) return <Home className={className} />;
-  return <Wrench className={className} />;
-}
+const heroVisuals = ["Bathroom Cleaning", "AC Service", "Chimney Cleaning", "Refrigerator Repair"];
 
 function servicesForCategory(services: ServiceListItem[], category: ServiceCategory | null) {
   if (!category) return [];
@@ -86,13 +64,19 @@ function serviceFamilies(services: ServiceListItem[]) {
   return Array.from(groups.entries()).map(([name, items]) => ({ name, services: items }));
 }
 
+function getCategoryVisualSrc(category: ServiceCategory) {
+  const text = `${category.name} ${category.slug}`.toLowerCase();
+  if (text.includes("clean")) return "/images/categories/cleaning.png";
+  if (text.includes("appliance") || text.includes("repair") || text.includes("home")) {
+    return "/images/categories/home-appliances-repair.png";
+  }
+  return category.image_url ?? null;
+}
+
 export function HomeDiscovery() {
-  const router = useRouter();
   const categories = useServiceCategories();
   const services = useServices({ page_size: 80 });
   const featured = useServices({ featured: true, page_size: 10 });
-  const [selectedCity, setSelectedCity] = useState(cityOptions[0]);
-  const [searchText, setSearchText] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<ServiceCategory | null>(null);
 
   const allServices = useMemo(() => services.data?.results ?? [], [services.data?.results]);
@@ -100,104 +84,77 @@ export function HomeDiscovery() {
   const selectedCategoryServices = useMemo(() => servicesForCategory(allServices, selectedCategory), [allServices, selectedCategory]);
   const whatsappUrl = env.supportWhatsapp ? `https://wa.me/${env.supportWhatsapp.replace(/\D/g, "")}` : routes.support;
 
-  function submitSearch(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const query = searchText.trim();
-    if (query) {
-      router.push(`/services?q=${encodeURIComponent(query)}`);
-    }
-  }
-
   return (
-    <div className="bg-[#f7f8fb]">
-      <section className="border-b border-border bg-white">
-        <div className="mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[1fr_430px] lg:px-8 lg:py-12">
-          <div className="flex flex-col justify-center">
+    <div className="bg-[#f7f7f7]">
+      <section className="overflow-hidden border-b border-border bg-white">
+        <div className="mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[minmax(460px,0.78fr)_1fr] lg:px-8 lg:py-9">
+          <div>
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
-              <Badge className="w-fit bg-primary-soft text-primary">
-                <BadgeCheck className="h-3 w-3" />
-                Verified home service professionals
-              </Badge>
-              <h1 className="mt-4 max-w-3xl text-4xl font-bold leading-tight text-foreground sm:text-5xl">
-                Hiring service experts made easy
+              <h1 className="max-w-lg text-4xl font-bold leading-tight text-foreground sm:text-5xl">
+                Home services at your doorstep
               </h1>
-              <p className="mt-4 max-w-2xl text-base leading-7 text-secondary">
-                Select your city, search the service you need, choose a package, and book a technician in a few taps.
-              </p>
             </motion.div>
 
-            <div className="mt-6 rounded-lg border border-border bg-surface p-3 shadow-[var(--shadow-card)]">
-              <div className="grid gap-3 md:grid-cols-[190px_1fr_auto] md:items-center">
-                <div className="rounded-lg border border-border bg-muted px-3 py-2">
-                  <label htmlFor="home-city" className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-secondary">
-                    <MapPin className="h-3.5 w-3.5 text-primary" />
-                    Select city
-                  </label>
-                  <select
-                    id="home-city"
-                    value={selectedCity}
-                    onChange={(event) => setSelectedCity(event.target.value)}
-                    className="mt-1 w-full bg-transparent text-sm font-bold text-foreground outline-none"
-                  >
-                    {cityOptions.map((city) => (
-                      <option key={city}>{city}</option>
-                    ))}
-                  </select>
-                </div>
-                <form onSubmit={submitSearch} className="relative">
-                  <label htmlFor="home-service-search" className="sr-only">
-                    What service do you need?
-                  </label>
-                  <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    id="home-service-search"
-                    value={searchText}
-                    onChange={(event) => setSearchText(event.target.value)}
-                    placeholder="What service do you need?"
-                    className="h-14 rounded-lg pl-12 text-base"
-                  />
-                </form>
-                <Button
-                  type="button"
-                  size="lg"
-                  onClick={() => searchText.trim() && router.push(`/services?q=${encodeURIComponent(searchText.trim())}`)}
-                >
-                  Search
-                </Button>
+            <div className="mt-9 rounded-lg border border-[#d9d9d9] bg-white p-6 shadow-sm">
+              <div className="mb-5 flex items-center justify-between gap-3">
+                <h2 className="text-lg font-semibold text-foreground">What are you looking for?</h2>
+                <Link href={routes.services} className="text-sm font-bold text-primary hover:text-primary-hover">
+                  View all
+                </Link>
               </div>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {popularSearches.map((item) => (
-                  <Link
-                    key={item}
-                    href={`/services?q=${encodeURIComponent(item)}`}
-                    className="rounded-full border border-border bg-white px-3 py-1 text-xs font-semibold text-secondary transition hover:border-primary/40 hover:text-primary"
-                  >
-                    {item}
-                  </Link>
-                ))}
+              {categories.isLoading ? (
+                <div className="grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-3">
+                  {Array.from({ length: 8 }).map((_, index) => (
+                    <div key={index} className="h-24 animate-pulse rounded-lg bg-muted" />
+                  ))}
+                </div>
+              ) : null}
+              {categories.data?.length ? (
+                <div className="grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-3">
+                  {categories.data.slice(0, 6).map((category) => (
+                    <HeroCategoryButton key={category.id} category={category} services={allServices} onSelect={setSelectedCategory} />
+                  ))}
+                </div>
+              ) : null}
+              <div className="mt-7 border-t border-border pt-5">
+                <h3 className="text-lg font-semibold text-foreground">Popular searches</h3>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {popularSearches.slice(0, 4).map((item) => (
+                    <Link
+                      key={item}
+                      href={`${routes.search}?q=${encodeURIComponent(item)}`}
+                      className="rounded-sm border border-border bg-white px-3 py-1.5 text-xs font-semibold text-secondary transition hover:border-primary/40 hover:text-primary"
+                    >
+                      {item}
+                    </Link>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="relative min-h-[320px] overflow-hidden rounded-lg border border-border bg-primary-subtle">
-            <Image
-              src="/images/hero/purple-squad-home-services-hero.png"
-              alt="Purple Squad technician with home appliances"
-              fill
-              priority
-              unoptimized
-              sizes="(min-width: 1024px) 430px, 100vw"
-              className="object-cover"
-            />
-          </div>
+          <HeroImageMosaic services={allServices} />
+        </div>
+        <div className="mx-auto grid max-w-7xl grid-cols-2 gap-px border-t border-border bg-border px-0 sm:grid-cols-4 lg:px-0">
+          {[
+            ["Transparent pricing", "View price before booking"],
+            ["Trained experts", "Verified technicians"],
+            ["On-time slots", "Pick your preferred time"],
+            ["Support included", "Help before and after service"],
+          ].map(([title, description]) => (
+            <div key={title} className="bg-white px-4 py-4 sm:px-6 lg:px-8">
+              <p className="text-sm font-bold text-foreground">{title}</p>
+              <p className="mt-1 text-xs leading-5 text-secondary">{description}</p>
+            </div>
+          ))}
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <section className="mx-auto max-w-7xl px-4 py-7 sm:px-6 lg:px-8">
         <div className="flex items-end justify-between gap-4">
           <div>
-            <p className="text-xs font-bold uppercase tracking-wide text-primary">What service do you need?</p>
-            <h2 className="mt-1 text-2xl font-bold text-foreground">Choose a category</h2>
+            <p className="text-xs font-bold uppercase tracking-wide text-primary">Explore</p>
+            <h2 className="mt-1 text-2xl font-bold text-foreground">All service categories</h2>
           </div>
           <Button asChild variant="outline">
             <Link href={routes.services}>More Categories</Link>
@@ -224,8 +181,8 @@ export function HomeDiscovery() {
         <div>
           <div className="mb-4 flex items-end justify-between gap-3">
             <div>
-              <p className="text-xs font-bold uppercase tracking-wide text-primary">Popular packages</p>
-              <h2 className="mt-1 text-2xl font-bold text-foreground">Book most requested services</h2>
+              <p className="text-xs font-bold uppercase tracking-wide text-primary">Frequently booked</p>
+              <h2 className="mt-1 text-2xl font-bold text-foreground">Popular services near you</h2>
             </div>
             <Button asChild variant="ghost">
               <Link href={routes.services}>
@@ -247,16 +204,12 @@ export function HomeDiscovery() {
 
         <aside className="space-y-3 rounded-lg border border-border bg-white p-5 shadow-sm">
           <h2 className="text-lg font-bold text-foreground">Why choose Purple Squad?</h2>
-          {[
-            ["Verified technicians", "Screened service partners for household jobs."],
-            ["Matched to your needs", "Category and package based flow keeps booking clear."],
-            ["Support at every step", "Help for service selection, payment and rescheduling."],
-          ].map(([title, text]) => (
-            <div key={title} className="flex gap-3">
+          {trustPromises.map((promise) => (
+            <div key={promise.title} className="flex gap-3">
               <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-success" />
               <div>
-                <p className="text-sm font-bold text-foreground">{title}</p>
-                <p className="mt-1 text-sm leading-5 text-secondary">{text}</p>
+                <p className="text-sm font-bold text-foreground">{promise.title}</p>
+                <p className="mt-1 text-sm leading-5 text-secondary">{promise.description}</p>
               </div>
             </div>
           ))}
@@ -271,6 +224,57 @@ export function HomeDiscovery() {
   );
 }
 
+function HeroCategoryButton({
+  category,
+  services,
+  onSelect,
+}: {
+  category: ServiceCategory;
+  services: ServiceListItem[];
+  onSelect: (category: ServiceCategory) => void;
+}) {
+  const count = services.filter((service) => service.category.slug === category.slug).length;
+  const visualSrc = getCategoryVisualSrc(category);
+
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect(category)}
+      className="group grid min-h-28 place-items-center rounded-lg bg-white p-2 text-center transition hover:bg-[#f6f6f6] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+    >
+      <span className="relative grid h-16 w-full max-w-32 place-items-center overflow-hidden rounded-md bg-[#f5f5f5] text-primary transition duration-300 group-hover:scale-105">
+        {visualSrc ? (
+          <Image src={visualSrc} alt="" fill unoptimized={visualSrc.startsWith("http")} className="object-cover" />
+        ) : (
+          <ServiceIcon label={category.name} className="h-full w-full" />
+        )}
+      </span>
+      <span className="mt-2 line-clamp-2 text-xs font-bold leading-4 text-foreground group-hover:text-primary">{category.name}</span>
+      <span className="text-[11px] font-semibold leading-4 text-secondary">{count || "New"}</span>
+    </button>
+  );
+}
+
+function HeroImageMosaic({ services }: { services: ServiceListItem[] }) {
+  const visuals = heroVisuals.map((label) => ({
+    label,
+    service: services.find((service) => `${service.name} ${service.category.name}`.toLowerCase().includes(label.split(" ")[0].toLowerCase())),
+  }));
+
+  return (
+    <div className="hidden min-h-[500px] grid-cols-[1fr_1fr] gap-3 lg:grid">
+      <div className="grid gap-3 pt-6">
+        <ServiceImage src={visuals[0]?.service?.cover_image} alt={visuals[0].label} priority className="h-[292px] rounded-md" />
+        <ServiceImage src={visuals[2]?.service?.cover_image} alt={visuals[2].label} className="h-[210px] rounded-md" />
+      </div>
+      <div className="grid gap-3">
+        <ServiceImage src={visuals[1]?.service?.cover_image} alt={visuals[1].label} priority className="h-[270px] rounded-md" />
+        <ServiceImage src={visuals[3]?.service?.cover_image} alt={visuals[3].label} className="h-[238px] rounded-md" />
+      </div>
+    </div>
+  );
+}
+
 function CategoryTile({
   category,
   services,
@@ -281,25 +285,32 @@ function CategoryTile({
   onSelect: (category: ServiceCategory) => void;
 }) {
   const count = services.filter((service) => service.category.slug === category.slug).length;
+  const visualSrc = getCategoryVisualSrc(category);
 
   return (
     <button
       type="button"
       onClick={() => onSelect(category)}
-      className="group overflow-hidden rounded-lg border border-border bg-white text-left shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-[var(--shadow-card)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      className="group overflow-hidden rounded-lg border border-border bg-white text-left shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-[0_18px_50px_rgba(18,18,20,0.10)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
     >
       <span className="relative block aspect-[4/3] bg-primary-soft">
-        {category.image_url ? (
-          <Image src={category.image_url} alt={category.name} fill unoptimized className="object-cover transition duration-300 group-hover:scale-105" />
+        {visualSrc ? (
+          <Image
+            src={visualSrc}
+            alt={category.name}
+            fill
+            unoptimized={visualSrc.startsWith("http")}
+            className="object-cover transition duration-300 group-hover:scale-105"
+          />
         ) : (
-          <span className="grid h-full w-full place-items-center text-primary">
-            <CategoryIcon name={category.name} className="h-9 w-9" />
+          <span className="grid h-full w-full place-items-center">
+            <ServiceIcon label={category.name} className="h-16 w-16" />
           </span>
         )}
       </span>
       <span className="block p-3">
-        <span className="block text-sm font-bold leading-5 text-foreground">{category.name}</span>
-        <span className="mt-1 block text-xs font-semibold text-secondary">{count || "New"} services</span>
+        <span className="block text-sm font-bold leading-5 text-foreground group-hover:text-primary">{category.name}</span>
+        <span className="mt-1 block text-xs font-semibold text-secondary">{count || "New"} options</span>
       </span>
     </button>
   );
@@ -360,90 +371,115 @@ function CategoryServicesDialog({
   return (
     <Dialog.Root open={Boolean(category)} onOpenChange={(open) => !open && closeDialog()}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/45 backdrop-blur-sm" />
-        <Dialog.Content className="fixed inset-x-3 bottom-3 top-3 z-50 mx-auto flex max-w-5xl flex-col overflow-hidden rounded-lg border border-border bg-background shadow-[var(--shadow-card)] focus:outline-none sm:inset-x-6 sm:bottom-6 sm:top-6 lg:grid lg:grid-cols-[280px_minmax(0,1fr)]">
-          <aside className="shrink-0 border-b border-border bg-white p-4 sm:p-5 lg:min-h-0 lg:overflow-y-auto lg:border-b-0 lg:border-r">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <Dialog.Title className="text-2xl font-bold text-foreground">{category?.name ?? "Services"}</Dialog.Title>
-                <Dialog.Description className="mt-2 text-sm leading-6 text-secondary">
-                  {showFamilies
-                    ? "Choose the appliance or service type first."
-                    : "Choose the exact package and book your preferred slot."}
-                </Dialog.Description>
-              </div>
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/70" />
+        <Dialog.Content
+          className={
+            showFamilies
+              ? "fixed left-1/2 top-1/2 z-50 w-[calc(100vw-2rem)] max-w-[540px] -translate-x-1/2 -translate-y-1/2 rounded-lg bg-white p-5 shadow-[0_22px_80px_rgba(0,0,0,0.28)] focus:outline-none sm:p-6"
+              : "fixed inset-x-0 bottom-0 z-50 mx-auto flex max-h-[94dvh] w-full max-w-7xl flex-col overflow-hidden rounded-t-lg bg-[#f7f7f7] shadow-[0_-22px_80px_rgba(0,0,0,0.28)] focus:outline-none sm:inset-x-4 sm:bottom-4 sm:top-4 sm:rounded-lg lg:grid lg:grid-cols-[230px_minmax(0,1fr)_260px]"
+          }
+        >
+          {showFamilies ? (
+            <>
               <Dialog.Close asChild>
-                <Button type="button" variant="ghost" size="icon" aria-label="Close service popup">
+                <Button type="button" variant="ghost" size="icon" className="absolute -right-3 -top-12 rounded-md bg-white shadow-sm" aria-label="Close service popup">
                   <X className="h-5 w-5" />
                 </Button>
               </Dialog.Close>
-            </div>
-            <div className="mt-5 space-y-3 rounded-lg bg-muted p-4">
-              <p className="flex items-center gap-2 text-sm font-bold text-foreground">
-                <ShieldCheck className="h-4 w-4 text-primary" />
-                How this works
-              </p>
-              {["Choose type", "Choose package", "Confirm address"].map((step, index) => (
-                <div key={step} className="flex items-center gap-3 text-sm font-semibold text-secondary">
-                  <span className="grid h-6 w-6 place-items-center rounded-full bg-white text-xs text-primary">{index + 1}</span>
-                  {step}
+              <Dialog.Title className="text-2xl font-bold text-foreground">{category?.name ?? "Services"}</Dialog.Title>
+              <Dialog.Description className="sr-only">Choose a service type to view packages.</Dialog.Description>
+
+              {families.length ? (
+                <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  {families.map((family) => (
+                    <button
+                      key={family.name}
+                      type="button"
+                      onClick={() => setSelectedFamily(family.name)}
+                      className="group text-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                    >
+                      <span className="grid h-20 place-items-center overflow-hidden rounded-lg bg-[#f5f5f5]">
+                        <ServiceIcon label={family.name} className="h-full w-full rounded-lg" imageClassName="p-3" />
+                      </span>
+                      <span className="mt-3 block text-sm font-semibold leading-5 text-foreground group-hover:text-primary">{family.name}</span>
+                    </button>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </aside>
-
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-5 [-webkit-overflow-scrolling:touch]">
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <div>
-                <p className="text-sm font-bold text-secondary">
-                  {showFamilies
-                    ? services.length
-                      ? `${families.length} options`
-                      : "No options yet"
-                    : `${selectedServices.length} package options`}
-                </p>
-                {!showFamilies ? <h3 className="mt-1 text-xl font-bold text-foreground">{selectedFamily}</h3> : null}
-              </div>
-              <Button asChild variant="outline" size="sm">
-                <Link href={category ? `/services?category=${encodeURIComponent(category.slug)}` : routes.services}>Open full list</Link>
-              </Button>
-            </div>
-
-            {showFamilies && families.length ? (
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                {families.map((family) => (
-                  <button
-                    key={family.name}
-                    type="button"
-                    onClick={() => setSelectedFamily(family.name)}
-                    className="group overflow-hidden rounded-lg border border-border bg-white text-left shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-[var(--shadow-card)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                  >
-                    <ServiceImage src={family.services[0]?.cover_image} alt={family.name} className="aspect-[4/3] rounded-none" />
-                    <span className="block p-3">
-                      <span className="block text-sm font-bold leading-5 text-foreground group-hover:text-primary">{family.name}</span>
-                      <span className="mt-1 block text-xs font-semibold text-secondary">{family.services.length} services</span>
-                    </span>
-                  </button>
-                ))}
-              </div>
-            ) : null}
-
-            {!showFamilies && selectedServices.length ? (
-              <div className="space-y-3">
-                <Button type="button" variant="ghost" size="sm" onClick={() => setSelectedFamily(null)}>
+              ) : (
+                <EmptyState title="No services published yet" description="Add services under this category from the admin catalogue." />
+              )}
+            </>
+          ) : (
+            <>
+              <aside className="min-h-0 overflow-y-auto border-b border-border bg-white p-4 lg:border-b-0 lg:border-r">
+                <Dialog.Close asChild>
+                  <Button type="button" variant="ghost" size="icon" className="mb-4" aria-label="Close package popup">
+                    <X className="h-5 w-5" />
+                  </Button>
+                </Dialog.Close>
+                <Dialog.Title className="text-xl font-bold text-foreground">{selectedFamily}</Dialog.Title>
+                <Dialog.Description className="mt-2 text-sm text-secondary">
+                  Select a package and continue to booking.
+                </Dialog.Description>
+                <Button type="button" variant="ghost" size="sm" className="mt-4" onClick={() => setSelectedFamily(null)}>
                   <ChevronLeft className="h-4 w-4" />
-                  Back to {category?.name}
+                  Back
                 </Button>
-                {selectedServices.map((service) => (
-                  <DialogPackageRow key={service.id} service={service} />
-                ))}
-              </div>
-            ) : null}
 
-            {services.length === 0 ? (
-              <EmptyState title="No services published yet" description="Add services under this category from the admin catalogue." />
-            ) : null}
-          </div>
+                <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-1">
+                  {families.map((family) => (
+                    <button
+                      key={family.name}
+                      type="button"
+                      onClick={() => setSelectedFamily(family.name)}
+                      className={`rounded-lg border p-2 text-left transition ${
+                        family.name === selectedFamily ? "border-primary bg-primary-soft" : "border-border bg-white hover:border-primary/40"
+                      }`}
+                    >
+                      <ServiceIcon label={family.name} className="h-16 w-full rounded-md" imageClassName="p-2" />
+                      <span className="mt-2 block text-xs font-bold leading-4 text-foreground">{family.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </aside>
+
+              <main className="min-h-0 overflow-y-auto p-4 [-webkit-overflow-scrolling:touch] sm:p-6">
+                <ServiceImage src={selectedServices[0]?.cover_image} alt={selectedFamily ?? category?.name ?? "Service"} priority className="h-48 rounded-lg sm:h-64" />
+                <section className="mt-5 rounded-lg border border-border bg-white p-5">
+                  <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-wide text-primary">Packages</p>
+                      <h3 className="mt-1 text-2xl font-bold text-foreground">{selectedFamily}</h3>
+                    </div>
+                    <p className="text-sm font-semibold text-secondary">{selectedServices.length} available</p>
+                  </div>
+                  <div className="divide-y divide-border">
+                    {selectedServices.map((service) => (
+                      <DialogPackageRow key={service.id} service={service} />
+                    ))}
+                  </div>
+                </section>
+              </main>
+
+              <aside className="hidden min-h-0 overflow-y-auto border-l border-border bg-white p-4 lg:block">
+                <div className="rounded-lg border border-border p-4">
+                  <p className="flex items-center gap-2 text-sm font-bold text-foreground">
+                    <ShieldCheck className="h-4 w-4 text-success" />
+                    Purple Squad promise
+                  </p>
+                  <div className="mt-4 space-y-3 text-sm text-secondary">
+                    <p>Clear price before booking</p>
+                    <p>Verified service professionals</p>
+                    <p>Support for reschedule and payment</p>
+                  </div>
+                </div>
+                <div className="mt-4 rounded-lg border border-border p-4 text-center">
+                  <p className="text-sm font-bold text-foreground">Cart</p>
+                  <p className="mt-2 text-sm text-secondary">Select a package to continue.</p>
+                </div>
+              </aside>
+            </>
+          )}
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
@@ -455,8 +491,7 @@ function DialogPackageRow({ service }: { service: ServiceListItem }) {
   const duration = formatDuration(service.estimated_duration_minutes);
 
   return (
-    <article className="grid gap-3 rounded-lg border border-border bg-white p-3 sm:grid-cols-[120px_1fr_auto] sm:items-center">
-      <ServiceImage src={service.cover_image} alt={service.name} className="aspect-[16/10] rounded-lg sm:h-24" />
+    <article className="grid gap-4 bg-white py-5 sm:grid-cols-[1fr_116px] sm:items-start">
       <div>
         <h3 className="text-base font-bold text-foreground">{service.name}</h3>
         <p className="mt-1 line-clamp-2 text-sm leading-5 text-secondary">{service.short_description || service.category.name}</p>
@@ -465,12 +500,15 @@ function DialogPackageRow({ service }: { service: ServiceListItem }) {
           <span>4.8 rated</span>
           <span>PS verified</span>
         </div>
+        <Button asChild variant="outline" size="sm" className="mt-3">
+          <Link href={routes.serviceDetail(service.slug)}>View details</Link>
+        </Button>
       </div>
-      <div className="grid gap-2 sm:w-32">
-        <p className="text-lg font-bold text-foreground sm:text-right">{price ?? "View price"}</p>
+      <div className="grid gap-2 rounded-lg bg-[#f4f4f5] p-3 sm:w-28">
+        <p className="text-center text-lg font-bold text-foreground">{price ?? "View price"}</p>
         <Button asChild size="sm">
           <AuthActionLink href={`/book?service=${encodeURIComponent(service.slug)}`} serviceSlug={service.slug}>
-            Book Now
+            Add
           </AuthActionLink>
         </Button>
       </div>

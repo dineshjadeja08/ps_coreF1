@@ -7,11 +7,11 @@ export function CategoryCard({ category }: { category: ServiceCategory }) {
   return (
     <Link
       href={`/services?category=${encodeURIComponent(category.slug)}`}
-      className="group rounded-2xl border border-border bg-surface p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[var(--shadow-card)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      className="group rounded-md border border-border bg-surface p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[var(--shadow-card)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
     >
       <div className="grid gap-3">
-        <div className="grid aspect-[4/3] place-items-center rounded-2xl bg-primary-subtle text-primary">
-          <div className="grid h-14 w-14 place-items-center rounded-2xl bg-surface shadow-sm">
+        <div className="grid aspect-[4/3] place-items-center rounded-md bg-primary-subtle text-primary">
+          <div className="grid h-14 w-14 place-items-center rounded-md bg-surface shadow-sm">
             <Wrench className="h-7 w-7" />
           </div>
         </div>

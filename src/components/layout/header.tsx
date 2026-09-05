@@ -1,10 +1,11 @@
 "use client";
 
-import { BriefcaseBusiness, CalendarCheck, LogOut, UserRound } from "lucide-react";
+import { CircleUserRound, LogOut, ShoppingCart, UserRound } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { Brand } from "@/components/layout/brand";
+import { LocationCitySelector } from "@/components/layout/location-city-selector";
 import { Button } from "@/components/ui/button";
 import { routes } from "@/constants/routes";
 import { useAuth } from "@/features/auth/hooks";
@@ -23,42 +24,45 @@ export function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-surface/95 backdrop-blur">
-      <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-[var(--z-header)] border-b border-[#e8e8e8] bg-white/95 backdrop-blur">
+      <div className="page-container flex min-h-[5.5rem] items-center gap-6 py-3">
         <Brand />
 
-        <ServiceSearch
-          services={services.data?.results ?? []}
-          className="hidden max-w-xl flex-1 lg:block"
-          compact
-          inputId="desktop-header-search"
-          placeholder="Search services"
-        />
+        <nav className="hidden items-center gap-8 text-sm font-medium text-secondary md:flex">
+          <Link href={routes.services} className="hover:text-foreground">
+            Homes
+          </Link>
+          <Link href={`${routes.search}?q=${encodeURIComponent("Appliance Repair")}`} className="hover:text-foreground">
+            Appliance
+          </Link>
+          <Link href={`${routes.search}?q=${encodeURIComponent("Cleaning")}`} className="hover:text-foreground">
+            Cleaning
+          </Link>
+        </nav>
 
-        <nav className="ml-auto hidden items-center gap-1 md:flex">
-          <Button asChild variant="ghost" size="sm">
-            <Link href={routes.services}>Services</Link>
-          </Button>
-          <Button asChild variant="ghost" size="sm">
-            <Link href={routes.bookings}>
-              <CalendarCheck className="h-4 w-4" />
-              Bookings
-            </Link>
-          </Button>
-          <Button asChild variant="ghost" size="sm">
-            <Link href={routes.support}>Help</Link>
-          </Button>
-          <Button asChild variant="outline" size="icon">
-            <Link href={routes.book} aria-label="Open booking">
-              <BriefcaseBusiness className="h-4 w-4" />
+        <div className="ml-auto hidden flex-1 items-center justify-end gap-2 lg:flex">
+          <LocationCitySelector compact className="w-[265px]" />
+
+          <ServiceSearch
+            services={services.data?.results ?? []}
+            className="w-[276px]"
+            compact
+            inputId="desktop-header-search"
+            placeholder="Search for AC service"
+          />
+        </div>
+
+        <nav className="hidden items-center gap-3 md:flex">
+          <Button asChild variant="outline" size="icon" className="rounded-md border-[#e5e5e5]">
+            <Link href={routes.bookings} aria-label="Bookings">
+              <ShoppingCart className="h-5 w-5" />
             </Link>
           </Button>
           {isAuthenticated ? (
             <>
-              <Button asChild size="sm">
-                <Link href={routes.profile}>
-                  <UserRound className="h-4 w-4" />
-                  {displayName}
+              <Button asChild variant="ghost" size="icon" className="rounded-md" title={displayName}>
+                <Link href={routes.profile} aria-label="Profile">
+                  <CircleUserRound className="h-5 w-5" />
                 </Link>
               </Button>
               <Button type="button" variant="ghost" size="icon" aria-label="Logout" onClick={handleLogout}>
@@ -66,16 +70,17 @@ export function Header() {
               </Button>
             </>
           ) : (
-            <Button asChild size="sm">
-              <Link href="/login">
-                <UserRound className="h-4 w-4" />
-                Login
+            <Button asChild variant="ghost" size="icon" className="rounded-md">
+              <Link href="/login" aria-label="Login">
+                <CircleUserRound className="h-5 w-5" />
               </Link>
             </Button>
           )}
         </nav>
 
-        <Button asChild variant="ghost" size="icon" className="ml-auto md:hidden">
+        <LocationCitySelector compact className="ml-auto max-w-[145px] md:hidden" />
+
+        <Button asChild variant="ghost" size="icon" className="md:hidden">
           <Link href={isAuthenticated ? routes.profile : "/login"} aria-label={isAuthenticated ? "Open profile" : "Login"}>
             <UserRound className="h-5 w-5" />
           </Link>
@@ -88,7 +93,7 @@ export function Header() {
           className="mx-auto max-w-7xl"
           compact
           inputId="mobile-header-search"
-          placeholder="Search services"
+          placeholder="Search home services"
         />
       </div>
     </header>

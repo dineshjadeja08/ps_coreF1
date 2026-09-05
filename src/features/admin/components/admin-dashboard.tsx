@@ -450,7 +450,7 @@ export function AdminDashboard() {
       </div>
 
       {(notice || error) && (
-        <div className="mb-5 rounded-2xl border border-border bg-surface p-4 text-sm">
+        <div className="mb-5 rounded-md border border-border bg-surface p-4 text-sm">
           {notice && <p className="font-semibold text-success">{notice}</p>}
           {error && <p className="font-semibold text-destructive">{error}</p>}
         </div>
@@ -487,7 +487,7 @@ export function AdminDashboard() {
           <Panel title="Services catalogue" icon={Wrench}>
             <div className="space-y-3">
               {services.map((service) => (
-                <div key={service.id} className="rounded-2xl border border-border bg-background p-4">
+                <div key={service.id} className="rounded-md border border-border bg-background p-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <div className="flex flex-wrap items-center gap-2">
@@ -514,7 +514,7 @@ export function AdminDashboard() {
                     </div>
                   </div>
                   <div className="mt-4 flex flex-wrap items-center gap-3">
-                    <label className="inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-xl border border-border bg-surface px-3 text-sm font-semibold">
+                    <label className="inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-md border border-border bg-surface px-3 text-sm font-semibold">
                       <ImagePlus className="h-4 w-4" />
                       Add image
                       <input className="sr-only" type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => void uploadGalleryImage(service.id, event)} />
@@ -523,7 +523,7 @@ export function AdminDashboard() {
                       <button
                         key={image.id}
                         type="button"
-                        className="rounded-full border border-border px-3 py-1 text-xs font-semibold text-secondary hover:border-destructive hover:text-destructive"
+                        className="rounded-sm border border-border px-3 py-1 text-xs font-semibold text-secondary hover:border-destructive hover:text-destructive"
                         onClick={() => void removeGalleryImage(service.id, image.id)}
                       >
                         Remove image {image.display_order}
@@ -551,7 +551,7 @@ export function AdminDashboard() {
           <Panel title="Catalogue categories" icon={LayoutGrid}>
             <div className="grid gap-3 md:grid-cols-2">
               {categories.map((category) => (
-                <div key={category.id} className="rounded-2xl border border-border bg-background p-4">
+                <div key={category.id} className="rounded-md border border-border bg-background p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <div className="flex items-center gap-2">
@@ -590,7 +590,7 @@ export function AdminDashboard() {
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input value={bookingSearch} onChange={(event) => setBookingSearch(event.target.value)} className="pl-9" placeholder="Search booking number" />
             </label>
-            <select className="h-11 rounded-xl border border-border bg-surface px-3 text-sm" value={bookingStatus} onChange={(event) => setBookingStatus(event.target.value)}>
+            <select className="h-11 rounded-md border border-border bg-surface px-3 text-sm" value={bookingStatus} onChange={(event) => setBookingStatus(event.target.value)}>
               {bookingStatuses.map((status) => (
                 <option key={status.value} value={status.value}>
                   {status.label}
@@ -605,7 +605,7 @@ export function AdminDashboard() {
 
           <div className="space-y-4">
             {bookings.map((booking) => (
-              <div key={booking.id} className="rounded-2xl border border-border bg-background p-4">
+              <div key={booking.id} className="rounded-md border border-border bg-background p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
@@ -629,7 +629,7 @@ export function AdminDashboard() {
                     onChange={(event) => setNotesByBooking((current) => ({ ...current, [booking.id]: event.target.value }))}
                   />
                   <select
-                    className="h-11 rounded-xl border border-border bg-surface px-3 text-sm"
+                    className="h-11 rounded-md border border-border bg-surface px-3 text-sm"
                     value={technicianByBooking[booking.id] ?? ""}
                     onChange={(event) => setTechnicianByBooking((current) => ({ ...current, [booking.id]: event.target.value }))}
                   >
@@ -641,7 +641,7 @@ export function AdminDashboard() {
                     ))}
                   </select>
                   <select
-                    className="h-11 rounded-xl border border-border bg-surface px-3 text-sm"
+                    className="h-11 rounded-md border border-border bg-surface px-3 text-sm"
                     value={balanceByBooking[booking.id]?.method ?? "CASH"}
                     onChange={(event) =>
                       setBalanceByBooking((current) => ({
@@ -702,10 +702,10 @@ export function AdminDashboard() {
 function AdminShell({ children }: { children: React.ReactNode }) {
   return (
     <section className="mx-auto max-w-7xl px-4 py-10 pb-24 sm:px-6 lg:px-8">
-      <div className="mb-6 rounded-3xl border border-border bg-surface p-6 shadow-sm">
+      <div className="mb-6 rounded-md border border-border bg-surface p-6 shadow-sm">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
+            <div className="inline-flex h-11 w-11 items-center justify-center rounded-md bg-primary text-primary-foreground">
               <ShieldCheck className="h-5 w-5" />
             </div>
             <p className="mt-4 text-sm font-semibold uppercase tracking-wide text-primary">Private Operations</p>
@@ -726,7 +726,7 @@ function AdminShell({ children }: { children: React.ReactNode }) {
 
 function AccessPanel({ title, message }: { title: string; message: string }) {
   return (
-    <div className="rounded-3xl border border-border bg-surface p-6 text-center shadow-sm">
+    <div className="rounded-md border border-border bg-surface p-6 text-center shadow-sm">
       <h2 className="text-2xl font-bold text-foreground">{title}</h2>
       <p className="mt-2 text-sm text-secondary">{message}</p>
       <Button asChild className="mt-5">
@@ -738,7 +738,7 @@ function AccessPanel({ title, message }: { title: string; message: string }) {
 
 function Metric({ icon: Icon, label, value }: { icon: typeof Wrench; label: string; value: number }) {
   return (
-    <div className="rounded-3xl border border-border bg-surface p-5 shadow-sm">
+    <div className="rounded-md border border-border bg-surface p-5 shadow-sm">
       <Icon className="h-5 w-5 text-primary" />
       <p className="mt-4 text-2xl font-bold text-foreground">{value}</p>
       <p className="text-sm text-secondary">{label}</p>
@@ -751,7 +751,7 @@ function TabButton({ active, children, onClick }: { active: boolean; children: R
     <button
       type="button"
       onClick={onClick}
-      className={`h-11 rounded-xl border px-4 text-sm font-semibold transition ${
+      className={`h-11 rounded-md border px-4 text-sm font-semibold transition ${
         active ? "border-primary bg-primary text-primary-foreground" : "border-border bg-surface text-foreground hover:border-primary/30"
       }`}
     >
@@ -762,7 +762,7 @@ function TabButton({ active, children, onClick }: { active: boolean; children: R
 
 function Panel({ title, icon: Icon, children }: { title: string; icon: typeof Wrench; children: React.ReactNode }) {
   return (
-    <div className="rounded-3xl border border-border bg-surface p-5 shadow-sm">
+    <div className="rounded-md border border-border bg-surface p-5 shadow-sm">
       <div className="mb-4 flex items-center gap-2">
         <Icon className="h-5 w-5 text-primary" />
         <h2 className="text-lg font-bold text-foreground">{title}</h2>
@@ -799,7 +799,7 @@ function ServiceForm({
   return (
     <form onSubmit={onSubmit} className="space-y-3">
       <Field label="Category">
-        <select className="h-11 w-full rounded-xl border border-border bg-surface px-3 text-sm" value={form.category} onChange={(event) => onChange({ ...form, category: event.target.value })} required>
+        <select className="h-11 w-full rounded-md border border-border bg-surface px-3 text-sm" value={form.category} onChange={(event) => onChange({ ...form, category: event.target.value })} required>
           <option value="">Select category</option>
           {categories.map((category) => (
             <option key={category.id} value={category.id}>
@@ -820,14 +820,14 @@ function ServiceForm({
         <Input value={form.short_description} onChange={(event) => onChange({ ...form, short_description: event.target.value })} required />
       </Field>
       <Field label="Description">
-        <textarea className="min-h-24 w-full rounded-xl border border-border bg-surface px-3 py-2 text-sm" value={form.description} onChange={(event) => onChange({ ...form, description: event.target.value })} />
+        <textarea className="min-h-24 w-full rounded-md border border-border bg-surface px-3 py-2 text-sm" value={form.description} onChange={(event) => onChange({ ...form, description: event.target.value })} />
       </Field>
       <div className="grid gap-3 md:grid-cols-2">
         <Field label="Included">
-          <textarea className="min-h-20 w-full rounded-xl border border-border bg-surface px-3 py-2 text-sm" value={form.whats_included} onChange={(event) => onChange({ ...form, whats_included: event.target.value })} />
+          <textarea className="min-h-20 w-full rounded-md border border-border bg-surface px-3 py-2 text-sm" value={form.whats_included} onChange={(event) => onChange({ ...form, whats_included: event.target.value })} />
         </Field>
         <Field label="Excluded">
-          <textarea className="min-h-20 w-full rounded-xl border border-border bg-surface px-3 py-2 text-sm" value={form.whats_excluded} onChange={(event) => onChange({ ...form, whats_excluded: event.target.value })} />
+          <textarea className="min-h-20 w-full rounded-md border border-border bg-surface px-3 py-2 text-sm" value={form.whats_excluded} onChange={(event) => onChange({ ...form, whats_excluded: event.target.value })} />
         </Field>
       </div>
       <Field label="Important notes">
@@ -846,7 +846,7 @@ function ServiceForm({
       </div>
       <div className="grid gap-3 md:grid-cols-3">
         <Field label="Advance type">
-          <select className="h-11 w-full rounded-xl border border-border bg-surface px-3 text-sm" value={form.advance_payment_type} onChange={(event) => onChange({ ...form, advance_payment_type: event.target.value as "FIXED" | "PERCENTAGE" })}>
+          <select className="h-11 w-full rounded-md border border-border bg-surface px-3 text-sm" value={form.advance_payment_type} onChange={(event) => onChange({ ...form, advance_payment_type: event.target.value as "FIXED" | "PERCENTAGE" })}>
             <option value="FIXED">Fixed</option>
             <option value="PERCENTAGE">Percentage</option>
           </select>
@@ -910,7 +910,7 @@ function CategoryForm({
         <Input value={form.slug} onChange={(event) => onChange({ ...form, slug: event.target.value })} required />
       </Field>
       <Field label="Description">
-        <textarea className="min-h-24 w-full rounded-xl border border-border bg-surface px-3 py-2 text-sm" value={form.description} onChange={(event) => onChange({ ...form, description: event.target.value })} />
+        <textarea className="min-h-24 w-full rounded-md border border-border bg-surface px-3 py-2 text-sm" value={form.description} onChange={(event) => onChange({ ...form, description: event.target.value })} />
       </Field>
       <Field label="Image URL">
         <Input value={form.image_url} onChange={(event) => onChange({ ...form, image_url: event.target.value })} />

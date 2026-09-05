@@ -22,7 +22,7 @@ export function ServiceAreasSection() {
 
   return (
     <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-      <div className="grid gap-6 rounded-3xl border border-border bg-surface p-5 shadow-sm lg:grid-cols-[0.9fr_1.1fr] lg:p-6">
+      <div className="grid gap-6 rounded-md border border-border bg-surface p-5 shadow-sm lg:grid-cols-[0.9fr_1.1fr] lg:p-6">
         <SectionHeading
           eyebrow="Service areas"
           title="Currently serving three launch cities"
@@ -31,7 +31,7 @@ export function ServiceAreasSection() {
         <div className="space-y-4">
           <div className="flex flex-wrap gap-2">
             {supportedCities.map((city) => (
-              <span key={city} className="inline-flex items-center gap-2 rounded-full border border-border px-3 py-2 text-sm font-semibold text-foreground">
+              <span key={city} className="inline-flex items-center gap-2 rounded-sm border border-border px-3 py-2 text-sm font-semibold text-foreground">
                 <MapPin className="h-4 w-4 text-primary" />
                 {city}
               </span>

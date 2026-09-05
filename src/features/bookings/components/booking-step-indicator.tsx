@@ -6,7 +6,7 @@ const steps = ["Details", "Payment", "Confirmed"];
 
 export function BookingStepIndicator({ currentStep }: { currentStep: number }) {
   return (
-    <ol className="grid grid-cols-3 gap-2 rounded-2xl border border-border bg-surface p-2 shadow-sm">
+    <ol className="grid grid-cols-3 gap-2 rounded-md border border-border bg-surface p-2 shadow-sm">
       {steps.map((step, index) => {
         const complete = index < currentStep;
         const active = index === currentStep;
@@ -14,7 +14,7 @@ export function BookingStepIndicator({ currentStep }: { currentStep: number }) {
           <li
             key={step}
             className={cn(
-              "flex min-h-12 items-center justify-center gap-2 rounded-xl px-2 text-center text-xs font-semibold sm:text-sm",
+              "flex min-h-12 items-center justify-center gap-2 rounded-md px-2 text-center text-xs font-semibold sm:text-sm",
               active && "bg-primary-soft text-primary",
               complete && "text-success",
               !active && !complete && "text-muted-foreground",
