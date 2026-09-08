@@ -8,7 +8,7 @@ import { siteConfig } from "@/config/site";
 
 import "./globals.css";
 
-const siteUrl = process.env.NEXT_PUBLIC_APP_URL || siteConfig.url;
+const siteUrl = siteConfig.url;
 
 const manrope = Manrope({
   variable: "--font-manrope",

@@ -30,7 +30,7 @@ export function Header() {
 
         <nav className="hidden items-center gap-8 text-sm font-medium text-secondary md:flex">
           <Link href={routes.services} className="hover:text-foreground">
-            Homes
+            Services
           </Link>
           <Link href={`${routes.search}?q=${encodeURIComponent("Appliance Repair")}`} className="hover:text-foreground">
             Appliance
@@ -69,22 +69,27 @@ export function Header() {
                 <LogOut className="h-4 w-4" />
               </Button>
             </>
-          ) : (
-            <Button asChild variant="ghost" size="icon" className="rounded-md">
-              <Link href="/login" aria-label="Login">
-                <CircleUserRound className="h-5 w-5" />
-              </Link>
-            </Button>
-          )}
+          ) : null}
         </nav>
+
+        {!isAuthenticated ? (
+          <Button asChild variant="ghost" className="rounded-md px-2 sm:px-3">
+            <Link href="/login" aria-label="Login" className="gap-2">
+              <CircleUserRound className="h-5 w-5" />
+              <span className="hidden text-sm font-semibold sm:inline">Login</span>
+            </Link>
+          </Button>
+        ) : null}
 
         <LocationCitySelector compact className="ml-auto max-w-[145px] md:hidden" />
 
-        <Button asChild variant="ghost" size="icon" className="md:hidden">
-          <Link href={isAuthenticated ? routes.profile : "/login"} aria-label={isAuthenticated ? "Open profile" : "Login"}>
-            <UserRound className="h-5 w-5" />
-          </Link>
-        </Button>
+        {isAuthenticated ? (
+          <Button asChild variant="ghost" size="icon" className="md:hidden">
+            <Link href={routes.profile} aria-label="Open profile">
+              <UserRound className="h-5 w-5" />
+            </Link>
+          </Button>
+        ) : null}
       </div>
 
       <div className="border-t border-border bg-surface px-4 py-3 md:hidden">

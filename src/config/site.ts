@@ -1,6 +1,6 @@
 export const siteConfig = {
   name: "Purple Squad",
-  url: "https://purplesquad.netlify.app",
+  url: "https://purplesquad.in",
   description:
     "Book trusted home appliance repair, AC service, cleaning, CCTV, water purifier, geyser, chimney, TV, refrigerator, washing machine, microwave, and dishwasher services in Chennai, Bangalore, and Coimbatore.",
   keywords: [

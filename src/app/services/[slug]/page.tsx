@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 
-import { publicCatalogueApi } from "@/features/catalogue/api";
+import { JsonLd } from "@/components/seo/json-ld";
 import { ServiceDetailView } from "@/features/catalogue/components/service-detail-view";
+import { getServiceDetailForSeo, getServiceReviewsForSeo } from "@/features/catalogue/server";
+import { canonicalFor, compactDescription, defaultOgImagePath, serviceJsonLd } from "@/lib/seo";
 
 type ServiceDetailPageProps = {
   params: Promise<{ slug: string }>;
@@ -10,25 +12,48 @@ type ServiceDetailPageProps = {
 export async function generateMetadata({ params }: ServiceDetailPageProps): Promise<Metadata> {
   const { slug } = await params;
 
-  try {
-    const service = await publicCatalogueApi.getService(slug);
+  const service = await getServiceDetailForSeo(slug);
+  if (service) {
+    const description = compactDescription(service.short_description || service.description, `Book ${service.name} with Purple Squad.`);
     return {
       title: service.name,
-      description: service.short_description || service.description || `Book ${service.name} with Purple Squad.`,
+      description,
+      keywords: [service.name, service.category.name, `${service.name} Chennai`, `${service.name} Bangalore`, `${service.name} Coimbatore`],
+      alternates: {
+        canonical: canonicalFor(`/services/${service.slug}`),
+      },
       openGraph: {
         title: `${service.name} | Purple Squad`,
-        description: service.short_description || service.description || `Book ${service.name} with Purple Squad.`,
-        images: service.cover_image ? [service.cover_image] : undefined,
+        description,
+        url: canonicalFor(`/services/${service.slug}`),
+        images: [service.cover_image || defaultOgImagePath],
+      },
+      twitter: {
+        title: `${service.name} | Purple Squad`,
+        description,
+        images: [service.cover_image || defaultOgImagePath],
       },
     };
-  } catch {
-    return {
-      title: "Service",
-      description: "View Purple Squad service details.",
-    };
   }
+
+  return {
+    title: "Service",
+    description: "View Purple Squad service details.",
+    alternates: {
+      canonical: canonicalFor(`/services/${slug}`),
+    },
+  };
 }
 
-export default function ServiceDetailPage() {
-  return <ServiceDetailView />;
+export default async function ServiceDetailPage({ params }: ServiceDetailPageProps) {
+  const { slug } = await params;
+  const service = await getServiceDetailForSeo(slug);
+  const reviews = service ? await getServiceReviewsForSeo(service.id) : null;
+
+  return (
+    <>
+      {service ? <JsonLd data={serviceJsonLd(service, `/services/${service.slug}`, reviews?.results)} /> : null}
+      <ServiceDetailView />
+    </>
+  );
 }
