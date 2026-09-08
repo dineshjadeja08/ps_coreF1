@@ -244,7 +244,14 @@ function HeroCategoryButton({
     >
       <span className="relative grid h-16 w-full max-w-32 place-items-center overflow-hidden rounded-md bg-[#f5f5f5] text-primary transition duration-300 group-hover:scale-105">
         {visualSrc ? (
-          <Image src={visualSrc} alt="" fill unoptimized={visualSrc.startsWith("http")} className="object-cover" />
+          <Image
+            src={visualSrc}
+            alt=""
+            fill
+            sizes="(min-width: 640px) 8rem, 45vw"
+            unoptimized={visualSrc.startsWith("http")}
+            className="object-cover"
+          />
         ) : (
           <ServiceIcon label={category.name} className="h-full w-full" />
         )}
@@ -299,6 +306,7 @@ function CategoryTile({
             src={visualSrc}
             alt={category.name}
             fill
+            sizes="(min-width: 1024px) 16vw, (min-width: 640px) 33vw, 50vw"
             unoptimized={visualSrc.startsWith("http")}
             className="object-cover transition duration-300 group-hover:scale-105"
           />
@@ -411,7 +419,27 @@ function CategoryServicesDialog({
             </>
           ) : (
             <>
-              <aside className="min-h-0 overflow-y-auto border-b border-border bg-white p-4 lg:border-b-0 lg:border-r">
+              <div className="border-b border-border bg-white p-4 lg:hidden">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <Dialog.Title className="text-xl font-bold text-foreground">{selectedFamily}</Dialog.Title>
+                    <Dialog.Description className="mt-1 text-sm text-secondary">
+                      Select a package and continue to booking.
+                    </Dialog.Description>
+                  </div>
+                  <Dialog.Close asChild>
+                    <Button type="button" variant="ghost" size="icon" aria-label="Close package popup">
+                      <X className="h-5 w-5" />
+                    </Button>
+                  </Dialog.Close>
+                </div>
+                <Button type="button" variant="ghost" size="sm" className="mt-3" onClick={() => setSelectedFamily(null)}>
+                  <ChevronLeft className="h-4 w-4" />
+                  Back to services
+                </Button>
+              </div>
+
+              <aside className="hidden min-h-0 overflow-y-auto border-r border-border bg-white p-4 lg:block">
                 <Dialog.Close asChild>
                   <Button type="button" variant="ghost" size="icon" className="mb-4" aria-label="Close package popup">
                     <X className="h-5 w-5" />
@@ -443,7 +471,7 @@ function CategoryServicesDialog({
                 </div>
               </aside>
 
-              <main className="min-h-0 overflow-y-auto p-4 [-webkit-overflow-scrolling:touch] sm:p-6">
+              <main className="min-h-0 flex-1 overflow-y-auto p-4 [-webkit-overflow-scrolling:touch] sm:p-6 lg:flex-none">
                 <ServiceImage src={selectedServices[0]?.cover_image} alt={selectedFamily ?? category?.name ?? "Service"} priority className="h-48 rounded-lg sm:h-64" />
                 <section className="mt-5 rounded-lg border border-border bg-white p-5">
                   <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">

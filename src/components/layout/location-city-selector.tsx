@@ -2,7 +2,7 @@
 
 import * as Dialog from "@radix-ui/react-dialog";
 import { Check, LocateFixed, MapPin, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,16 +19,21 @@ type LocationCitySelectorProps = {
 
 export function LocationCitySelector({ compact = false, className }: LocationCitySelectorProps) {
   const [open, setOpen] = useState(false);
-  const [selectedCity, setSelectedCity] = useState<string>(() => {
-    if (typeof window === "undefined") return serviceCities[0];
-    const savedCity = window.localStorage.getItem(selectedCityKey);
-    return savedCity && serviceCities.includes(savedCity as (typeof serviceCities)[number]) ? savedCity : serviceCities[0];
-  });
-  const [pincode, setPincode] = useState(() => {
-    if (typeof window === "undefined") return "";
-    return window.localStorage.getItem(selectedPincodeKey) ?? "";
-  });
+  const [selectedCity, setSelectedCity] = useState<string>(serviceCities[0]);
+  const [pincode, setPincode] = useState("");
   const [geoStatus, setGeoStatus] = useState<"idle" | "loading" | "denied" | "ready">("idle");
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      const savedCity = window.localStorage.getItem(selectedCityKey);
+      if (savedCity && serviceCities.includes(savedCity as (typeof serviceCities)[number])) {
+        setSelectedCity(savedCity);
+      }
+      setPincode(window.localStorage.getItem(selectedPincodeKey) ?? "");
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, []);
 
   function chooseCity(city: string) {
     setSelectedCity(city);
