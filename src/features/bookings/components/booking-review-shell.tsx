@@ -8,6 +8,7 @@ import { FormEvent, useMemo, useState } from "react";
 import { EmptyState } from "@/components/common/empty-state";
 import { ErrorState } from "@/components/common/error-state";
 import { Button } from "@/components/ui/button";
+import { useCart } from "@/features/cart/use-cart";
 import { routes } from "@/constants/routes";
 import { useAddresses, useAddressServiceability } from "@/features/addresses/queries";
 import { StatusBadge } from "@/features/bookings/components/status-badge";
@@ -30,6 +31,7 @@ import { useAvailableSlots } from "@/features/slots/queries";
 import { formatSlotTime, isSlotAvailable } from "@/features/slots/utils";
 
 export function BookingReviewShell() {
+  const cart = useCart();
   const router = useRouter();
   const searchParams = useSearchParams();
   const serviceSlug = searchParams.get("service") ?? "";
@@ -102,6 +104,7 @@ export function BookingReviewShell() {
           customerNotes,
         }),
       );
+      cart.markBooked(serviceSlug, booking.id);
       router.replace(routes.bookingPayment(booking.id));
     } catch (error) {
       const message = getBookingCreationErrorMessage(error);

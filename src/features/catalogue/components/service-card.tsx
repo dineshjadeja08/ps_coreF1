@@ -2,9 +2,8 @@ import { Clock, ShieldCheck, Sparkles } from "lucide-react";
 import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { routes } from "@/constants/routes";
-import { AuthActionLink } from "@/features/auth/components/auth-action-link";
+import { AddToCartButton } from "@/features/cart/cart-controls";
 import type { ServiceListItem } from "@/features/catalogue/types";
 import { formatDuration } from "@/features/catalogue/utils";
 
@@ -48,11 +47,7 @@ export function ServiceCard({ service }: { service: ServiceListItem }) {
         ) : null}
         <div className="flex items-end justify-between gap-3">
           <PriceDisplay service={service} compact />
-          <Button asChild size="sm">
-            <AuthActionLink href={`/book?service=${encodeURIComponent(service.slug)}`} serviceSlug={service.slug}>
-              Book Now
-            </AuthActionLink>
-          </Button>
+          <AddToCartButton service={service} />
         </div>
       </div>
     </article>

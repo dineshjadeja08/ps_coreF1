@@ -2,6 +2,8 @@
 
 import { CheckCircle2, Loader2 } from "lucide-react";
 import Link from "next/link";
+import { useEffect } from "react";
+import { useCart } from "@/features/cart/use-cart";
 
 import { ErrorState } from "@/components/common/error-state";
 import { Button } from "@/components/ui/button";
@@ -12,6 +14,9 @@ import { buildPaymentSummary, getBookingPayability } from "@/features/payments/u
 
 export function BookingSuccessScreen({ bookingId }: { bookingId: string }) {
   const booking = useBooking(bookingId);
+  const cart = useCart();
+  const paid = booking.data ? getBookingPayability(booking.data).alreadyPaid : false;
+  useEffect(() => { if (paid) cart.complete(bookingId); }, [paid, bookingId, cart]);
 
   if (booking.isLoading) {
     return (
@@ -64,6 +69,7 @@ export function BookingSuccessScreen({ bookingId }: { bookingId: string }) {
         </div>
 
         <div className="mt-6 flex flex-wrap gap-3">
+          {cart.count > 0 ? <Button asChild><Link href="/cart">Continue checkout ({cart.count} services)</Link></Button> : null}
           {!payability.alreadyPaid ? (
             <Button asChild>
               <Link href={routes.bookingPayment(booking.data.id)}>Complete Payment</Link>

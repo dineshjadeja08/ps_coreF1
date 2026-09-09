@@ -5,6 +5,9 @@ import { motion } from "framer-motion";
 import {
   ArrowRight,
   ChevronLeft,
+  ChevronRight,
+  Pause,
+  Play,
   CheckCircle2,
   ShieldCheck,
   Star,
@@ -12,7 +15,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 import { EmptyState } from "@/components/common/empty-state";
 import { ErrorState } from "@/components/common/error-state";
@@ -20,15 +23,45 @@ import { Button } from "@/components/ui/button";
 import { trustPromises } from "@/config/design";
 import { env } from "@/config/env";
 import { routes } from "@/constants/routes";
-import { AuthActionLink } from "@/features/auth/components/auth-action-link";
+import { AddToCartButton, CartSummary } from "@/features/cart/cart-controls";
 import { ServiceIcon } from "@/features/catalogue/components/service-icon";
 import { ServiceImage } from "@/features/catalogue/components/service-image";
-import { CategorySkeletonGrid, ServiceCardSkeletonGrid } from "@/features/catalogue/components/skeletons";
+import { ServiceCardSkeletonGrid } from "@/features/catalogue/components/skeletons";
 import { useServiceCategories, useServices } from "@/features/catalogue/queries";
 import type { ServiceCategory, ServiceListItem } from "@/features/catalogue/types";
 import { formatDuration, formatPrice, getCurrentPrice, hasOfferPrice } from "@/features/catalogue/utils";
 
-const popularSearches = ["AC Service", "Bathroom Cleaning", "Washing Machine", "Refrigerator", "Water Purifier", "Chimney"];
+const homeCategories = [
+  { name: "Home Appliances", query: "appliance", image: "/images/categories/home-appliances-repair.png" },
+  { name: "Water Tank Cleaning", query: "water tank", image: "/images/service-icons/water-tank.webp" },
+  { name: "Sofa Repair", query: "sofa", image: "/images/service-icons/sofa-repair.webp" },
+  { name: "Mosquito Net", query: "mosquito", image: "/images/service-icons/mosquito-net.webp" },
+];
+
+const popularCategories = [
+  ...homeCategories,
+  ...[
+    ["AC Service", "AC", "ac"],
+    ["Washing Machine", "washing machine", "washing-machine"],
+    ["Refrigerator", "refrigerator", "refrigerator"],
+    ["Water Purifier", "water purifier", "water-purifier"],
+    ["TV Repair", "TV", "tv"],
+    ["Geyser", "geyser", "geyser"],
+    ["Microwave", "microwave", "microwave"],
+    ["Dishwasher", "dishwasher", "dishwasher"],
+  ].map(([name, query, icon]) => ({ name, query, image: `/images/service-icons/${icon}.webp` })),
+];
+
+const spotlights = [
+  { title: "Give your sofa a fresh start", label: "Sofa repair", description: "Comfort worth coming home to.", query: "sofa", image: "/images/hero/sofa-repair-hd.png" },
+  { title: "Cleaner tanks. Fresher homes.", label: "Water tank cleaning", description: "Care for your home's water storage.", query: "water tank", image: "/images/hero/water-tank-cleaning-hd.png" },
+  { title: "Everyday appliances, expert care", label: "Home appliances", description: "Keep your home running smoothly.", query: "washing machine", image: "/images/hero/washing-machine-service-hd.png" },
+  { title: "Stay cool, all year", label: "AC service", description: "Give your cooling the care it deserves.", query: "AC", image: "/images/hero/ac-service-hd.png" },
+  { title: "Fresh air. Peaceful evenings.", label: "Mosquito net", description: "Find the right net for your home.", query: "mosquito", image: "/images/service-icons/mosquito-net.webp" },
+  { title: "Keep the freshness going", label: "Refrigerator repair", description: "Expert care for your kitchen essential.", query: "refrigerator", image: "/images/service-icons/refrigerator.webp" },
+];
+
+const serviceSearchHref = (query: string) => `${routes.services}?q=${encodeURIComponent(query)}`;
 
 function servicesForCategory(services: ServiceListItem[], category: ServiceCategory | null) {
   if (!category) return [];
@@ -63,15 +96,6 @@ function serviceFamilies(services: ServiceListItem[]) {
   return Array.from(groups.entries()).map(([name, items]) => ({ name, services: items }));
 }
 
-function getCategoryVisualSrc(category: ServiceCategory) {
-  const text = `${category.name} ${category.slug}`.toLowerCase();
-  if (text.includes("clean")) return "/images/categories/cleaning.png";
-  if (text.includes("appliance") || text.includes("repair") || text.includes("home")) {
-    return "/images/categories/home-appliances-repair.png";
-  }
-  return category.image_url ?? null;
-}
-
 export function HomeDiscovery() {
   const categories = useServiceCategories();
   const services = useServices({ page_size: 80 });
@@ -79,57 +103,33 @@ export function HomeDiscovery() {
   const [selectedCategory, setSelectedCategory] = useState<ServiceCategory | null>(null);
 
   const allServices = useMemo(() => services.data?.results ?? [], [services.data?.results]);
-  const visibleServices = (featured.data?.results?.length ? featured.data.results : allServices).slice(0, 8);
+  const visibleServices = Array.from(new Map(
+    [...(featured.data?.results ?? []), ...allServices].map((service) => [service.id, service]),
+  ).values());
   const selectedCategoryServices = useMemo(() => servicesForCategory(allServices, selectedCategory), [allServices, selectedCategory]);
   const whatsappUrl = env.supportWhatsapp ? `https://wa.me/${env.supportWhatsapp.replace(/\D/g, "")}` : routes.support;
 
   return (
-    <div className="bg-[#f7f7f7]">
+    <div className="bg-white">
       <section className="overflow-hidden border-b border-border bg-white">
-        <div className="mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[minmax(460px,0.78fr)_1fr] lg:px-8 lg:py-9">
+        <div className="mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1fr)] lg:px-8 lg:py-9">
           <div>
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
               <h1 className="max-w-lg text-4xl font-bold leading-tight text-foreground sm:text-5xl">
-                Home services at your doorstep
+                Home services at <span className="text-primary">your doorstep</span>
               </h1>
             </motion.div>
 
-            <div className="mt-9 rounded-lg border border-[#d9d9d9] bg-white p-6 shadow-sm">
-              <div className="mb-5 flex items-center justify-between gap-3">
-                <h2 className="text-lg font-semibold text-foreground">What are you looking for?</h2>
-                <Link href={routes.services} className="text-sm font-bold text-primary hover:text-primary-hover">
-                  View all
-                </Link>
-              </div>
-              {categories.isLoading ? (
-                <div className="grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-3">
-                  {Array.from({ length: 8 }).map((_, index) => (
-                    <div key={index} className="h-24 animate-pulse rounded-lg bg-muted" />
-                  ))}
-                </div>
-              ) : null}
-              {categories.data?.length ? (
-                <div className="grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-3">
-                  {categories.data.slice(0, 6).map((category) => (
-                    <HeroCategoryButton key={category.id} category={category} services={allServices} onSelect={setSelectedCategory} />
-                  ))}
-                </div>
-              ) : null}
-              <div className="mt-7 border-t border-border pt-5">
-                <h3 className="text-lg font-semibold text-foreground">Popular searches</h3>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {popularSearches.slice(0, 4).map((item) => (
-                    <Link
-                      key={item}
-                      href={`${routes.search}?q=${encodeURIComponent(item)}`}
-                      className="rounded-sm border border-border bg-white px-3 py-1.5 text-xs font-semibold text-secondary transition hover:border-primary/40 hover:text-primary"
-                    >
-                      {item}
-                    </Link>
-                  ))}
-                </div>
-              </div>
+            <p className="mt-4 text-lg text-secondary">Trusted professionals. Hassle-free service.</p>
+            <div className="mt-7 grid grid-cols-2 gap-3">
+              {homeCategories.map((item) => {
+                const category = categories.data?.find((entry) => `${entry.name} ${entry.slug}`.toLowerCase().includes(item.query));
+                const content = <><Image src={item.image} alt="" width={64} height={64} className="h-16 w-16 object-contain" /><span className="text-sm font-semibold">{item.name}</span></>;
+                const tileClass = "flex min-h-28 flex-col items-center justify-center gap-2 rounded-xl bg-[#f7f5fa] p-4 text-center transition hover:bg-primary-soft hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
+                return category ? <button key={item.name} type="button" onClick={() => setSelectedCategory(category)} className={tileClass}>{content}</button> : <Link key={item.name} href={serviceSearchHref(item.query)} className={tileClass}>{content}</Link>;
+              })}
             </div>
+            <Button asChild className="mt-6"><Link href={routes.services}>Book a Service <ArrowRight className="h-4 w-4" /></Link></Button>
           </div>
 
           <HeroImageMosaic />
@@ -149,34 +149,35 @@ export function HomeDiscovery() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 py-7 sm:px-6 lg:px-8">
-        <div className="flex items-end justify-between gap-4">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-wide text-primary">Explore</p>
-            <h2 className="mt-1 text-2xl font-bold text-foreground">All service categories</h2>
-          </div>
-          <Button asChild variant="outline">
-            <Link href={routes.services}>More Categories</Link>
-          </Button>
-        </div>
-
-        <div className="mt-5">
-          {categories.isLoading ? <CategorySkeletonGrid /> : null}
-          {categories.isError ? <ErrorState error={categories.error} onRetry={() => categories.refetch()} /> : null}
-          {categories.data?.length ? (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-              {categories.data.slice(0, 12).map((category) => (
-                <CategoryTile key={category.id} category={category} services={allServices} onSelect={setSelectedCategory} />
-              ))}
-            </div>
-          ) : null}
-          {categories.data && categories.data.length === 0 ? (
-            <EmptyState title="No categories available yet" description="Add active categories from the admin catalogue." actionLabel="Refresh" actionHref={routes.home} />
-          ) : null}
+      <section aria-label="AC service" className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 lg:px-8">
+        <div className="relative isolate overflow-hidden rounded-xl bg-[#eee5fc] p-6 sm:p-10">
+          <Image src="/images/hero/ac-service-hd.png" alt="Purple Squad AC service professional" fill sizes="(min-width: 1280px) 1200px, 100vw" className="-z-20 object-cover object-right" />
+          <div className="absolute inset-0 -z-10 bg-gradient-to-r from-[#eee5fc] via-[#eee5fc]/95 to-transparent" />
+          <p className="font-semibold text-primary">AC Service</p>
+          <h2 className="mt-2 max-w-64 text-3xl font-bold sm:max-w-none sm:text-4xl">Stay Cool, All Year</h2>
+          <p className="mt-3 max-w-56 text-sm text-secondary sm:max-w-none">Professional AC service at your doorstep.</p>
+          <Button asChild className="mt-5"><Link href={serviceSearchHref("AC")}>Book AC Service <ArrowRight className="h-4 w-4" /></Link></Button>
         </div>
       </section>
 
-      <section className="mx-auto grid max-w-7xl gap-5 px-4 py-6 sm:px-6 lg:grid-cols-[1fr_330px] lg:px-8">
+      <SpotlightCarousel />
+
+      <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <div className="mb-5 flex items-center justify-between gap-4">
+          <h2 className="text-2xl font-bold">Popular service categories</h2>
+          <Link href={routes.services} className="flex shrink-0 items-center gap-2 text-sm font-semibold text-primary">View all <ArrowRight className="h-4 w-4" /></Link>
+        </div>
+        <HorizontalServiceRow label="Popular service categories" cardWidth="w-36 sm:w-40">
+          {popularCategories.map((item) => (
+            <Link key={item.name} href={serviceSearchHref(item.query)} className="group flex flex-col items-center gap-3 rounded-xl border border-purple-100 bg-[#f8f5fc] p-5 text-center transition hover:border-primary/40 hover:bg-primary-soft">
+              <Image src={item.image} alt="" width={88} height={88} className="h-20 w-20 object-contain transition group-hover:scale-105" />
+              <h3 className="text-sm font-semibold group-hover:text-primary">{item.name}</h3>
+            </Link>
+          ))}
+        </HorizontalServiceRow>
+      </section>
+
+      <section className="mx-auto grid max-w-7xl gap-5 px-4 py-6 sm:px-6 lg:grid-cols-[minmax(0,1fr)_330px] lg:px-8">
         <div>
           <div className="mb-4 flex items-end justify-between gap-3">
             <div>
@@ -193,11 +194,11 @@ export function HomeDiscovery() {
           {services.isLoading || featured.isLoading ? <ServiceCardSkeletonGrid /> : null}
           {services.isError ? <ErrorState error={services.error} onRetry={() => services.refetch()} /> : null}
           {visibleServices.length ? (
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+            <HorizontalServiceRow label="Popular services near you" cardWidth="w-52 sm:w-60">
               {visibleServices.map((service) => (
                 <CompactPackageCard key={service.id} service={service} />
               ))}
-            </div>
+            </HorizontalServiceRow>
           ) : null}
         </div>
 
@@ -223,98 +224,90 @@ export function HomeDiscovery() {
   );
 }
 
-function HeroCategoryButton({
-  category,
-  services,
-  onSelect,
-}: {
-  category: ServiceCategory;
-  services: ServiceListItem[];
-  onSelect: (category: ServiceCategory) => void;
-}) {
-  const count = services.filter((service) => service.category.slug === category.slug).length;
-  const visualSrc = getCategoryVisualSrc(category);
-
+function HorizontalServiceRow({ label, cardWidth, children }: { label: string; cardWidth: string; children: ReactNode }) {
+  const row = useRef<HTMLDivElement>(null);
+  function scroll(direction: number) {
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    row.current?.scrollBy({ left: direction * row.current.clientWidth * 0.85, behavior: reducedMotion ? "instant" : "smooth" });
+  }
   return (
-    <button
-      type="button"
-      onClick={() => onSelect(category)}
-      className="group grid min-h-28 place-items-center rounded-lg bg-white p-2 text-center transition hover:bg-[#f6f6f6] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-    >
-      <span className="relative grid h-16 w-full max-w-32 place-items-center overflow-hidden rounded-md bg-[#f5f5f5] text-primary transition duration-300 group-hover:scale-105">
-        {visualSrc ? (
-          <Image
-            src={visualSrc}
-            alt=""
-            fill
-            sizes="(min-width: 640px) 8rem, 45vw"
-            unoptimized={visualSrc.startsWith("http")}
-            className="object-cover"
-          />
-        ) : (
-          <ServiceIcon label={category.name} className="h-full w-full" />
-        )}
-      </span>
-      <span className="mt-2 line-clamp-2 text-xs font-bold leading-4 text-foreground group-hover:text-primary">{category.name}</span>
-      <span className="text-[11px] font-semibold leading-4 text-secondary">{count || "New"}</span>
-    </button>
-  );
-}
-
-function HeroImageMosaic() {
-  return (
-    <div className="hidden min-h-[500px] grid-cols-[1fr_1fr] gap-3 lg:grid">
-      <div className="grid gap-3 pt-6">
-        <ServiceImage src="/images/hero/ac-service-hd.png" alt="Purple Squad technician servicing an air conditioner" priority className="h-[292px] rounded-md" />
-        <ServiceImage src="/images/hero/water-tank-cleaning-hd.png" alt="Purple Squad technician cleaning a rooftop water tank" className="h-[210px] rounded-md" />
+    <div className="min-w-0">
+      <div className="mb-3 flex justify-end gap-2">
+        <Button type="button" variant="outline" size="icon" aria-label={`Scroll ${label} left`} onClick={() => scroll(-1)}><ChevronLeft className="h-4 w-4" /></Button>
+        <Button type="button" variant="outline" size="icon" aria-label={`Scroll ${label} right`} onClick={() => scroll(1)}><ChevronRight className="h-4 w-4" /></Button>
       </div>
-      <div className="grid gap-3">
-        <ServiceImage src="/images/hero/washing-machine-service-hd.png" alt="Purple Squad technician servicing a washing machine" priority className="h-[270px] rounded-md" />
-        <ServiceImage src="/images/hero/sofa-repair-hd.png" alt="Purple Squad technician repairing a sofa" className="h-[238px] rounded-md" />
+      <div ref={row} role="region" aria-label={label} tabIndex={0} className="flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain pb-4 focus-visible:outline-2 focus-visible:outline-primary">
+        {Array.isArray(children) ? children.map((child, index) => <div key={index} className={`${cardWidth} shrink-0 snap-start`}>{child}</div>) : children}
       </div>
     </div>
   );
 }
 
-function CategoryTile({
-  category,
-  services,
-  onSelect,
-}: {
-  category: ServiceCategory;
-  services: ServiceListItem[];
-  onSelect: (category: ServiceCategory) => void;
-}) {
-  const count = services.filter((service) => service.category.slug === category.slug).length;
-  const visualSrc = getCategoryVisualSrc(category);
+function SpotlightCarousel() {
+  const [start, setStart] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const [hovered, setHovered] = useState(false);
+  const [focused, setFocused] = useState(false);
+
+  useEffect(() => {
+    const motionPreference = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (paused || hovered || focused) return;
+    const timer = window.setInterval(() => {
+      if (!document.hidden && !motionPreference.matches) setStart((value) => (value + 1) % spotlights.length);
+    }, 6000);
+    return () => window.clearInterval(timer);
+  }, [paused, hovered, focused]);
+
+  function change(direction: number) {
+    setPaused(true);
+    setStart((value) => (value + direction + spotlights.length) % spotlights.length);
+  }
 
   return (
-    <button
-      type="button"
-      onClick={() => onSelect(category)}
-      className="group overflow-hidden rounded-lg border border-border bg-white text-left shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-[0_18px_50px_rgba(18,18,20,0.10)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-    >
-      <span className="relative block aspect-[4/3] bg-primary-soft">
-        {visualSrc ? (
-          <Image
-            src={visualSrc}
-            alt={category.name}
-            fill
-            sizes="(min-width: 1024px) 16vw, (min-width: 640px) 33vw, 50vw"
-            unoptimized={visualSrc.startsWith("http")}
-            className="object-cover transition duration-300 group-hover:scale-105"
-          />
-        ) : (
-          <span className="grid h-full w-full place-items-center">
-            <ServiceIcon label={category.name} className="h-16 w-16" />
-          </span>
-        )}
-      </span>
-      <span className="block p-3">
-        <span className="block text-sm font-bold leading-5 text-foreground group-hover:text-primary">{category.name}</span>
-        <span className="mt-1 block text-xs font-semibold text-secondary">{count || "New"} options</span>
-      </span>
-    </button>
+    <section aria-label="Service spotlights" aria-roledescription="carousel" className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 lg:px-8" onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)} onFocusCapture={() => setFocused(true)} onBlurCapture={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false); }}>
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
+        <h2 className="text-2xl font-bold">In the spotlight</h2>
+        <div className="flex items-center gap-2">
+          <Button type="button" variant="outline" size="icon" aria-label="Previous spotlight" onClick={() => change(-1)}><ChevronLeft className="h-4 w-4" /></Button>
+          <Button type="button" variant="outline" size="icon" aria-label={paused ? "Play spotlights" : "Pause spotlights"} onClick={() => setPaused((value) => !value)}>{paused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}</Button>
+          <Button type="button" variant="outline" size="icon" aria-label="Next spotlight" onClick={() => change(1)}><ChevronRight className="h-4 w-4" /></Button>
+          <Link href={routes.services} className="ml-2 text-sm font-semibold text-primary">View all</Link>
+        </div>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-3" aria-live="off">
+        {[0, 1, 2].map((offset) => {
+          const item = spotlights[(start + offset) % spotlights.length];
+          return (
+            <Link key={offset} href={serviceSearchHref(item.query)} className="group relative isolate flex min-h-80 flex-col items-start justify-end overflow-hidden rounded-xl bg-[#e9dff7] p-5 text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+              <Image src={item.image} alt="" fill sizes="(min-width: 1280px) 390px, (min-width: 640px) 33vw, 100vw" className={`-z-20 transition duration-300 group-hover:scale-105 motion-reduce:transition-none ${item.image.endsWith("webp") ? "object-contain p-6" : "object-cover"}`} />
+              <div className="absolute inset-0 -z-10 bg-gradient-to-t from-[#1e1036]/95 via-[#1e1036]/35 to-transparent" />
+              <span className="mb-auto rounded bg-primary px-2.5 py-1 text-xs font-semibold">{item.label}</span>
+              <h3 className="mt-8 max-w-60 text-2xl font-bold leading-tight">{item.title}</h3>
+              <p className="mt-2 text-sm text-white/90">{item.description}</p>
+              <span className="mt-4 inline-flex items-center gap-2 rounded-md bg-white px-4 py-2 text-sm font-semibold text-primary">Explore <ArrowRight className="h-4 w-4" /></span>
+            </Link>
+          );
+        })}
+      </div>
+      <div className="mt-4 flex justify-center gap-2">
+        {spotlights.map((item, index) => <button key={item.query} type="button" aria-label={`Show spotlight: ${item.label}`} aria-current={start === index ? "true" : undefined} onClick={() => { setPaused(true); setStart(index); }} className="grid h-8 w-8 place-items-center rounded-full focus-visible:outline-2 focus-visible:outline-primary"><span className={`h-2 rounded-full ${start === index ? "w-6 bg-primary" : "w-2 bg-primary/25"}`} /></button>)}
+      </div>
+    </section>
+  );
+}
+
+function HeroImageMosaic() {
+  return (
+    <div className="grid grid-cols-2 gap-3">
+      <div className="grid gap-3">
+        <ServiceImage src="/images/hero/ac-service-hd.png" alt="Purple Squad technician servicing an air conditioner" priority className="h-40 rounded-xl sm:h-56" />
+        <ServiceImage src="/images/hero/water-tank-cleaning-hd.png" alt="Purple Squad technician cleaning a rooftop water tank" className="h-40 rounded-xl sm:h-56" />
+      </div>
+      <div className="grid gap-3">
+        <ServiceImage src="/images/hero/washing-machine-service-hd.png" alt="Purple Squad technician servicing a washing machine" priority className="h-40 rounded-xl sm:h-56" />
+        <ServiceImage src="/images/hero/sofa-repair-hd.png" alt="Purple Squad technician repairing a sofa" className="h-40 rounded-xl sm:h-56" />
+      </div>
+    </div>
   );
 }
 
@@ -341,11 +334,7 @@ function CompactPackageCard({ service }: { service: ServiceListItem }) {
           <span className="text-base font-bold text-foreground">{currentPrice ?? "View price"}</span>
           {showOffer ? <span className="text-xs text-muted-foreground line-through">{basePrice}</span> : null}
         </div>
-        <Button asChild size="sm" className="mt-3 w-full">
-          <AuthActionLink href={`/book?service=${encodeURIComponent(service.slug)}`} serviceSlug={service.slug}>
-            Book Now
-          </AuthActionLink>
-        </Button>
+        <AddToCartButton service={service} />
       </div>
     </article>
   );
@@ -495,10 +484,7 @@ function CategoryServicesDialog({
                     <p>Support for reschedule and payment</p>
                   </div>
                 </div>
-                <div className="mt-4 rounded-lg border border-border p-4 text-center">
-                  <p className="text-sm font-bold text-foreground">Cart</p>
-                  <p className="mt-2 text-sm text-secondary">Select a package to continue.</p>
-                </div>
+                <CartSummary />
               </aside>
             </>
           )}
@@ -528,11 +514,7 @@ function DialogPackageRow({ service }: { service: ServiceListItem }) {
       </div>
       <div className="grid gap-2 rounded-lg bg-[#f4f4f5] p-3 sm:w-28">
         <p className="text-center text-lg font-bold text-foreground">{price ?? "View price"}</p>
-        <Button asChild size="sm">
-          <AuthActionLink href={`/book?service=${encodeURIComponent(service.slug)}`} serviceSlug={service.slug}>
-            Add
-          </AuthActionLink>
-        </Button>
+        <AddToCartButton service={service} />
       </div>
     </article>
   );

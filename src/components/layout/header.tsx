@@ -1,6 +1,6 @@
 "use client";
 
-import { CircleUserRound, LogOut, ShoppingCart, UserRound } from "lucide-react";
+import { CircleUserRound, LogOut, UserRound } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -11,6 +11,8 @@ import { routes } from "@/constants/routes";
 import { useAuth } from "@/features/auth/hooks";
 import { ServiceSearch } from "@/features/catalogue/components/service-search";
 import { useServices } from "@/features/catalogue/queries";
+
+import { CartNavLink } from "@/features/cart/cart-controls";
 
 export function Header() {
   const router = useRouter();
@@ -25,7 +27,7 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-[var(--z-header)] border-b border-[#e8e8e8] bg-white/95 backdrop-blur">
-      <div className="page-container flex min-h-[5.5rem] items-center gap-6 py-3">
+      <div className="page-container flex min-h-[5.5rem] items-center gap-2 py-3 lg:gap-6">
         <Brand />
 
         <nav className="hidden items-center gap-8 text-sm font-medium text-secondary md:flex">
@@ -52,12 +54,9 @@ export function Header() {
           />
         </div>
 
+        <div className="ml-auto lg:ml-0"><CartNavLink /></div>
+
         <nav className="hidden items-center gap-3 md:flex">
-          <Button asChild variant="outline" size="icon" className="rounded-md border-[#e5e5e5]">
-            <Link href={routes.bookings} aria-label="Bookings">
-              <ShoppingCart className="h-5 w-5" />
-            </Link>
-          </Button>
           {isAuthenticated ? (
             <>
               <Button asChild variant="ghost" size="icon" className="rounded-md" title={displayName}>
@@ -81,7 +80,6 @@ export function Header() {
           </Button>
         ) : null}
 
-        <LocationCitySelector compact className="ml-auto max-w-[145px] md:hidden" />
 
         {isAuthenticated ? (
           <Button asChild variant="ghost" size="icon" className="md:hidden">
@@ -92,7 +90,8 @@ export function Header() {
         ) : null}
       </div>
 
-      <div className="border-t border-border bg-surface px-4 py-3 md:hidden">
+      <div className="flex items-center gap-2 border-t border-border bg-surface px-4 py-3 md:hidden">
+        <LocationCitySelector compact className="max-w-[130px] shrink-0" />
         <ServiceSearch
           services={services.data?.results ?? []}
           className="mx-auto max-w-7xl"

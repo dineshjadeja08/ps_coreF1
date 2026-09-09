@@ -9,7 +9,7 @@ import { ErrorState } from "@/components/common/error-state";
 import { SectionHeading } from "@/components/common/section-heading";
 import { Button } from "@/components/ui/button";
 import { routes } from "@/constants/routes";
-import { AuthActionLink } from "@/features/auth/components/auth-action-link";
+import { AddToCartButton, CartSummary } from "@/features/cart/cart-controls";
 import { ServiceIcon } from "@/features/catalogue/components/service-icon";
 import { ServiceImage } from "@/features/catalogue/components/service-image";
 import { ServiceDetailSkeleton } from "@/features/catalogue/components/skeletons";
@@ -210,10 +210,7 @@ export function ServiceDetailView() {
               </div>
             </div>
 
-            <div className="rounded-lg border border-border bg-white p-5 text-center">
-              <p className="text-sm font-bold text-foreground">Cart</p>
-              <p className="mt-2 text-sm text-secondary">Select a package to continue booking.</p>
-            </div>
+            <CartSummary />
           </div>
         </aside>
       </section>
@@ -238,11 +235,7 @@ export function ServiceDetailView() {
             <p className="text-xs text-secondary">Starts at</p>
             <p className="text-lg font-bold text-foreground">{formatPrice(getCurrentPrice(detail)) ?? "Price unavailable"}</p>
           </div>
-          <Button asChild>
-            <AuthActionLink href={`/book?service=${encodeURIComponent(detail.slug)}`} serviceSlug={detail.slug}>
-              Book Now
-            </AuthActionLink>
-          </Button>
+          <AddToCartButton service={detail} />
         </div>
       </div>
     </div>
@@ -292,11 +285,7 @@ function PackageRow({ service, featured }: { service: ServiceListItem; featured?
       </div>
       <div className="grid gap-2 rounded-lg bg-[#f1f1f3] p-3 text-center">
         {showOffer ? <p className="text-3xl font-extrabold leading-8 text-success">Save</p> : null}
-        <Button asChild size="sm">
-          <AuthActionLink href={`/book?service=${encodeURIComponent(service.slug)}`} serviceSlug={service.slug}>
-            Add
-          </AuthActionLink>
-        </Button>
+        <AddToCartButton service={service} />
       </div>
     </article>
   );

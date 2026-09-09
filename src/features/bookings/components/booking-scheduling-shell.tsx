@@ -8,6 +8,7 @@ import { useMemo, useState } from "react";
 import { EmptyState } from "@/components/common/empty-state";
 import { ErrorState } from "@/components/common/error-state";
 import { Button } from "@/components/ui/button";
+import { useCart } from "@/features/cart/use-cart";
 import { routes } from "@/constants/routes";
 import { AddressManager } from "@/features/addresses/components/address-manager";
 import { useAddresses, useAddressServiceability } from "@/features/addresses/queries";
@@ -26,6 +27,7 @@ import { formatSlotTime, getUpcomingDates, isSlotAvailable } from "@/features/sl
 import { cn } from "@/lib/utils";
 
 export function BookingSchedulingShell() {
+  const cart = useCart();
   const searchParams = useSearchParams();
   const router = useRouter();
   const serviceSlug = searchParams.get("service") ?? "";
@@ -103,6 +105,8 @@ export function BookingSchedulingShell() {
   async function createFastBooking() {
     if (!service.data || !selectedAddress || !selectedSlot || createBooking.isPending) return;
 
+    const existing = cart.items.find((item) => item.slug === serviceSlug && item.bookingId);
+    if (existing?.bookingId) { router.push(routes.bookingPayment(existing.bookingId)); return; }
     setSubmitError("");
 
     try {
@@ -115,6 +119,7 @@ export function BookingSchedulingShell() {
           customerNotes,
         }),
       );
+      cart.markBooked(serviceSlug, booking.id);
       router.push(routes.bookingPayment(booking.id));
     } catch (error) {
       setSubmitError(getBookingCreationErrorMessage(error));
@@ -147,6 +152,7 @@ export function BookingSchedulingShell() {
 
   return (
     <section className="mx-auto max-w-6xl px-4 py-4 pb-28 sm:px-6 lg:px-8">
+      {cart.count > 0 ? <div className="mb-4 flex items-center justify-between rounded-lg bg-primary-soft p-4 text-sm"><span>{cart.count} services in your cart · Complete this service, then continue with the next.</span><Link href="/cart" className="shrink-0 font-semibold text-primary">View cart</Link></div> : null}
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-sm font-semibold uppercase tracking-wide text-primary">Book service</p>

@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { serviceCities } from "@/config/design";
 import { routes } from "@/constants/routes";
-import { AuthActionLink } from "@/features/auth/components/auth-action-link";
+import { AddToCartButton } from "@/features/cart/cart-controls";
 import { ServiceIcon } from "@/features/catalogue/components/service-icon";
 import { ServiceImage } from "@/features/catalogue/components/service-image";
 import { CategorySkeletonGrid, ServiceCardSkeletonGrid } from "@/features/catalogue/components/skeletons";
@@ -76,7 +76,7 @@ export function ServicesListing({ mode = "browse" }: ServicesListingProps) {
             <p className="mt-3 max-w-2xl text-sm leading-6 text-secondary sm:text-base">
               {mode === "search"
                 ? "Type a service, appliance, or category, then choose the right package."
-                : "Search by need, choose a category, compare packages, then book directly."}
+                : "Compare packages, add your services to the cart, and check out when you are ready."}
             </p>
           </div>
 
@@ -165,7 +165,7 @@ export function ServicesListing({ mode = "browse" }: ServicesListingProps) {
                   {query ? `Results for "${query}"` : categoryTitle}
                 </h2>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-secondary">
-                  {selectedCategory?.description || "Pick the exact service you need, then continue straight to address and slot selection."}
+                  {selectedCategory?.description || "Add the services you need to your cart, then choose an address and time at checkout."}
                 </p>
               </div>
               <Button asChild variant="ghost" size="sm">
@@ -394,11 +394,7 @@ function ServicePackageRow({ service, highlight }: { service: ServiceListItem; h
             {showOffer ? <span className="text-sm text-muted-foreground line-through">{basePrice}</span> : null}
           </div>
           <div className="mt-3 grid gap-2">
-            <Button asChild>
-              <AuthActionLink href={`/book?service=${encodeURIComponent(service.slug)}`} serviceSlug={service.slug}>
-                Book now
-              </AuthActionLink>
-            </Button>
+            <AddToCartButton service={service} />
             <Button asChild variant="outline">
               <Link href={routes.serviceDetail(service.slug)}>
                 Details
