@@ -265,12 +265,12 @@ function HeroImageMosaic() {
   return (
     <div className="hidden min-h-[500px] grid-cols-[1fr_1fr] gap-3 lg:grid">
       <div className="grid gap-3 pt-6">
-        <ServiceImage src="/images/hero/ac-service.png" alt="Purple Squad technician servicing an air conditioner" priority className="h-[292px] rounded-md" />
-        <ServiceImage src="/images/hero/water-tank-cleaning.png" alt="Purple Squad technician cleaning a rooftop water tank" className="h-[210px] rounded-md" />
+        <ServiceImage src="/images/hero/ac-service-hd.png" alt="Purple Squad technician servicing an air conditioner" priority className="h-[292px] rounded-md" />
+        <ServiceImage src="/images/hero/water-tank-cleaning-hd.png" alt="Purple Squad technician cleaning a rooftop water tank" className="h-[210px] rounded-md" />
       </div>
       <div className="grid gap-3">
-        <ServiceImage src="/images/hero/washing-machine-service.png" alt="Purple Squad technician servicing a washing machine" priority className="h-[270px] rounded-md" />
-        <ServiceImage src="/images/hero/sofa-repair.png" alt="Purple Squad technician repairing a sofa" className="h-[238px] rounded-md" />
+        <ServiceImage src="/images/hero/washing-machine-service-hd.png" alt="Purple Squad technician servicing a washing machine" priority className="h-[270px] rounded-md" />
+        <ServiceImage src="/images/hero/sofa-repair-hd.png" alt="Purple Squad technician repairing a sofa" className="h-[238px] rounded-md" />
       </div>
     </div>
   );
