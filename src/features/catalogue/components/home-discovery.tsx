@@ -29,7 +29,6 @@ import type { ServiceCategory, ServiceListItem } from "@/features/catalogue/type
 import { formatDuration, formatPrice, getCurrentPrice, hasOfferPrice } from "@/features/catalogue/utils";
 
 const popularSearches = ["AC Service", "Bathroom Cleaning", "Washing Machine", "Refrigerator", "Water Purifier", "Chimney"];
-const heroVisuals = ["Bathroom Cleaning", "AC Service", "Chimney Cleaning", "Refrigerator Repair"];
 
 function servicesForCategory(services: ServiceListItem[], category: ServiceCategory | null) {
   if (!category) return [];
@@ -133,7 +132,7 @@ export function HomeDiscovery() {
             </div>
           </div>
 
-          <HeroImageMosaic services={allServices} />
+          <HeroImageMosaic />
         </div>
         <div className="mx-auto grid max-w-7xl grid-cols-2 gap-px border-t border-border bg-border px-0 sm:grid-cols-4 lg:px-0">
           {[
@@ -262,21 +261,16 @@ function HeroCategoryButton({
   );
 }
 
-function HeroImageMosaic({ services }: { services: ServiceListItem[] }) {
-  const visuals = heroVisuals.map((label) => ({
-    label,
-    service: services.find((service) => `${service.name} ${service.category.name}`.toLowerCase().includes(label.split(" ")[0].toLowerCase())),
-  }));
-
+function HeroImageMosaic() {
   return (
     <div className="hidden min-h-[500px] grid-cols-[1fr_1fr] gap-3 lg:grid">
       <div className="grid gap-3 pt-6">
-        <ServiceImage src={visuals[0]?.service?.cover_image} alt={visuals[0].label} priority className="h-[292px] rounded-md" />
-        <ServiceImage src={visuals[2]?.service?.cover_image} alt={visuals[2].label} className="h-[210px] rounded-md" />
+        <ServiceImage src="/images/hero/ac-service.png" alt="Purple Squad technician servicing an air conditioner" priority className="h-[292px] rounded-md" />
+        <ServiceImage src="/images/hero/water-tank-cleaning.png" alt="Purple Squad technician cleaning a rooftop water tank" className="h-[210px] rounded-md" />
       </div>
       <div className="grid gap-3">
-        <ServiceImage src={visuals[1]?.service?.cover_image} alt={visuals[1].label} priority className="h-[270px] rounded-md" />
-        <ServiceImage src={visuals[3]?.service?.cover_image} alt={visuals[3].label} className="h-[238px] rounded-md" />
+        <ServiceImage src="/images/hero/washing-machine-service.png" alt="Purple Squad technician servicing a washing machine" priority className="h-[270px] rounded-md" />
+        <ServiceImage src="/images/hero/sofa-repair.png" alt="Purple Squad technician repairing a sofa" className="h-[238px] rounded-md" />
       </div>
     </div>
   );
