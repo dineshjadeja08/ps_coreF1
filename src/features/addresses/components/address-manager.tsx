@@ -12,8 +12,8 @@ import { AddressFormValues } from "@/features/addresses/schema";
 import { useAddresses, useCreateAddress, useDeleteAddress, useUpdateAddress } from "@/features/addresses/queries";
 import { getFriendlyApiMessage } from "@/lib/api/errors";
 
-export function AddressManager({ compact = false }: { compact?: boolean }) {
-  const [showForm, setShowForm] = useState(false);
+export function AddressManager({ compact = false, startOpen = false }: { compact?: boolean; startOpen?: boolean }) {
+  const [showForm, setShowForm] = useState(startOpen);
   const [editing, setEditing] = useState<Address | null>(null);
   const [message, setMessage] = useState("");
   const addresses = useAddresses();

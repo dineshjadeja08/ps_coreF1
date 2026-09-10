@@ -77,7 +77,7 @@ export function BookingReviewShell() {
           : staleSlot
             ? "slot"
             : null;
-  const canSubmit = Boolean(service.data?.id && selectedAddress?.id && selectedSlot?.id && problemDescription.trim() && !createBooking.isPending && !createdBooking && !blockedReason);
+  const canSubmit = Boolean(service.data?.id && selectedAddress?.id && selectedSlot?.id && problemDescription.trim() && !createBooking.isPending && cart.ready && !createdBooking && !blockedReason);
 
   function returnToScheduling(clearSlot = false) {
     const params = new URLSearchParams();
@@ -95,7 +95,8 @@ export function BookingReviewShell() {
     setSubmitError("");
 
     try {
-      const booking = await createBooking.mutateAsync(
+      const bookService = cart.items.some((item) => item.slug === serviceSlug) ? cart.checkout : createBooking.mutateAsync;
+      const booking = await bookService(
         createBookingPayload({
           serviceId: service.data.id,
           addressId: selectedAddress.id,
@@ -104,7 +105,7 @@ export function BookingReviewShell() {
           customerNotes,
         }),
       );
-      cart.markBooked(serviceSlug, booking.id);
+      cart.markBooked();
       router.replace(routes.bookingPayment(booking.id));
     } catch (error) {
       const message = getBookingCreationErrorMessage(error);
@@ -186,7 +187,7 @@ export function BookingReviewShell() {
         </Link>
       </Button>
 
-      <div className="grid gap-8 lg:grid-cols-[1fr_380px] lg:items-start">
+      <div className="grid min-w-0 grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
         <main className="space-y-6">
           <section className="rounded-md border border-border bg-surface p-5 shadow-sm">
             <p className="text-sm font-semibold uppercase tracking-wide text-primary">Booking Review</p>

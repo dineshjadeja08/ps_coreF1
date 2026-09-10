@@ -12,6 +12,8 @@ export const addressSchema = z.object({
   state: z.string().trim().min(1, "Enter state.").max(100),
   postal_code: z.string().trim().min(1, "Enter pincode.").max(20),
   country: z.string().trim().min(1).max(100),
+  latitude: z.string().trim().max(32).nullable().optional(),
+  longitude: z.string().trim().max(32).nullable().optional(),
   is_default: z.boolean(),
 });
 
@@ -29,5 +31,7 @@ export const emptyAddressValues: AddressFormValues = {
   state: "Tamil Nadu",
   postal_code: "",
   country: "India",
+  latitude: null,
+  longitude: null,
   is_default: false,
 };

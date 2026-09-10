@@ -7,6 +7,7 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 type ServiceImageProps = {
+  fit?: "cover" | "contain";
   src?: string | null;
   alt: string;
   className?: string;
@@ -120,7 +121,7 @@ function isLocalBackendImage(src?: string | null) {
   return Boolean(src?.startsWith("http://127.0.0.1:8000/") || src?.startsWith("http://localhost:8000/"));
 }
 
-export function ServiceImage({ src, alt, className, priority }: ServiceImageProps) {
+export function ServiceImage({ src, alt, className, priority, fit = "cover" }: ServiceImageProps) {
   const [failed, setFailed] = useState(false);
   const hasUploadedImage = Boolean(src) && !failed;
   const fallback = getFallbackVisual(alt);
@@ -135,7 +136,7 @@ export function ServiceImage({ src, alt, className, priority }: ServiceImageProp
         priority={priority}
         unoptimized={isLocalBackendImage(imageSrc)}
         sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-        className="object-cover"
+        className={fit === "contain" ? "object-contain" : "object-cover"}
         onError={() => setFailed(true)}
       />
       {!hasUploadedImage ? (

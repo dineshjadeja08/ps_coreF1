@@ -1,14 +1,15 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CheckCircle2, Loader2, XCircle } from "lucide-react";
-import { useEffect } from "react";
+import { CheckCircle2, LocateFixed, Loader2, XCircle } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { addressSchema, emptyAddressValues, type AddressFormValues } from "@/features/addresses/schema";
 import type { Address } from "@/features/addresses/types";
+import { detectCurrentAddress } from "@/features/addresses/location";
 import { useAddressServiceability } from "@/features/addresses/queries";
 
 type AddressFormProps = {
@@ -32,11 +33,15 @@ function toFormValues(address?: Address | null): AddressFormValues {
     state: address.state,
     postal_code: address.postal_code,
     country: address.country ?? "India",
+    latitude: address.latitude ?? null,
+    longitude: address.longitude ?? null,
     is_default: address.is_default,
   };
 }
 
 export function AddressForm({ initialAddress, submitting, onSubmit, onCancel }: AddressFormProps) {
+  const [detecting, setDetecting] = useState(false);
+  const [detectMessage, setDetectMessage] = useState("");
   const form = useForm<AddressFormValues>({
     resolver: zodResolver(addressSchema),
     defaultValues: toFormValues(initialAddress),
@@ -47,6 +52,24 @@ export function AddressForm({ initialAddress, submitting, onSubmit, onCancel }: 
   useEffect(() => {
     form.reset(toFormValues(initialAddress));
   }, [form, initialAddress]);
+
+  async function detectAddressFromLocation() {
+    setDetecting(true);
+    setDetectMessage("");
+    try {
+      const detected = await detectCurrentAddress();
+      for (const [name, value] of Object.entries(detected)) {
+        if (value) {
+          form.setValue(name as keyof AddressFormValues, value, { shouldDirty: true, shouldValidate: true });
+        }
+      }
+      setDetectMessage("Location detected. Check the address before saving.");
+    } catch (error) {
+      setDetectMessage(error instanceof Error ? error.message : "Location detection failed.");
+    } finally {
+      setDetecting(false);
+    }
+  }
 
   const fields: Array<{ name: keyof AddressFormValues; label: string; placeholder: string; required?: boolean }> = [
     { name: "recipient_name", label: "Recipient name", placeholder: "Name", required: true },
@@ -62,6 +85,16 @@ export function AddressForm({ initialAddress, submitting, onSubmit, onCancel }: 
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="rounded-lg border border-border bg-surface p-5 shadow-sm">
+      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h3 className="text-lg font-bold text-foreground">{initialAddress ? "Edit address" : "Add address"}</h3>
+        </div>
+        <Button type="button" variant="outline" onClick={() => void detectAddressFromLocation()} disabled={detecting || submitting}>
+          {detecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <LocateFixed className="h-4 w-4" />}
+          Auto detect address
+        </Button>
+      </div>
+      {detectMessage ? <p className="mb-4 rounded-md bg-primary-soft p-3 text-sm text-primary">{detectMessage}</p> : null}
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label htmlFor="label" className="text-sm font-semibold text-foreground">

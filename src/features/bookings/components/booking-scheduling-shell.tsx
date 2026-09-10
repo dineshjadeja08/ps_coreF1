@@ -41,6 +41,7 @@ export function BookingSchedulingShell() {
   const [problemDescription, setProblemDescription] = useState("");
   const [customerNotes, setCustomerNotes] = useState("");
   const [submitError, setSubmitError] = useState("");
+  const [showAddressForm, setShowAddressForm] = useState(false);
 
   const service = useServiceDetail(serviceSlug);
   const addresses = useAddresses();
@@ -103,14 +104,15 @@ export function BookingSchedulingShell() {
   }
 
   async function createFastBooking() {
-    if (!service.data || !selectedAddress || !selectedSlot || createBooking.isPending) return;
+    if (!service.data || !selectedAddress || !selectedSlot || createBooking.isPending || !cart.ready) return;
 
     const existing = cart.items.find((item) => item.slug === serviceSlug && item.bookingId);
     if (existing?.bookingId) { router.push(routes.bookingPayment(existing.bookingId)); return; }
     setSubmitError("");
 
     try {
-      const booking = await createBooking.mutateAsync(
+      const bookService = (searchParams.get("cart") === "1" || cart.items.some((item) => item.slug === serviceSlug)) ? cart.checkout : createBooking.mutateAsync;
+      const booking = await bookService(
         createBookingPayload({
           serviceId: service.data.id,
           addressId: selectedAddress.id,
@@ -119,7 +121,7 @@ export function BookingSchedulingShell() {
           customerNotes,
         }),
       );
-      cart.markBooked(serviceSlug, booking.id);
+      cart.markBooked();
       router.push(routes.bookingPayment(booking.id));
     } catch (error) {
       setSubmitError(getBookingCreationErrorMessage(error));
@@ -152,7 +154,7 @@ export function BookingSchedulingShell() {
 
   return (
     <section className="mx-auto max-w-6xl px-4 py-4 pb-28 sm:px-6 lg:px-8">
-      {cart.count > 0 ? <div className="mb-4 flex items-center justify-between rounded-lg bg-primary-soft p-4 text-sm"><span>{cart.count} services in your cart · Complete this service, then continue with the next.</span><Link href="/cart" className="shrink-0 font-semibold text-primary">View cart</Link></div> : null}
+      {cart.count > 0 ? <div className="mb-4 flex items-center justify-between gap-3 rounded-lg bg-primary-soft p-4 text-sm"><span>{cart.count} services in your cart · Complete this service, then continue with the next.</span><Link href="/cart" className="shrink-0 font-semibold text-primary">View cart</Link></div> : null}
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-sm font-semibold uppercase tracking-wide text-primary">Book service</p>
@@ -190,16 +192,21 @@ export function BookingSchedulingShell() {
         <div className="mb-5 h-40 animate-pulse rounded-lg bg-muted" />
       ) : null}
 
-      <div className="grid gap-4 lg:grid-cols-[1fr_320px] lg:items-start">
-        <div className="space-y-4">
+      <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
+        <div className="min-w-0 space-y-4">
           <section className="rounded-lg border border-border bg-surface p-4 shadow-sm">
-            <div className="flex items-start justify-between gap-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <h2 className="text-lg font-bold text-foreground">1. Select address</h2>
               </div>
-              {serviceability.data?.is_supported ? (
-                <span className="rounded-sm bg-green-50 px-3 py-1 text-xs font-bold text-green-700">Serviceable</span>
-              ) : null}
+              <div className="flex flex-wrap items-center gap-2">
+                <Button type="button" variant="outline" size="sm" onClick={() => setShowAddressForm((value) => !value)}>
+                  {showAddressForm ? "Hide form" : "Auto detect address"}
+                </Button>
+                {serviceability.data?.is_supported ? (
+                  <span className="rounded-sm bg-green-50 px-3 py-1 text-xs font-bold text-green-700">Serviceable</span>
+                ) : null}
+              </div>
             </div>
 
             {addresses.isLoading ? <div className="mt-4 h-24 animate-pulse rounded-lg bg-muted" /> : null}
@@ -231,7 +238,11 @@ export function BookingSchedulingShell() {
                 })}
               </div>
             ) : null}
-            {addresses.data && addresses.data.results.length === 0 ? <AddressManager compact /> : null}
+            {showAddressForm || (addresses.data && addresses.data.results.length === 0) ? (
+              <div className="mt-4">
+                <AddressManager compact startOpen />
+              </div>
+            ) : null}
 
             {selectedAddress ? (
               <div className="mt-3 rounded-lg bg-slate-50 px-3 py-2" aria-live="polite">
@@ -313,7 +324,7 @@ export function BookingSchedulingShell() {
           <Button
             type="button"
             className="mt-5 w-full"
-            disabled={!canContinue || createBooking.isPending}
+            disabled={!canContinue || createBooking.isPending || !cart.ready}
             onClick={() => void createFastBooking()}
           >
             {createBooking.isPending ? (
@@ -328,14 +339,14 @@ export function BookingSchedulingShell() {
         </aside>
       </div>
 
-      <div className="fixed inset-x-0 bottom-16 z-30 border-t border-border bg-surface p-3 shadow-lg md:hidden">
+      <div className="sticky-action-safe fixed inset-x-0 bottom-0 z-40 border-t border-border bg-surface p-3 shadow-lg md:hidden">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
           <p className="min-w-0 text-sm font-semibold text-foreground">
             {selectedSlot ? `${formatSlotTime(selectedSlot.start_time)} selected` : "Choose a time slot"}
           </p>
           <Button
             type="button"
-            disabled={!canContinue || createBooking.isPending}
+            disabled={!canContinue || createBooking.isPending || !cart.ready}
             onClick={() => void createFastBooking()}
           >
             {createBooking.isPending ? "Booking..." : "Pay"}

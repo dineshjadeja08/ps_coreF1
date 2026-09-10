@@ -9,7 +9,6 @@ import {
   Pause,
   Play,
   CheckCircle2,
-  ShieldCheck,
   Star,
   X,
 } from "lucide-react";
@@ -23,13 +22,13 @@ import { Button } from "@/components/ui/button";
 import { trustPromises } from "@/config/design";
 import { env } from "@/config/env";
 import { routes } from "@/constants/routes";
-import { AddToCartButton, CartSummary } from "@/features/cart/cart-controls";
+import { AddToCartButton } from "@/features/cart/cart-controls";
 import { ServiceIcon } from "@/features/catalogue/components/service-icon";
 import { ServiceImage } from "@/features/catalogue/components/service-image";
 import { ServiceCardSkeletonGrid } from "@/features/catalogue/components/skeletons";
 import { useServiceCategories, useServices } from "@/features/catalogue/queries";
 import type { ServiceCategory, ServiceListItem } from "@/features/catalogue/types";
-import { formatDuration, formatPrice, getCurrentPrice, hasOfferPrice } from "@/features/catalogue/utils";
+import { formatPrice, getCurrentPrice, hasOfferPrice } from "@/features/catalogue/utils";
 
 const homeCategories = [
   { name: "Home Appliances", query: "appliance", image: "/images/categories/home-appliances-repair.png" },
@@ -62,6 +61,28 @@ const spotlights = [
 ];
 
 const serviceSearchHref = (query: string) => `${routes.services}?q=${encodeURIComponent(query)}`;
+const preferredServiceSlugs: Record<string, string> = {
+  AC: "ac-service",
+  appliance: "washing-machine-repair-service",
+  mosquito: "mosquito-net-inspection-charge",
+  refrigerator: "refrigerator-repair-services",
+  sofa: "sofa-repair-inspection-charge",
+  "washing machine": "washing-machine-repair-service",
+  "water tank": "water-tank-cleaning",
+};
+
+function serviceDetailHrefForQuery(services: ServiceListItem[], query: string) {
+  const preferred = preferredServiceSlugs[query];
+  if (preferred && services.some((item) => item.slug === preferred)) {
+    return routes.serviceDetail(preferred);
+  }
+  const normalized = query.toLowerCase();
+  const service = services.find((item) => {
+    const searchable = `${item.name} ${item.slug} ${item.short_description} ${item.category.name}`.toLowerCase();
+    return searchable.includes(normalized);
+  });
+  return service ? routes.serviceDetail(service.slug) : serviceSearchHref(query);
+}
 
 function servicesForCategory(services: ServiceListItem[], category: ServiceCategory | null) {
   if (!category) return [];
@@ -72,13 +93,13 @@ function serviceFamilyFor(service: ServiceListItem) {
   const text = `${service.name} ${service.short_description} ${service.category.name}`.toLowerCase();
   if (text.includes("washing")) return "Washing Machine";
   if (text.includes("refrigerator") || text.includes("fridge")) return "Refrigerator";
+  if (text.includes("cctv")) return "CCTV Camera";
   if (text.includes("wall mount")) return "TV Wall Mount";
   if (text.includes("tv")) return "TV Repair";
   if (text.includes("geyser")) return "Geyser";
   if (text.includes("purifier")) return "Water Purifier";
   if (text.includes("microwave")) return "Microwave Oven";
   if (text.includes("dishwasher")) return "Dishwasher";
-  if (text.includes("cctv")) return "CCTV Camera";
   if (text.includes("chimney")) return "Chimney";
   if (text.includes("full house")) return "Full House Cleaning";
   if (text.includes("bathroom")) return "Bathroom Cleaning";
@@ -107,26 +128,32 @@ export function HomeDiscovery() {
     [...(featured.data?.results ?? []), ...allServices].map((service) => [service.id, service]),
   ).values());
   const selectedCategoryServices = useMemo(() => servicesForCategory(allServices, selectedCategory), [allServices, selectedCategory]);
+  const homeAppliancesCategory = useMemo(
+    () => categories.data?.find((entry) => `${entry.name} ${entry.slug}`.toLowerCase().includes("appliance")) ?? null,
+    [categories.data],
+  );
   const whatsappUrl = env.supportWhatsapp ? `https://wa.me/${env.supportWhatsapp.replace(/\D/g, "")}` : routes.support;
 
   return (
-    <div className="bg-white">
+    <div className="min-w-0 bg-white">
       <section className="overflow-hidden border-b border-border bg-white">
-        <div className="mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1fr)] lg:px-8 lg:py-9">
+        <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1fr)] lg:px-8 lg:py-9">
           <div>
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
-              <h1 className="max-w-lg text-4xl font-bold leading-tight text-foreground sm:text-5xl">
+              <h1 className="max-w-lg text-3xl font-bold leading-tight text-foreground sm:text-5xl">
                 Home services at <span className="text-primary">your doorstep</span>
               </h1>
             </motion.div>
 
-            <p className="mt-4 text-lg text-secondary">Trusted professionals. Hassle-free service.</p>
+            <p className="mt-3 text-base text-secondary sm:text-lg">Trusted professionals. Hassle-free service.</p>
             <div className="mt-7 grid grid-cols-2 gap-3">
               {homeCategories.map((item) => {
-                const category = categories.data?.find((entry) => `${entry.name} ${entry.slug}`.toLowerCase().includes(item.query));
                 const content = <><Image src={item.image} alt="" width={64} height={64} className="h-16 w-16 object-contain" /><span className="text-sm font-semibold">{item.name}</span></>;
                 const tileClass = "flex min-h-28 flex-col items-center justify-center gap-2 rounded-xl bg-[#f7f5fa] p-4 text-center transition hover:bg-primary-soft hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
-                return category ? <button key={item.name} type="button" onClick={() => setSelectedCategory(category)} className={tileClass}>{content}</button> : <Link key={item.name} href={serviceSearchHref(item.query)} className={tileClass}>{content}</Link>;
+                if (item.query === "appliance" && homeAppliancesCategory) {
+                  return <button key={item.name} type="button" onClick={() => setSelectedCategory(homeAppliancesCategory)} className={tileClass}>{content}</button>;
+                }
+                return <Link key={item.name} href={serviceDetailHrefForQuery(allServices, item.query)} className={tileClass}>{content}</Link>;
               })}
             </div>
             <Button asChild className="mt-6"><Link href={routes.services}>Book a Service <ArrowRight className="h-4 w-4" /></Link></Button>
@@ -150,27 +177,28 @@ export function HomeDiscovery() {
       </section>
 
       <section aria-label="AC service" className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 lg:px-8">
-        <div className="relative isolate overflow-hidden rounded-xl bg-[#eee5fc] p-6 sm:p-10">
-          <Image src="/images/hero/ac-service-hd.png" alt="Purple Squad AC service professional" fill sizes="(min-width: 1280px) 1200px, 100vw" className="-z-20 object-cover object-right" />
-          <div className="absolute inset-0 -z-10 bg-gradient-to-r from-[#eee5fc] via-[#eee5fc]/95 to-transparent" />
-          <p className="font-semibold text-primary">AC Service</p>
-          <h2 className="mt-2 max-w-64 text-3xl font-bold sm:max-w-none sm:text-4xl">Stay Cool, All Year</h2>
-          <p className="mt-3 max-w-56 text-sm text-secondary sm:max-w-none">Professional AC service at your doorstep.</p>
-          <Button asChild className="mt-5"><Link href={serviceSearchHref("AC")}>Book AC Service <ArrowRight className="h-4 w-4" /></Link></Button>
+        <div className="grid overflow-hidden rounded-2xl bg-[#eee5fc] sm:aspect-[235/100] sm:grid-cols-2 sm:items-center">
+          <div className="p-6 sm:p-8">
+            <p className="text-sm font-semibold text-primary">AC Service</p>
+            <h2 className="mt-2 text-3xl font-bold sm:text-4xl">Stay Cool, All Year</h2>
+            <p className="mt-3 text-sm text-secondary">Professional AC service at your doorstep.</p>
+            <Button asChild className="mt-5 min-h-11"><Link href={serviceDetailHrefForQuery(allServices, "AC")}>Book AC Service <ArrowRight className="h-4 w-4" /></Link></Button>
+          </div>
+          <Image src="/images/hero/ac-service-hd.png" alt="Purple Squad AC service professional" width={1536} height={1024} sizes="(min-width: 640px) 50vw, 100vw" className="aspect-[235/100] h-full w-full object-contain sm:aspect-auto" />
         </div>
       </section>
 
-      <SpotlightCarousel />
+      <SpotlightCarousel services={allServices} />
 
       <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-5 flex items-center justify-between gap-4">
-          <h2 className="text-2xl font-bold">Popular service categories</h2>
+          <h2 className="text-xl font-bold sm:text-2xl">Popular service categories</h2>
           <Link href={routes.services} className="flex shrink-0 items-center gap-2 text-sm font-semibold text-primary">View all <ArrowRight className="h-4 w-4" /></Link>
         </div>
-        <HorizontalServiceRow label="Popular service categories" cardWidth="w-36 sm:w-40">
+        <HorizontalServiceRow label="Popular service categories" cardWidth="w-28 sm:w-40">
           {popularCategories.map((item) => (
-            <Link key={item.name} href={serviceSearchHref(item.query)} className="group flex flex-col items-center gap-3 rounded-xl border border-purple-100 bg-[#f8f5fc] p-5 text-center transition hover:border-primary/40 hover:bg-primary-soft">
-              <Image src={item.image} alt="" width={88} height={88} className="h-20 w-20 object-contain transition group-hover:scale-105" />
+            <Link key={item.name} href={serviceSearchHref(item.query)} className="group flex flex-col items-center gap-3 rounded-xl border border-purple-100 bg-[#f8f5fc] p-3 text-center sm:p-5 transition hover:border-primary/40 hover:bg-primary-soft">
+              <Image src={item.image} alt="" width={88} height={88} className="h-14 w-14 object-contain sm:h-20 sm:w-20 transition group-hover:scale-105" />
               <h3 className="text-sm font-semibold group-hover:text-primary">{item.name}</h3>
             </Link>
           ))}
@@ -178,11 +206,11 @@ export function HomeDiscovery() {
       </section>
 
       <section className="mx-auto grid max-w-7xl gap-5 px-4 py-6 sm:px-6 lg:grid-cols-[minmax(0,1fr)_330px] lg:px-8">
-        <div>
+        <div className="min-w-0">
           <div className="mb-4 flex items-end justify-between gap-3">
             <div>
               <p className="text-xs font-bold uppercase tracking-wide text-primary">Frequently booked</p>
-              <h2 className="mt-1 text-2xl font-bold text-foreground">Popular services near you</h2>
+              <h2 className="mt-1 text-xl font-bold text-foreground sm:text-2xl">Popular services near you</h2>
             </div>
             <Button asChild variant="ghost">
               <Link href={routes.services}>
@@ -194,7 +222,7 @@ export function HomeDiscovery() {
           {services.isLoading || featured.isLoading ? <ServiceCardSkeletonGrid /> : null}
           {services.isError ? <ErrorState error={services.error} onRetry={() => services.refetch()} /> : null}
           {visibleServices.length ? (
-            <HorizontalServiceRow label="Popular services near you" cardWidth="w-52 sm:w-60">
+            <HorizontalServiceRow label="Popular services near you" cardWidth="w-[70vw] max-w-64 sm:w-60">
               {visibleServices.map((service) => (
                 <CompactPackageCard key={service.id} service={service} />
               ))}
@@ -232,83 +260,83 @@ function HorizontalServiceRow({ label, cardWidth, children }: { label: string; c
   }
   return (
     <div className="min-w-0">
-      <div className="mb-3 flex justify-end gap-2">
+      <div className="mb-3 hidden justify-end gap-2 sm:flex">
         <Button type="button" variant="outline" size="icon" aria-label={`Scroll ${label} left`} onClick={() => scroll(-1)}><ChevronLeft className="h-4 w-4" /></Button>
         <Button type="button" variant="outline" size="icon" aria-label={`Scroll ${label} right`} onClick={() => scroll(1)}><ChevronRight className="h-4 w-4" /></Button>
       </div>
-      <div ref={row} role="region" aria-label={label} tabIndex={0} className="flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain pb-4 focus-visible:outline-2 focus-visible:outline-primary">
-        {Array.isArray(children) ? children.map((child, index) => <div key={index} className={`${cardWidth} shrink-0 snap-start`}>{child}</div>) : children}
+      <div ref={row} role="region" aria-label={label} tabIndex={0} className="mobile-scroll-row flex max-w-full snap-x snap-proximity gap-3 overflow-x-auto overscroll-x-contain px-0.5 pb-4 pt-1 focus-visible:outline-2 focus-visible:outline-primary">
+        {Array.isArray(children) ? children.map((child, index) => <div key={index} className={`${cardWidth} min-w-0 shrink-0 snap-start`}>{child}</div>) : children}
       </div>
     </div>
   );
 }
 
-function SpotlightCarousel() {
+function SpotlightCarousel({ services }: { services: ServiceListItem[] }) {
+  const row = useRef<HTMLDivElement>(null);
   const [start, setStart] = useState(0);
+  const [last, setLast] = useState(5);
   const [paused, setPaused] = useState(false);
   const [hovered, setHovered] = useState(false);
   const [focused, setFocused] = useState(false);
 
+  function goTo(index: number) {
+    const element = row.current;
+    const card = element?.firstElementChild as HTMLElement | null;
+    if (!element || !card) return;
+    element.scrollTo({ left: index * (card.offsetWidth + 16), behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
+  }
   useEffect(() => {
-    const motionPreference = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const element = row.current;
+    if (!element) return;
+    const observer = new ResizeObserver(() => {
+      const card = element.firstElementChild as HTMLElement | null;
+      if (card) setLast(Math.max(0, spotlights.length - Math.floor((element.clientWidth + 16) / (card.offsetWidth + 16))));
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+  useEffect(() => {
     if (paused || hovered || focused) return;
     const timer = window.setInterval(() => {
-      if (!document.hidden && !motionPreference.matches) setStart((value) => (value + 1) % spotlights.length);
+      if (!document.hidden && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) goTo(start >= last ? 0 : start + 1);
     }, 6000);
     return () => window.clearInterval(timer);
-  }, [paused, hovered, focused]);
-
-  function change(direction: number) {
-    setPaused(true);
-    setStart((value) => (value + direction + spotlights.length) % spotlights.length);
-  }
+  }, [paused, hovered, focused, start, last]);
 
   return (
-    <section aria-label="Service spotlights" aria-roledescription="carousel" className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 lg:px-8" onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)} onFocusCapture={() => setFocused(true)} onBlurCapture={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false); }}>
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
-        <h2 className="text-2xl font-bold">In the spotlight</h2>
-        <div className="flex items-center gap-2">
-          <Button type="button" variant="outline" size="icon" aria-label="Previous spotlight" onClick={() => change(-1)}><ChevronLeft className="h-4 w-4" /></Button>
-          <Button type="button" variant="outline" size="icon" aria-label={paused ? "Play spotlights" : "Pause spotlights"} onClick={() => setPaused((value) => !value)}>{paused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}</Button>
-          <Button type="button" variant="outline" size="icon" aria-label="Next spotlight" onClick={() => change(1)}><ChevronRight className="h-4 w-4" /></Button>
-          <Link href={routes.services} className="ml-2 text-sm font-semibold text-primary">View all</Link>
+    <section aria-label="Service spotlights" aria-roledescription="carousel" className="mx-auto max-w-7xl min-w-0 px-4 pt-6 sm:px-6 lg:px-8" onPointerEnter={(event) => { if (event.pointerType === "mouse") setHovered(true); }} onPointerLeave={() => setHovered(false)} onFocusCapture={() => setFocused(true)} onBlurCapture={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false); }}>
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <h2 className="text-xl font-bold sm:text-2xl">In the spotlight</h2>
+        <div className="flex items-center gap-1">
+          <Button type="button" variant="outline" size="icon" className="hidden sm:inline-flex" aria-label="Previous spotlight" onClick={() => { setPaused(true); goTo(start <= 0 ? last : start - 1); }}><ChevronLeft className="h-4 w-4" /></Button>
+          <Button type="button" variant="ghost" size="icon" className="min-h-11 min-w-11" aria-label={paused ? "Play spotlights" : "Pause spotlights"} onClick={() => setPaused((value) => !value)}>{paused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}</Button>
+          <Button type="button" variant="outline" size="icon" className="hidden sm:inline-flex" aria-label="Next spotlight" onClick={() => { setPaused(true); goTo(start >= last ? 0 : start + 1); }}><ChevronRight className="h-4 w-4" /></Button>
+          <Link href={routes.services} className="ml-1 whitespace-nowrap text-sm font-semibold text-primary">View all</Link>
         </div>
       </div>
-      <div className="grid gap-4 sm:grid-cols-3" aria-live="off">
-        {[0, 1, 2].map((offset) => {
-          const item = spotlights[(start + offset) % spotlights.length];
-          return (
-            <Link key={offset} href={serviceSearchHref(item.query)} className="group relative isolate flex min-h-80 flex-col items-start justify-end overflow-hidden rounded-xl bg-[#e9dff7] p-5 text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
-              <Image src={item.image} alt="" fill sizes="(min-width: 1280px) 390px, (min-width: 640px) 33vw, 100vw" className={`-z-20 transition duration-300 group-hover:scale-105 motion-reduce:transition-none ${item.image.endsWith("webp") ? "object-contain p-6" : "object-cover"}`} />
-              <div className="absolute inset-0 -z-10 bg-gradient-to-t from-[#1e1036]/95 via-[#1e1036]/35 to-transparent" />
-              <span className="mb-auto rounded bg-primary px-2.5 py-1 text-xs font-semibold">{item.label}</span>
-              <h3 className="mt-8 max-w-60 text-2xl font-bold leading-tight">{item.title}</h3>
-              <p className="mt-2 text-sm text-white/90">{item.description}</p>
-              <span className="mt-4 inline-flex items-center gap-2 rounded-md bg-white px-4 py-2 text-sm font-semibold text-primary">Explore <ArrowRight className="h-4 w-4" /></span>
-            </Link>
-          );
-        })}
+      <div ref={row} role="group" aria-label="Swipe to browse service spotlights" className="mobile-scroll-row flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain px-0.5 pb-2" onTouchStart={() => setPaused(true)} onScroll={() => {
+        const element = row.current;
+        const card = element?.firstElementChild as HTMLElement | null;
+        if (element && card) setStart(Math.min(last, Math.round(element.scrollLeft / (card.offsetWidth + 16))));
+      }}>
+        {spotlights.map((item) => <Link key={item.query} href={serviceDetailHrefForQuery(services, item.query)} className="group flex w-[84%] shrink-0 snap-start flex-col overflow-hidden rounded-2xl border border-purple-100 bg-[#f7f2fd] sm:w-[calc((100%-1rem)/2)] lg:w-[calc((100%-2rem)/3)] focus-visible:outline-2 focus-visible:outline-primary">
+          <div className="relative aspect-[235/100] w-full bg-[#eee5f8]"><Image src={item.image} alt={item.label} fill sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 84vw" className={`object-contain ${item.image.endsWith("webp") ? "p-5" : ""}`} /></div>
+          <div className="flex flex-1 flex-col items-start p-5"><span className="text-xs font-bold uppercase tracking-wide text-primary">{item.label}</span><h3 className="mt-2 text-xl font-bold leading-tight">{item.title}</h3><p className="mt-2 text-sm leading-6 text-secondary">{item.description}</p><span className="mt-auto inline-flex min-h-11 items-center gap-2 pt-3 text-sm font-semibold text-primary">Explore <ArrowRight className="h-4 w-4" /></span></div>
+        </Link>)}
       </div>
-      <div className="mt-4 flex justify-center gap-2">
-        {spotlights.map((item, index) => <button key={item.query} type="button" aria-label={`Show spotlight: ${item.label}`} aria-current={start === index ? "true" : undefined} onClick={() => { setPaused(true); setStart(index); }} className="grid h-8 w-8 place-items-center rounded-full focus-visible:outline-2 focus-visible:outline-primary"><span className={`h-2 rounded-full ${start === index ? "w-6 bg-primary" : "w-2 bg-primary/25"}`} /></button>)}
-      </div>
+      <div className="mt-1 flex justify-center gap-1">{Array.from({ length: last + 1 }, (_, index) => <button key={index} type="button" aria-label={`Show spotlight ${index + 1}`} aria-current={start === index ? "true" : undefined} onClick={() => { setPaused(true); goTo(index); }} className="grid h-11 w-11 place-items-center rounded-full focus-visible:outline-2 focus-visible:outline-primary"><span className={`h-2 rounded-full ${start === index ? "w-6 bg-primary" : "w-2 bg-primary/25"}`} /></button>)}</div>
     </section>
   );
 }
 
 function HeroImageMosaic() {
-  return (
-    <div className="grid grid-cols-2 gap-3">
-      <div className="grid gap-3">
-        <ServiceImage src="/images/hero/ac-service-hd.png" alt="Purple Squad technician servicing an air conditioner" priority className="h-40 rounded-xl sm:h-56" />
-        <ServiceImage src="/images/hero/water-tank-cleaning-hd.png" alt="Purple Squad technician cleaning a rooftop water tank" className="h-40 rounded-xl sm:h-56" />
-      </div>
-      <div className="grid gap-3">
-        <ServiceImage src="/images/hero/washing-machine-service-hd.png" alt="Purple Squad technician servicing a washing machine" priority className="h-40 rounded-xl sm:h-56" />
-        <ServiceImage src="/images/hero/sofa-repair-hd.png" alt="Purple Squad technician repairing a sofa" className="h-40 rounded-xl sm:h-56" />
-      </div>
-    </div>
-  );
+  const cards = [
+    { image: "ac-service", title: "AC Service", query: "AC" },
+    { image: "washing-machine-service", title: "Appliance Repair", query: "washing machine" },
+    { image: "water-tank-cleaning", title: "Water Tank Cleaning", query: "water tank" },
+    { image: "sofa-repair", title: "Sofa Repair", query: "sofa" },
+  ];
+  return <div className="grid min-w-0 grid-cols-2 content-start gap-3">{cards.map((card) => <Link key={card.image} href={serviceSearchHref(card.query)} className="overflow-hidden rounded-xl border border-purple-100 bg-[#faf7fd] focus-visible:outline-2 focus-visible:outline-primary"><Image src={`/images/hero/${card.image}-hd.png`} alt={`Purple Squad ${card.title}`} width={1536} height={1024} priority sizes="(min-width: 1024px) 28vw, 46vw" className="aspect-[3/2] h-auto w-full object-contain" /><p className="px-3 py-3 text-xs font-bold sm:text-sm">{card.title}</p></Link>)}</div>;
 }
 
 function CompactPackageCard({ service }: { service: ServiceListItem }) {
@@ -319,7 +347,7 @@ function CompactPackageCard({ service }: { service: ServiceListItem }) {
   return (
     <article className="overflow-hidden rounded-lg border border-border bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[var(--shadow-card)]">
       <Link href={routes.serviceDetail(service.slug)} aria-label={`View ${service.name}`}>
-        <ServiceImage src={service.cover_image} alt={service.name} className="aspect-[4/3] rounded-none" />
+        <ServiceImage src={service.cover_image} alt={service.name} fit="contain" className="aspect-[3/2] rounded-none" />
       </Link>
       <div className="p-3">
         <h3 className="line-clamp-2 min-h-10 text-sm font-bold leading-5 text-foreground">
@@ -349,14 +377,28 @@ function CategoryServicesDialog({
   services: ServiceListItem[];
   onClose: () => void;
 }) {
-  const [selectedFamily, setSelectedFamily] = useState<string | null>(null);
   const families = useMemo(() => serviceFamilies(services), [services]);
-  const selectedServices = selectedFamily ? services.filter((service) => serviceFamilyFor(service) === selectedFamily) : [];
-  const showFamilies = !selectedFamily || selectedServices.length === 0;
 
   function closeDialog() {
-    setSelectedFamily(null);
     onClose();
+  }
+
+  function landingHrefForFamily(family: string) {
+    const preferredSlugs: Record<string, string> = {
+      "AC Service": "ac-service",
+      "CCTV Camera": "cctv-cameras-repair-installation",
+      Dishwasher: "dishwasher-repair-service",
+      Geyser: "geyser-repair-services",
+      "Microwave Oven": "microwave-oven-repair-services",
+      Refrigerator: "refrigerator-repair-services",
+      "TV Repair": "tv-repair-services",
+      "TV Wall Mount": "tv-wall-mount-installation",
+      "Washing Machine": "washing-machine-repair-service",
+      "Water Purifier": "water-purifier-repair-services",
+    };
+    const preferred = preferredSlugs[family];
+    const service = services.find((item) => item.slug === preferred) ?? services.find((item) => serviceFamilyFor(item) === family);
+    return service ? routes.serviceDetail(service.slug) : routes.services;
   }
 
   return (
@@ -364,158 +406,37 @@ function CategoryServicesDialog({
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/70" />
         <Dialog.Content
-          className={
-            showFamilies
-              ? "fixed left-1/2 top-1/2 z-50 w-[calc(100vw-2rem)] max-w-[540px] -translate-x-1/2 -translate-y-1/2 rounded-lg bg-white p-5 shadow-[0_22px_80px_rgba(0,0,0,0.28)] focus:outline-none sm:p-6"
-              : "fixed inset-x-0 bottom-0 z-50 mx-auto flex max-h-[94dvh] w-full max-w-7xl flex-col overflow-hidden rounded-t-lg bg-[#f7f7f7] shadow-[0_-22px_80px_rgba(0,0,0,0.28)] focus:outline-none sm:inset-x-4 sm:bottom-4 sm:top-4 sm:rounded-lg lg:grid lg:grid-cols-[230px_minmax(0,1fr)_260px]"
-          }
+          className="fixed left-1/2 top-1/2 z-50 max-h-[85dvh] w-[calc(100vw-2rem)] max-w-[540px] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-lg bg-white p-5 shadow-[0_22px_80px_rgba(0,0,0,0.28)] focus:outline-none sm:p-6"
         >
-          {showFamilies ? (
-            <>
-              <Dialog.Close asChild>
-                <Button type="button" variant="ghost" size="icon" className="absolute -right-3 -top-12 rounded-md bg-white shadow-sm" aria-label="Close service popup">
-                  <X className="h-5 w-5" />
-                </Button>
-              </Dialog.Close>
-              <Dialog.Title className="text-2xl font-bold text-foreground">{category?.name ?? "Services"}</Dialog.Title>
-              <Dialog.Description className="sr-only">Choose a service type to view packages.</Dialog.Description>
+          <Dialog.Close asChild>
+            <Button type="button" variant="ghost" size="icon" className="absolute right-3 top-3 rounded-md bg-white shadow-sm" aria-label="Close appliance popup">
+              <X className="h-5 w-5" />
+            </Button>
+          </Dialog.Close>
+          <Dialog.Title className="pr-12 text-2xl font-bold text-foreground">{category?.name ?? "Home appliances"}</Dialog.Title>
+          <Dialog.Description className="mt-1 text-sm text-secondary">Select an appliance to open its service page.</Dialog.Description>
 
-              {families.length ? (
-                <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
-                  {families.map((family) => (
-                    <button
-                      key={family.name}
-                      type="button"
-                      onClick={() => setSelectedFamily(family.name)}
-                      className="group text-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                    >
-                      <span className="grid h-20 place-items-center overflow-hidden rounded-lg bg-[#f5f5f5]">
-                        <ServiceIcon label={family.name} className="h-full w-full rounded-lg" imageClassName="p-3" />
-                      </span>
-                      <span className="mt-3 block text-sm font-semibold leading-5 text-foreground group-hover:text-primary">{family.name}</span>
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <EmptyState title="No services published yet" description="Add services under this category from the admin catalogue." />
-              )}
-            </>
+          {families.length ? (
+            <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {families.map((family) => (
+                <Link
+                  key={family.name}
+                  href={landingHrefForFamily(family.name)}
+                  onClick={closeDialog}
+                  className="group text-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                >
+                  <span className="grid h-20 place-items-center overflow-hidden rounded-lg bg-[#f5f5f5]">
+                    <ServiceIcon label={family.name} className="h-full w-full rounded-lg" imageClassName="p-3" />
+                  </span>
+                  <span className="mt-3 block text-sm font-semibold leading-5 text-foreground group-hover:text-primary">{family.name}</span>
+                </Link>
+              ))}
+            </div>
           ) : (
-            <>
-              <div className="border-b border-border bg-white p-4 lg:hidden">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <Dialog.Title className="text-xl font-bold text-foreground">{selectedFamily}</Dialog.Title>
-                    <Dialog.Description className="mt-1 text-sm text-secondary">
-                      Select a package and continue to booking.
-                    </Dialog.Description>
-                  </div>
-                  <Dialog.Close asChild>
-                    <Button type="button" variant="ghost" size="icon" aria-label="Close package popup">
-                      <X className="h-5 w-5" />
-                    </Button>
-                  </Dialog.Close>
-                </div>
-                <Button type="button" variant="ghost" size="sm" className="mt-3" onClick={() => setSelectedFamily(null)}>
-                  <ChevronLeft className="h-4 w-4" />
-                  Back to services
-                </Button>
-              </div>
-
-              <aside className="hidden min-h-0 overflow-y-auto border-r border-border bg-white p-4 lg:block">
-                <Dialog.Close asChild>
-                  <Button type="button" variant="ghost" size="icon" className="mb-4" aria-label="Close package popup">
-                    <X className="h-5 w-5" />
-                  </Button>
-                </Dialog.Close>
-                <Dialog.Title className="text-xl font-bold text-foreground">{selectedFamily}</Dialog.Title>
-                <Dialog.Description className="mt-2 text-sm text-secondary">
-                  Select a package and continue to booking.
-                </Dialog.Description>
-                <Button type="button" variant="ghost" size="sm" className="mt-4" onClick={() => setSelectedFamily(null)}>
-                  <ChevronLeft className="h-4 w-4" />
-                  Back
-                </Button>
-
-                <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-1">
-                  {families.map((family) => (
-                    <button
-                      key={family.name}
-                      type="button"
-                      onClick={() => setSelectedFamily(family.name)}
-                      className={`rounded-lg border p-2 text-left transition ${
-                        family.name === selectedFamily ? "border-primary bg-primary-soft" : "border-border bg-white hover:border-primary/40"
-                      }`}
-                    >
-                      <ServiceIcon label={family.name} className="h-16 w-full rounded-md" imageClassName="p-2" />
-                      <span className="mt-2 block text-xs font-bold leading-4 text-foreground">{family.name}</span>
-                    </button>
-                  ))}
-                </div>
-              </aside>
-
-              <main className="min-h-0 flex-1 overflow-y-auto p-4 [-webkit-overflow-scrolling:touch] sm:p-6 lg:flex-none">
-                <ServiceImage src={selectedServices[0]?.cover_image} alt={selectedFamily ?? category?.name ?? "Service"} priority className="h-48 rounded-lg sm:h-64" />
-                <section className="mt-5 rounded-lg border border-border bg-white p-5">
-                  <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-                    <div>
-                      <p className="text-xs font-bold uppercase tracking-wide text-primary">Packages</p>
-                      <h3 className="mt-1 text-2xl font-bold text-foreground">{selectedFamily}</h3>
-                    </div>
-                    <p className="text-sm font-semibold text-secondary">{selectedServices.length} available</p>
-                  </div>
-                  <div className="divide-y divide-border">
-                    {selectedServices.map((service) => (
-                      <DialogPackageRow key={service.id} service={service} />
-                    ))}
-                  </div>
-                </section>
-              </main>
-
-              <aside className="hidden min-h-0 overflow-y-auto border-l border-border bg-white p-4 lg:block">
-                <div className="rounded-lg border border-border p-4">
-                  <p className="flex items-center gap-2 text-sm font-bold text-foreground">
-                    <ShieldCheck className="h-4 w-4 text-success" />
-                    Purple Squad promise
-                  </p>
-                  <div className="mt-4 space-y-3 text-sm text-secondary">
-                    <p>Clear price before booking</p>
-                    <p>Verified service professionals</p>
-                    <p>Support for reschedule and payment</p>
-                  </div>
-                </div>
-                <CartSummary />
-              </aside>
-            </>
+            <EmptyState title="No appliances published yet" description="Add appliance services from the admin catalogue." />
           )}
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
-  );
-}
-
-function DialogPackageRow({ service }: { service: ServiceListItem }) {
-  const price = formatPrice(getCurrentPrice(service));
-  const duration = formatDuration(service.estimated_duration_minutes);
-
-  return (
-    <article className="grid gap-4 bg-white py-5 sm:grid-cols-[1fr_116px] sm:items-start">
-      <div>
-        <h3 className="text-base font-bold text-foreground">{service.name}</h3>
-        <p className="mt-1 line-clamp-2 text-sm leading-5 text-secondary">{service.short_description || service.category.name}</p>
-        <div className="mt-2 flex flex-wrap gap-3 text-xs font-semibold text-secondary">
-          {duration ? <span>{duration}</span> : null}
-          <span>4.8 rated</span>
-          <span>PS verified</span>
-        </div>
-        <Button asChild variant="outline" size="sm" className="mt-3">
-          <Link href={routes.serviceDetail(service.slug)}>View details</Link>
-        </Button>
-      </div>
-      <div className="grid gap-2 rounded-lg bg-[#f4f4f5] p-3 sm:w-28">
-        <p className="text-center text-lg font-bold text-foreground">{price ?? "View price"}</p>
-        <AddToCartButton service={service} />
-      </div>
-    </article>
   );
 }

@@ -16,7 +16,8 @@ export function BookingSuccessScreen({ bookingId }: { bookingId: string }) {
   const booking = useBooking(bookingId);
   const cart = useCart();
   const paid = booking.data ? getBookingPayability(booking.data).alreadyPaid : false;
-  useEffect(() => { if (paid) cart.complete(bookingId); }, [paid, bookingId, cart]);
+  const completeCartItem = cart.complete;
+  useEffect(() => { if (paid) completeCartItem(); }, [paid, bookingId, completeCartItem]);
 
   if (booking.isLoading) {
     return (

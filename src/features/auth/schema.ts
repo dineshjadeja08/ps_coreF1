@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 export const phoneLoginSchema = z.object({
+  name: z.string().trim().max(150, "Name is too long.").optional(),
   phone: z
     .string()
     .trim()

@@ -131,3 +131,11 @@ a {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Swipe rows keep overflow inside the component and leave vertical page scrolling available. */
+.mobile-scroll-row { -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
+@media (max-width: 639px) {
+  .mobile-scroll-row { scrollbar-width: none; }
+  .mobile-scroll-row::-webkit-scrollbar { display: none; }
+  input, select, textarea { font-size: 16px; }
+}

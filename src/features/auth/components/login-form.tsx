@@ -28,7 +28,7 @@ import {
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { loginWithOtp, loginWithPassword, signupWithPassword, loginWithDevPhone, consumeReturnPath } = useAuth();
+  const { loginWithOtp, loginWithPassword, signupWithPassword, loginWithDevPhone, updateCurrentUser, consumeReturnPath } = useAuth();
   const [mode, setMode] = useState<"login" | "signup" | "otp">("login");
   const [step, setStep] = useState<"password" | "phone" | "otp" | "success">("password");
   const [normalizedPhone, setNormalizedPhone] = useState("");
@@ -39,11 +39,11 @@ export function LoginForm() {
 
   const phoneForm = useForm<PhoneLoginFormValues>({
     resolver: zodResolver(phoneLoginSchema),
-    defaultValues: { phone: "" },
+    defaultValues: { name: "", phone: "" },
   });
   const passwordLoginForm = useForm<PasswordLoginFormValues>({
     resolver: zodResolver(passwordLoginSchema),
-    defaultValues: { phone: "", password: "" },
+    defaultValues: { name: "", phone: "", password: "" },
   });
   const passwordSignupForm = useForm<PasswordSignupFormValues>({
     resolver: zodResolver(passwordSignupSchema),
@@ -74,6 +74,11 @@ export function LoginForm() {
     return () => window.clearInterval(timer);
   }, [cooldown]);
 
+  function splitName(name?: string) {
+    const parts = name?.trim().split(/\s+/).filter(Boolean) ?? [];
+    return { firstName: parts[0] ?? "", lastName: parts.slice(1).join(" ") };
+  }
+
   async function sendOtp(phone: string) {
     const normalized = normalizeIndianPhone(phone);
     if (!normalized) {
@@ -87,7 +92,7 @@ export function LoginForm() {
     try {
       await backendAuthApi.sendOtp(normalized);
       setNormalizedPhone(normalized);
-      setCooldown(30);
+      setCooldown(60);
       setStep("otp");
       otpForm.reset({ otp: "" });
     } catch (error) {
@@ -109,6 +114,10 @@ export function LoginForm() {
 
     try {
       await loginWithOtp(normalizedPhone, values.otp);
+      const { firstName, lastName } = splitName(phoneForm.getValues("name"));
+      if (firstName || lastName) {
+        await updateCurrentUser({ first_name: firstName, last_name: lastName });
+      }
       setStep("success");
       router.replace(consumeReturnPath(fallback));
     } catch (error) {
@@ -345,6 +354,24 @@ export function LoginForm() {
       {step === "phone" ? (
         <form onSubmit={phoneForm.handleSubmit((values) => sendOtp(values.phone))} className="space-y-4">
           <div>
+            <label htmlFor="otp-name" className="text-sm font-semibold text-foreground">
+              Name
+            </label>
+            <Input
+              id="otp-name"
+              autoComplete="name"
+              placeholder="Your name"
+              className="mt-2"
+              aria-invalid={Boolean(phoneForm.formState.errors.name)}
+              {...phoneForm.register("name")}
+            />
+            {phoneForm.formState.errors.name ? (
+              <p className="mt-2 text-sm text-destructive" role="alert">
+                {phoneForm.formState.errors.name.message}
+              </p>
+            ) : null}
+          </div>
+          <div>
             <label htmlFor="phone" className="text-sm font-semibold text-foreground">
               Mobile number
             </label>
@@ -413,7 +440,7 @@ export function LoginForm() {
             Verify OTP
           </Button>
           <Button type="button" variant="ghost" className="w-full" disabled={cooldown > 0 || isSending} onClick={() => sendOtp(normalizedPhone)}>
-            {cooldown > 0 ? `Resend code in 00:${String(cooldown).padStart(2, "0")}` : "Resend OTP"}
+            {cooldown > 0 ? `Resend code in ${Math.floor(cooldown / 60)}:${String(cooldown % 60).padStart(2, "0")}` : "Resend OTP"}
           </Button>
         </form>
       ) : null}

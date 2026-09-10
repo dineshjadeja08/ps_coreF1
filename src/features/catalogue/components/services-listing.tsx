@@ -130,7 +130,7 @@ export function ServicesListing({ mode = "browse" }: ServicesListingProps) {
         </div>
       </section>
 
-      <section className="mx-auto grid max-w-7xl gap-5 px-4 py-6 pb-20 sm:px-6 lg:grid-cols-[280px_1fr] lg:px-8">
+      <section className="mx-auto grid max-w-7xl gap-5 px-4 py-6 pb-20 sm:px-6 lg:grid-cols-[280px_minmax(0,1fr)] lg:px-8">
         <aside className="hidden lg:block">
           <div className="sticky top-24 space-y-4">
             <CategoryPanel
@@ -146,7 +146,7 @@ export function ServicesListing({ mode = "browse" }: ServicesListingProps) {
           </div>
         </aside>
 
-        <div className="space-y-4">
+        <div className="min-w-0 space-y-4">
           <div className="flex items-center justify-between gap-3 lg:hidden">
             <Button type="button" variant="outline" onClick={() => setCategoryDialogOpen(true)}>
               <ListFilter className="h-4 w-4" />

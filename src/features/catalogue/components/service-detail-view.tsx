@@ -91,7 +91,7 @@ export function ServiceDetailView() {
   const allRelated = related.data?.results ?? [];
   const currentFamily = packageFamilyKey(detail);
   const familyPackages = allRelated.filter((item) => packageFamilyKey(item) === currentFamily);
-  const packageServices = familyPackages.length > 1 ? familyPackages : [detail, ...allRelated.filter((item) => item.slug !== detail.slug).slice(0, 5)];
+  const packageServices = familyPackages.length > 1 ? familyPackages : [detail];
   const serviceOptions = allRelated.length ? allRelated : [detail];
 
   return (
@@ -138,6 +138,26 @@ export function ServiceDetailView() {
 
             <ServiceImage src={detail.cover_image} alt={detail.name} priority className="h-64 rounded-lg sm:h-[380px]" />
           </div>
+
+          {packageServices.length > 1 ? (
+            <section className="mt-6 rounded-lg border border-border bg-surface p-4">
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-bold uppercase tracking-wide text-primary">Available packages</span>
+                <span className="h-px flex-1 bg-border" />
+              </div>
+              <div className="mobile-scroll-row mt-3 flex max-w-full gap-3 overflow-x-auto overscroll-x-contain pb-1">
+                {packageServices.map((item) => (
+                  <a
+                    key={item.id}
+                    href={`#package-${item.slug}`}
+                    className="w-48 shrink-0 rounded-md border border-border bg-white p-3 text-sm font-semibold leading-5 text-foreground hover:border-primary/40 hover:text-primary"
+                  >
+                    {item.name}
+                  </a>
+                ))}
+              </div>
+            </section>
+          ) : null}
         </div>
       </section>
 
@@ -159,7 +179,14 @@ export function ServiceDetailView() {
         </aside>
 
         <main className="border-border bg-white p-5 lg:border-r lg:p-7">
-          <div className="border-b border-border pb-5">
+          <div className="grid gap-4">
+            <TextSection title="Description" body={detail.description} />
+            <TextSection title="What's included" body={detail.whats_included} />
+            <TextSection title="What's excluded" body={detail.whats_excluded} />
+            <TextSection title="Important notes" body={detail.important_notes} />
+          </div>
+
+          <div className="mt-7 border-b border-border pb-5">
             <p className="text-xs font-bold uppercase tracking-wide text-primary">Recommended</p>
             <h2 className="mt-1 text-2xl font-bold text-foreground">{packageSectionTitle(detail)}</h2>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-secondary">
@@ -171,13 +198,6 @@ export function ServiceDetailView() {
             {packageServices.map((item, index) => (
               <PackageRow key={item.id} service={item} featured={index === 0} />
             ))}
-          </div>
-
-          <div className="mt-7 grid gap-4">
-            <TextSection title="Description" body={detail.description} />
-            <TextSection title="What's included" body={detail.whats_included} />
-            <TextSection title="What's excluded" body={detail.whats_excluded} />
-            <TextSection title="Important notes" body={detail.important_notes} />
           </div>
         </main>
 
@@ -229,7 +249,7 @@ export function ServiceDetailView() {
         </section>
       ) : null}
 
-      <div className="fixed inset-x-0 bottom-16 z-30 border-t border-border bg-surface p-3 shadow-lg md:hidden">
+      <div className="fixed inset-x-0 bottom-[calc(var(--mobile-nav-height)+env(safe-area-inset-bottom))] z-30 border-t border-border bg-surface p-3 shadow-lg md:hidden">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
           <div>
             <p className="text-xs text-secondary">Starts at</p>
