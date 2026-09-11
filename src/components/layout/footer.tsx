@@ -49,8 +49,8 @@ export function Footer() {
             alt="Purple Squad — Service You Can Trust"
             width={1600}
             height={900}
-            sizes="(min-width: 640px) 288px, 240px"
-            className="h-auto w-60 object-contain mix-blend-multiply sm:w-72"
+            sizes="(min-width: 640px) 224px, 192px"
+            className="h-auto w-48 object-contain mix-blend-multiply sm:w-56"
           />
         </Link>
 
