@@ -1,6 +1,7 @@
+import Image from "next/image";
 import Link from "next/link";
 
-import { Brand } from "@/components/layout/brand";
+import { routes } from "@/constants/routes";
 
 export function Footer() {
   const groups = [
@@ -42,9 +43,16 @@ export function Footer() {
   return (
     <footer className="border-t border-border bg-[#f4f4f4] pb-24 md:pb-0">
       <div className="page-container py-12">
-        <div>
-          <Brand />
-        </div>
+        <Link href={routes.home} className="inline-block" aria-label="Purple Squad home">
+          <Image
+            src="/images/brand/purple-squad-logo-tagline.jpg"
+            alt="Purple Squad — Service You Can Trust"
+            width={1600}
+            height={900}
+            sizes="(min-width: 640px) 288px, 240px"
+            className="h-auto w-60 object-contain mix-blend-multiply sm:w-72"
+          />
+        </Link>
 
         <div className="mt-12 grid gap-10 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_1fr]">
           {groups.map((group) => (

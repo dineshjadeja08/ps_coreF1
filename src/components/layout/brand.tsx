@@ -9,8 +9,8 @@ export function Brand() {
       <Image
         src="/images/brand/purple-squad-logo-horizontal.png"
         alt="Purple Squad"
-        width={720}
-        height={266}
+        width={762}
+        height={327}
         priority
         className="h-10 w-auto object-contain"
       />

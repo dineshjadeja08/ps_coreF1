@@ -60,6 +60,18 @@ const spotlights = [
   { title: "Keep the freshness going", label: "Refrigerator repair", description: "Expert care for your kitchen essential.", query: "refrigerator", image: "/images/service-icons/refrigerator.webp" },
 ];
 
+const appliancePopupOrder = [
+  { family: "AC Service", label: "AC" },
+  { family: "Washing Machine", label: "Washing Machine" },
+  { family: "Refrigerator", label: "Refrigerator" },
+  { family: "Microwave Oven", label: "Microwave" },
+  { family: "Geyser", label: "Geyser" },
+  { family: "Water Purifier", label: "Water Purifier" },
+  { family: "TV Repair", label: "TV" },
+  { family: "CCTV Camera", label: "CCTV" },
+  { family: "Dishwasher", label: "Dishwasher" },
+] as const;
+
 const serviceSearchHref = (query: string) => `${routes.services}?q=${encodeURIComponent(query)}`;
 const preferredServiceSlugs: Record<string, string> = {
   AC: "ac-service",
@@ -177,14 +189,21 @@ export function HomeDiscovery() {
       </section>
 
       <section aria-label="AC service" className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 lg:px-8">
-        <div className="grid overflow-hidden rounded-2xl bg-[#eee5fc] sm:aspect-[235/100] sm:grid-cols-2 sm:items-center">
-          <div className="p-6 sm:p-8">
+        <div className="relative isolate min-h-56 overflow-hidden rounded-2xl bg-[#eee5fc] sm:aspect-[5/1] sm:min-h-0">
+          <Image
+            src="/images/hero/ac-service-hd.png"
+            alt="Purple Squad AC service professional"
+            fill
+            sizes="(min-width: 1280px) 1280px, 100vw"
+            className="object-cover object-[72%_42%]"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#eee5fc] via-[#eee5fc]/95 to-[#eee5fc]/5 sm:via-[#eee5fc]/80 sm:to-transparent" />
+          <div className="relative z-10 flex h-full max-w-[72%] flex-col justify-center p-5 sm:max-w-[48%] sm:p-7">
             <p className="text-sm font-semibold text-primary">AC Service</p>
-            <h2 className="mt-2 text-3xl font-bold sm:text-4xl">Stay Cool, All Year</h2>
-            <p className="mt-3 text-sm text-secondary">Professional AC service at your doorstep.</p>
-            <Button asChild className="mt-5 min-h-11"><Link href={serviceDetailHrefForQuery(allServices, "AC")}>Book AC Service <ArrowRight className="h-4 w-4" /></Link></Button>
+            <h2 className="mt-1 text-2xl font-bold sm:text-3xl">Stay Cool, All Year</h2>
+            <p className="mt-2 text-sm text-secondary">Professional AC service at your doorstep.</p>
+            <Button asChild size="sm" className="mt-4 w-fit"><Link href={serviceDetailHrefForQuery(allServices, "AC")}>Book AC Service <ArrowRight className="h-4 w-4" /></Link></Button>
           </div>
-          <Image src="/images/hero/ac-service-hd.png" alt="Purple Squad AC service professional" width={1536} height={1024} sizes="(min-width: 640px) 50vw, 100vw" className="aspect-[235/100] h-full w-full object-contain sm:aspect-auto" />
         </div>
       </section>
 
@@ -319,9 +338,15 @@ function SpotlightCarousel({ services }: { services: ServiceListItem[] }) {
         const card = element?.firstElementChild as HTMLElement | null;
         if (element && card) setStart(Math.min(last, Math.round(element.scrollLeft / (card.offsetWidth + 16))));
       }}>
-        {spotlights.map((item) => <Link key={item.query} href={serviceDetailHrefForQuery(services, item.query)} className="group flex w-[84%] shrink-0 snap-start flex-col overflow-hidden rounded-2xl border border-purple-100 bg-[#f7f2fd] sm:w-[calc((100%-1rem)/2)] lg:w-[calc((100%-2rem)/3)] focus-visible:outline-2 focus-visible:outline-primary">
-          <div className="relative aspect-[235/100] w-full bg-[#eee5f8]"><Image src={item.image} alt={item.label} fill sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 84vw" className={`object-contain ${item.image.endsWith("webp") ? "p-5" : ""}`} /></div>
-          <div className="flex flex-1 flex-col items-start p-5"><span className="text-xs font-bold uppercase tracking-wide text-primary">{item.label}</span><h3 className="mt-2 text-xl font-bold leading-tight">{item.title}</h3><p className="mt-2 text-sm leading-6 text-secondary">{item.description}</p><span className="mt-auto inline-flex min-h-11 items-center gap-2 pt-3 text-sm font-semibold text-primary">Explore <ArrowRight className="h-4 w-4" /></span></div>
+        {spotlights.map((item) => <Link key={item.query} href={serviceDetailHrefForQuery(services, item.query)} className="group relative aspect-[3/2] w-[84%] shrink-0 snap-start overflow-hidden rounded-2xl sm:w-[calc((100%-1rem)/2)] lg:w-[calc((100%-2rem)/3)] focus-visible:outline-2 focus-visible:outline-primary">
+          <Image src={item.image} alt={item.label} fill sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 84vw" className="object-cover transition duration-300 group-hover:scale-[1.02]" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/45 to-transparent" />
+          <div className="absolute inset-0 flex max-w-[76%] flex-col items-start justify-end p-4 text-white sm:p-5">
+            <span className="rounded-full bg-white/90 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-primary">{item.label}</span>
+            <h3 className="mt-2 text-lg font-bold leading-tight sm:text-xl">{item.title}</h3>
+            <p className="mt-1 line-clamp-2 text-xs leading-5 text-white/85 sm:text-sm">{item.description}</p>
+            <span className="mt-2 inline-flex items-center gap-2 text-sm font-semibold">Explore <ArrowRight className="h-4 w-4" /></span>
+          </div>
         </Link>)}
       </div>
       <div className="mt-1 flex justify-center gap-1">{Array.from({ length: last + 1 }, (_, index) => <button key={index} type="button" aria-label={`Show spotlight ${index + 1}`} aria-current={start === index ? "true" : undefined} onClick={() => { setPaused(true); goTo(index); }} className="grid h-11 w-11 place-items-center rounded-full focus-visible:outline-2 focus-visible:outline-primary"><span className={`h-2 rounded-full ${start === index ? "w-6 bg-primary" : "w-2 bg-primary/25"}`} /></button>)}</div>
@@ -336,7 +361,7 @@ function HeroImageMosaic() {
     { image: "water-tank-cleaning", title: "Water Tank Cleaning", query: "water tank" },
     { image: "sofa-repair", title: "Sofa Repair", query: "sofa" },
   ];
-  return <div className="grid min-w-0 grid-cols-2 content-start gap-3">{cards.map((card) => <Link key={card.image} href={serviceSearchHref(card.query)} className="overflow-hidden rounded-xl border border-purple-100 bg-[#faf7fd] focus-visible:outline-2 focus-visible:outline-primary"><Image src={`/images/hero/${card.image}-hd.png`} alt={`Purple Squad ${card.title}`} width={1536} height={1024} priority sizes="(min-width: 1024px) 28vw, 46vw" className="aspect-[3/2] h-auto w-full object-contain" /><p className="px-3 py-3 text-xs font-bold sm:text-sm">{card.title}</p></Link>)}</div>;
+  return <div className="grid min-w-0 grid-cols-2 content-start gap-3">{cards.map((card) => <Link key={card.image} href={serviceSearchHref(card.query)} className="group relative aspect-[3/2] overflow-hidden rounded-xl focus-visible:outline-2 focus-visible:outline-primary"><Image src={`/images/hero/${card.image}-hd.png`} alt={`Purple Squad ${card.title}`} fill priority sizes="(min-width: 1024px) 28vw, 46vw" className="object-cover transition duration-300 group-hover:scale-[1.02]" /><span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent px-3 pb-3 pt-8 text-xs font-bold text-white sm:text-sm">{card.title}</span></Link>)}</div>;
 }
 
 function CompactPackageCard({ service }: { service: ServiceListItem }) {
@@ -377,7 +402,13 @@ function CategoryServicesDialog({
   services: ServiceListItem[];
   onClose: () => void;
 }) {
-  const families = useMemo(() => serviceFamilies(services), [services]);
+  const families = useMemo(() => {
+    const byName = new Map(serviceFamilies(services).map((family) => [family.name, family]));
+    return appliancePopupOrder.flatMap((item) => {
+      const family = byName.get(item.family);
+      return family ? [{ ...family, label: item.label }] : [];
+    });
+  }, [services]);
 
   function closeDialog() {
     onClose();
@@ -417,7 +448,7 @@ function CategoryServicesDialog({
           <Dialog.Description className="mt-1 text-sm text-secondary">Select an appliance to open its service page.</Dialog.Description>
 
           {families.length ? (
-            <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <div className="mt-6 grid grid-cols-3 gap-3">
               {families.map((family) => (
                 <Link
                   key={family.name}
@@ -425,10 +456,10 @@ function CategoryServicesDialog({
                   onClick={closeDialog}
                   className="group text-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                 >
-                  <span className="grid h-20 place-items-center overflow-hidden rounded-lg bg-[#f5f5f5]">
-                    <ServiceIcon label={family.name} className="h-full w-full rounded-lg" imageClassName="p-3" />
+                  <span className="grid h-20 place-items-center">
+                    <ServiceIcon label={family.name} className="h-full w-full overflow-visible rounded-none bg-transparent" imageClassName="p-0" />
                   </span>
-                  <span className="mt-3 block text-sm font-semibold leading-5 text-foreground group-hover:text-primary">{family.name}</span>
+                  <span className="mt-3 block text-sm font-semibold leading-5 text-foreground group-hover:text-primary">{family.label}</span>
                 </Link>
               ))}
             </div>
