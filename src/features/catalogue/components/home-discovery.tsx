@@ -189,7 +189,7 @@ export function HomeDiscovery() {
       </section>
 
       <section aria-label="AC service" className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 lg:px-8">
-        <div className="relative isolate min-h-56 overflow-hidden rounded-2xl bg-[#eee5fc] sm:aspect-[5/1] sm:min-h-0">
+        <div className="relative isolate min-h-56 overflow-hidden rounded-lg bg-[#eee5fc] sm:aspect-[5/1] sm:min-h-0">
           <Image
             src="/images/hero/ac-service-hd.png"
             alt="Purple Squad AC service professional"
@@ -338,7 +338,7 @@ function SpotlightCarousel({ services }: { services: ServiceListItem[] }) {
         const card = element?.firstElementChild as HTMLElement | null;
         if (element && card) setStart(Math.min(last, Math.round(element.scrollLeft / (card.offsetWidth + 16))));
       }}>
-        {spotlights.map((item) => <Link key={item.query} href={serviceDetailHrefForQuery(services, item.query)} className="group relative aspect-[3/2] w-[84%] shrink-0 snap-start overflow-hidden rounded-2xl sm:w-[calc((100%-1rem)/2)] lg:w-[calc((100%-2rem)/3)] focus-visible:outline-2 focus-visible:outline-primary">
+        {spotlights.map((item) => <Link key={item.query} href={serviceDetailHrefForQuery(services, item.query)} className="group relative aspect-[3/2] w-[84%] shrink-0 snap-start overflow-hidden rounded-lg sm:w-[calc((100%-1rem)/2)] lg:w-[calc((100%-2rem)/3)] focus-visible:outline-2 focus-visible:outline-primary">
           <Image src={item.image} alt={item.label} fill sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 84vw" className="object-cover transition duration-300 group-hover:scale-[1.02]" />
           <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/45 to-transparent" />
           <div className="absolute inset-0 flex max-w-[76%] flex-col items-start justify-end p-4 text-white sm:p-5">
@@ -361,7 +361,7 @@ function HeroImageMosaic() {
     { image: "water-tank-cleaning", title: "Water Tank Cleaning", query: "water tank" },
     { image: "sofa-repair", title: "Sofa Repair", query: "sofa" },
   ];
-  return <div className="grid min-w-0 grid-cols-2 content-start gap-3">{cards.map((card) => <Link key={card.image} href={serviceSearchHref(card.query)} className="group relative aspect-[3/2] overflow-hidden rounded-xl focus-visible:outline-2 focus-visible:outline-primary"><Image src={`/images/hero/${card.image}-hd.png`} alt={`Purple Squad ${card.title}`} fill priority sizes="(min-width: 1024px) 28vw, 46vw" className="object-cover transition duration-300 group-hover:scale-[1.02]" /><span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent px-3 pb-3 pt-8 text-xs font-bold text-white sm:text-sm">{card.title}</span></Link>)}</div>;
+  return <div className="grid min-w-0 grid-cols-2 content-start gap-3">{cards.map((card) => <Link key={card.image} href={serviceSearchHref(card.query)} className="group relative aspect-[3/2] overflow-hidden rounded-md focus-visible:outline-2 focus-visible:outline-primary"><Image src={`/images/hero/${card.image}-hd.png`} alt={`Purple Squad ${card.title}`} fill priority sizes="(min-width: 1024px) 28vw, 46vw" className="object-cover transition duration-300 group-hover:scale-[1.02]" /><span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent px-3 pb-3 pt-8 text-xs font-bold text-white sm:text-sm">{card.title}</span></Link>)}</div>;
 }
 
 function CompactPackageCard({ service }: { service: ServiceListItem }) {
