@@ -7,7 +7,7 @@ export function Brand() {
   return (
     <Link href={routes.home} className="flex items-center gap-2" aria-label="Purple Squad home">
       <Image
-        src="/images/brand/purple-squad-logo-horizontal.png"
+        src="/images/brand/purple-squad-navbar-logo.png"
         alt="Purple Squad"
         width={762}
         height={327}
