@@ -26,8 +26,8 @@ import { AddToCartButton } from "@/features/cart/cart-controls";
 import { ServiceIcon } from "@/features/catalogue/components/service-icon";
 import { ServiceImage } from "@/features/catalogue/components/service-image";
 import { ServiceCardSkeletonGrid } from "@/features/catalogue/components/skeletons";
-import { useServiceCategories, useServices } from "@/features/catalogue/queries";
-import type { ServiceCategory, ServiceListItem } from "@/features/catalogue/types";
+import { useServices } from "@/features/catalogue/queries";
+import type { ServiceListItem } from "@/features/catalogue/types";
 import { formatPrice, getCurrentPrice, hasOfferPrice } from "@/features/catalogue/utils";
 
 const homeCategories = [
@@ -96,11 +96,6 @@ function serviceDetailHrefForQuery(services: ServiceListItem[], query: string) {
   return service ? routes.serviceDetail(service.slug) : serviceSearchHref(query);
 }
 
-function servicesForCategory(services: ServiceListItem[], category: ServiceCategory | null) {
-  if (!category) return [];
-  return services.filter((service) => service.category.slug === category.slug);
-}
-
 function serviceFamilyFor(service: ServiceListItem) {
   const text = `${service.name} ${service.short_description} ${service.category.name}`.toLowerCase();
   if (text.includes("washing")) return "Washing Machine";
@@ -130,20 +125,18 @@ function serviceFamilies(services: ServiceListItem[]) {
 }
 
 export function HomeDiscovery() {
-  const categories = useServiceCategories();
   const services = useServices({ page_size: 80 });
   const featured = useServices({ featured: true, page_size: 10 });
-  const [selectedCategory, setSelectedCategory] = useState<ServiceCategory | null>(null);
+  const [applianceDialogOpen, setApplianceDialogOpen] = useState(false);
 
   const allServices = useMemo(() => services.data?.results ?? [], [services.data?.results]);
   const visibleServices = Array.from(new Map(
     [...(featured.data?.results ?? []), ...allServices].map((service) => [service.id, service]),
   ).values());
-  const selectedCategoryServices = useMemo(() => servicesForCategory(allServices, selectedCategory), [allServices, selectedCategory]);
-  const homeAppliancesCategory = useMemo(
-    () => categories.data?.find((entry) => `${entry.name} ${entry.slug}`.toLowerCase().includes("appliance")) ?? null,
-    [categories.data],
-  );
+  const applianceServices = useMemo(() => {
+    const allowedFamilies = new Set<string>(appliancePopupOrder.map((item) => item.family));
+    return allServices.filter((service) => allowedFamilies.has(serviceFamilyFor(service)));
+  }, [allServices]);
   const whatsappUrl = env.supportWhatsapp ? `https://wa.me/${env.supportWhatsapp.replace(/\D/g, "")}` : routes.support;
 
   return (
@@ -162,8 +155,8 @@ export function HomeDiscovery() {
               {homeCategories.map((item) => {
                 const content = <><Image src={item.image} alt="" width={64} height={64} className="h-16 w-16 object-contain" /><span className="text-sm font-semibold">{item.name}</span></>;
                 const tileClass = "flex min-h-28 flex-col items-center justify-center gap-2 rounded-xl bg-[#f7f5fa] p-4 text-center transition hover:bg-primary-soft hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
-                if (item.query === "appliance" && homeAppliancesCategory) {
-                  return <button key={item.name} type="button" onClick={() => setSelectedCategory(homeAppliancesCategory)} className={tileClass}>{content}</button>;
+                if (item.query === "appliance") {
+                  return <button key={item.name} type="button" onClick={() => setApplianceDialogOpen(true)} className={tileClass}>{content}</button>;
                 }
                 return <Link key={item.name} href={serviceDetailHrefForQuery(allServices, item.query)} className={tileClass}>{content}</Link>;
               })}
@@ -269,7 +262,7 @@ export function HomeDiscovery() {
         </aside>
       </section>
 
-      <CategoryServicesDialog category={selectedCategory} services={selectedCategoryServices} onClose={() => setSelectedCategory(null)} />
+      <CategoryServicesDialog open={applianceDialogOpen} services={applianceServices} onClose={() => setApplianceDialogOpen(false)} />
     </div>
   );
 }
@@ -397,11 +390,11 @@ function CompactPackageCard({ service }: { service: ServiceListItem }) {
 }
 
 function CategoryServicesDialog({
-  category,
+  open,
   services,
   onClose,
 }: {
-  category: ServiceCategory | null;
+  open: boolean;
   services: ServiceListItem[];
   onClose: () => void;
 }) {
@@ -436,7 +429,7 @@ function CategoryServicesDialog({
   }
 
   return (
-    <Dialog.Root open={Boolean(category)} onOpenChange={(open) => !open && closeDialog()}>
+    <Dialog.Root open={open} onOpenChange={(nextOpen) => !nextOpen && closeDialog()}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/70" />
         <Dialog.Content
@@ -447,7 +440,7 @@ function CategoryServicesDialog({
               <X className="h-5 w-5" />
             </Button>
           </Dialog.Close>
-          <Dialog.Title className="pr-12 text-2xl font-bold text-foreground">{category?.name ?? "Home appliances"}</Dialog.Title>
+          <Dialog.Title className="pr-12 text-2xl font-bold text-foreground">Home appliances</Dialog.Title>
           <Dialog.Description className="mt-1 text-sm text-secondary">Select an appliance to open its service page.</Dialog.Description>
 
           {families.length ? (
