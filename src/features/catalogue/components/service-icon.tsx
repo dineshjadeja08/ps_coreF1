@@ -12,17 +12,18 @@ type ServiceIconProps = {
 };
 
 const iconMap = [
-  { match: ["washing", "washer"], src: "/images/service-icons/washing-machine.webp" },
-  { match: ["refrigerator", "fridge"], src: "/images/service-icons/refrigerator.webp" },
-  { match: ["dishwasher"], src: "/images/service-icons/dishwasher.webp" },
-  { match: ["microwave"], src: "/images/service-icons/microwave.webp" },
-  { match: ["geyser"], src: "/images/service-icons/geyser.webp" },
-  { match: ["purifier", "ro", "uv"], src: "/images/service-icons/water-purifier.webp" },
-  { match: ["water tank", "tank cleaning"], src: "/images/service-icons/water-tank.webp" },
-  { match: ["mosquito"], src: "/images/service-icons/mosquito-net.webp" },
-  { match: ["sofa"], src: "/images/service-icons/sofa-repair.webp" },
-  { match: ["tv", "television"], src: "/images/service-icons/tv.webp" },
-  { match: ["ac", "air conditioner", "air conditioning", "appliance"], src: "/images/service-icons/ac.webp" },
+  { match: ["washing", "washer"], src: "/images/service-icons/washing-machine.png" },
+  { match: ["refrigerator", "fridge"], src: "/images/service-icons/refrigerator.png" },
+  { match: ["dishwasher"], src: "/images/service-icons/dishwasher.png" },
+  { match: ["microwave"], src: "/images/service-icons/microwave.png" },
+  { match: ["geyser"], src: "/images/service-icons/geyser.png" },
+  { match: ["purifier", "ro", "uv"], src: "/images/service-icons/water-purifier.png" },
+  { match: ["water tank", "tank cleaning"], src: "/images/service-icons/water-tank.png" },
+  { match: ["mosquito"], src: "/images/service-icons/mosquito-net.png" },
+  { match: ["sofa"], src: "/images/service-icons/sofa-repair.png" },
+  { match: ["cctv", "security camera"], src: "/images/service-icons/cctv.png" },
+  { match: ["tv", "television"], src: "/images/service-icons/tv.png" },
+  { match: ["ac", "air conditioner", "air conditioning", "appliance"], src: "/images/service-icons/ac.png" },
 ];
 
 export function getServiceIconSrc(label: string) {

@@ -99,6 +99,34 @@ const fallbackPhotos: Record<string, FallbackVisual> = {
   },
 };
 
+const localServicePhotos = [
+  { match: ["foam jet"], src: "/images/services/ac-foam-jet.png" },
+  { match: ["full ac chemical wash", "chemical wash"], src: "/images/services/ac-chemical-wash.png" },
+  { match: ["gas refill", "gas refil"], src: "/images/services/ac-gas-refill.png" },
+  { match: ["ac inspection"], src: "/images/services/ac-inspection.png" },
+  { match: ["ac uninstallation & installation"], src: "/images/services/ac-installation.png" },
+  { match: ["ac uninstallation"], src: "/images/services/ac-uninstallation.png" },
+  { match: ["ac installation"], src: "/images/services/ac-installation.png" },
+  { match: ["washing", "washer"], src: "/images/services/washing-machine.png" },
+  { match: ["refrigerator", "fridge"], src: "/images/services/refrigerator.png" },
+  { match: ["dishwasher"], src: "/images/services/dishwasher.png" },
+  { match: ["microwave"], src: "/images/services/microwave.png" },
+  { match: ["geyser"], src: "/images/services/geyser.png" },
+  { match: ["purifier", "ro repair", "uv repair"], src: "/images/services/water-purifier.png" },
+  { match: ["water tank", "sump"], src: "/images/services/water-tank.png" },
+  { match: ["mosquito"], src: "/images/services/mosquito-net.png" },
+  { match: ["sofa"], src: "/images/services/sofa-repair.png" },
+  { match: ["cctv", "security camera"], src: "/images/services/cctv.png" },
+  { match: ["wall mount", "tv repair", "television"], src: "/images/services/tv.png" },
+  { match: ["chimney"], src: "/images/services/chimney.png" },
+  { match: ["ac service"], src: "/images/services/ac-service.png" },
+] as const;
+
+function getLocalServicePhoto(label: string) {
+  const normalized = label.toLowerCase();
+  return localServicePhotos.find((item) => item.match.some((keyword) => normalized.includes(keyword)))?.src ?? null;
+}
+
 function getFallbackVisual(label: string): FallbackVisual {
   const text = label.toLowerCase();
   if (text.includes("washing")) return fallbackPhotos.washer;
@@ -124,23 +152,25 @@ function isLocalBackendImage(src?: string | null) {
 
 export function ServiceImage({ src, alt, className, imageClassName, priority, fit = "cover" }: ServiceImageProps) {
   const [failed, setFailed] = useState(false);
-  const hasUploadedImage = Boolean(src) && !failed;
+  const localImage = getLocalServicePhoto(alt);
+  const hasUploadedImage = Boolean(src) && !failed && !localImage;
   const fallback = getFallbackVisual(alt);
-  const imageSrc = hasUploadedImage ? src ?? "" : fallback.image;
+  const hasServiceImage = Boolean(localImage || hasUploadedImage);
+  const imageSrc = localImage ?? (hasUploadedImage ? src ?? "" : fallback.image);
 
   return (
     <div className={cn("relative overflow-hidden rounded-md bg-primary-subtle", className)}>
       <Image
         src={imageSrc}
-        alt={hasUploadedImage ? alt : fallback.title}
+        alt={hasServiceImage ? alt : fallback.title}
         fill
         priority={priority}
         unoptimized={isLocalBackendImage(imageSrc)}
         sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
         className={cn(fit === "contain" ? "object-contain" : "object-cover", imageClassName)}
-        onError={() => setFailed(true)}
+        onError={() => { if (!localImage) setFailed(true); }}
       />
-      {!hasUploadedImage ? (
+      {!hasServiceImage ? (
         <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent">
           <div className="absolute bottom-3 left-3 right-3">
             <p className="inline-flex items-center gap-1 rounded-sm bg-white/95 px-2.5 py-1 text-xs font-bold text-primary shadow-sm">

@@ -32,9 +32,9 @@ import { formatPrice, getCurrentPrice, hasOfferPrice } from "@/features/catalogu
 
 const homeCategories = [
   { name: "Home Appliances", query: "appliance", image: "/images/categories/home-appliances-repair.png" },
-  { name: "Water Tank Cleaning", query: "water tank", image: "/images/service-icons/water-tank.webp" },
-  { name: "Sofa Repair", query: "sofa", image: "/images/service-icons/sofa-repair.webp" },
-  { name: "Mosquito Net", query: "mosquito", image: "/images/service-icons/mosquito-net.webp" },
+  { name: "Water Tank Cleaning", query: "water tank", image: "/images/service-icons/water-tank.png" },
+  { name: "Sofa Repair", query: "sofa", image: "/images/service-icons/sofa-repair.png" },
+  { name: "Mosquito Net", query: "mosquito", image: "/images/service-icons/mosquito-net.png" },
 ];
 
 const popularCategories = [
@@ -48,16 +48,16 @@ const popularCategories = [
     ["Geyser", "geyser", "geyser"],
     ["Microwave", "microwave", "microwave"],
     ["Dishwasher", "dishwasher", "dishwasher"],
-  ].map(([name, query, icon]) => ({ name, query, image: `/images/service-icons/${icon}.webp` })),
+  ].map(([name, query, icon]) => ({ name, query, image: `/images/service-icons/${icon}.png` })),
 ];
 
 const spotlights = [
-  { title: "Give your sofa a fresh start", label: "Sofa repair", description: "Comfort worth coming home to.", query: "sofa", image: "/images/hero/sofa-repair-hd.png" },
-  { title: "Cleaner tanks. Fresher homes.", label: "Water tank cleaning", description: "Care for your home's water storage.", query: "water tank", image: "/images/hero/water-tank-cleaning-hd.png" },
-  { title: "Everyday appliances, expert care", label: "Home appliances", description: "Keep your home running smoothly.", query: "washing machine", image: "/images/hero/washing-machine-service-hd.png" },
-  { title: "Stay cool, all year", label: "AC service", description: "Give your cooling the care it deserves.", query: "AC", image: "/images/hero/ac-service-hd.png" },
-  { title: "Fresh air. Peaceful evenings.", label: "Mosquito net", description: "Find the right net for your home.", query: "mosquito", image: "/images/service-icons/mosquito-net.webp" },
-  { title: "Keep the freshness going", label: "Refrigerator repair", description: "Expert care for your kitchen essential.", query: "refrigerator", image: "/images/service-icons/refrigerator.webp" },
+  { title: "Give your sofa a fresh start", label: "Sofa repair", description: "Comfort worth coming home to.", query: "sofa", image: "/images/hero/sofa-repair.webp" },
+  { title: "Cleaner tanks. Fresher homes.", label: "Water tank cleaning", description: "Care for your home's water storage.", query: "water tank", image: "/images/hero/water-tank-cleaning.webp" },
+  { title: "Everyday appliances, expert care", label: "Home appliances", description: "Keep your home running smoothly.", query: "washing machine", image: "/images/hero/washing-machine-service.webp" },
+  { title: "Stay cool, all year", label: "AC service", description: "Give your cooling the care it deserves.", query: "AC", image: "/images/hero/ac-service.webp" },
+  { title: "Fresh air. Peaceful evenings.", label: "Mosquito net", description: "Find the right net for your home.", query: "mosquito", image: "/images/services/mosquito-net.png" },
+  { title: "Keep the freshness going", label: "Refrigerator repair", description: "Expert care for your kitchen essential.", query: "refrigerator", image: "/images/services/refrigerator.png" },
 ];
 
 const appliancePopupOrder = [
@@ -184,7 +184,7 @@ export function HomeDiscovery() {
       <section aria-label="AC service" className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 lg:px-8">
         <div className="relative isolate min-h-56 overflow-hidden rounded-lg bg-[#eee5fc] sm:aspect-[5/1] sm:min-h-0">
           <Image
-            src="/images/hero/ac-service-hd.png"
+            src="/images/hero/ac-service.webp"
             alt="Purple Squad AC service professional"
             fill
             sizes="(min-width: 1280px) 1280px, 100vw"
@@ -352,12 +352,12 @@ function SpotlightCarousel({ services }: { services: ServiceListItem[] }) {
 
 function HeroImageMosaic() {
   const cards = [
-    { image: "ac-service", title: "AC Service", query: "AC" },
-    { image: "washing-machine-service", title: "Appliance Repair", query: "washing machine" },
-    { image: "water-tank-cleaning", title: "Water Tank Cleaning", query: "water tank" },
-    { image: "sofa-repair", title: "Sofa Repair", query: "sofa" },
+    { image: "/images/hero/ac-service.webp", title: "AC Service", query: "AC" },
+    { image: "/images/hero/washing-machine-service.webp", title: "Appliance Repair", query: "washing machine" },
+    { image: "/images/hero/water-tank-cleaning.webp", title: "Water Tank Cleaning", query: "water tank" },
+    { image: "/images/hero/sofa-repair.webp", title: "Sofa Repair", query: "sofa" },
   ];
-  return <div className="grid min-w-0 grid-cols-2 content-start gap-3">{cards.map((card) => <Link key={card.image} href={serviceSearchHref(card.query)} className="group relative aspect-[3/2] overflow-hidden rounded-md focus-visible:outline-2 focus-visible:outline-primary"><Image src={`/images/hero/${card.image}-hd.png`} alt={`Purple Squad ${card.title}`} fill priority sizes="(min-width: 1024px) 28vw, 46vw" className="object-cover transition duration-300 group-hover:scale-[1.02]" /><span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent px-3 pb-3 pt-8 text-xs font-bold text-white sm:text-sm">{card.title}</span></Link>)}</div>;
+  return <div className="grid min-w-0 grid-cols-2 content-start gap-3">{cards.map((card) => <Link key={card.image} href={serviceSearchHref(card.query)} className="group relative aspect-[3/2] overflow-hidden rounded-md focus-visible:outline-2 focus-visible:outline-primary"><Image src={card.image} alt={`Purple Squad ${card.title}`} fill priority sizes="(min-width: 1024px) 28vw, 46vw" className="object-cover transition duration-300 group-hover:scale-[1.02]" /><span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent px-3 pb-3 pt-8 text-xs font-bold text-white sm:text-sm">{card.title}</span></Link>)}</div>;
 }
 
 function CompactPackageCard({ service }: { service: ServiceListItem }) {
