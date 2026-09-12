@@ -47,10 +47,10 @@ function packageSectionTitle(service: ServiceDetail) {
   return `${service.name} packages`;
 }
 
-export function ServiceDetailView() {
+export function ServiceDetailView({ initialService }: { initialService?: ServiceDetail | null }) {
   const params = useParams<{ slug: string }>();
   const slug = params.slug;
-  const service = useServiceDetail(slug);
+  const service = useServiceDetail(slug, initialService ?? undefined);
   const related = useServices({
     category: service.data?.category.slug,
     page_size: 80,
@@ -106,13 +106,13 @@ export function ServiceDetailView() {
             <div className="min-w-0 rounded-lg border border-border bg-white p-3 shadow-sm sm:p-4">
               <ServiceImage
                 src={detail.cover_image}
-                alt={detail.name}
+                alt={`${detail.name} service by Purple Squad in Chennai`}
                 priority
                 className="aspect-[16/10] h-auto w-full rounded-lg bg-white sm:aspect-[16/7]"
                 imageClassName="object-contain sm:object-cover"
               />
               <div className="mt-5">
-                <h1 className="text-2xl font-bold leading-tight text-foreground sm:text-3xl">{detail.name}</h1>
+                <h1 className="text-2xl font-bold leading-tight text-foreground sm:text-3xl">{detail.name} in Chennai</h1>
                 <p className="mt-2 flex items-center gap-2 text-sm font-semibold text-secondary">
                   <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
                   4.8 service quality

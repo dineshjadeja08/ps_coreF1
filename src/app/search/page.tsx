@@ -31,6 +31,10 @@ export async function generateMetadata({ searchParams }: SearchPageProps): Promi
     alternates: {
       canonical: canonicalFor(path),
     },
+    robots: {
+      index: false,
+      follow: true,
+    },
     openGraph: {
       title: `${title} | Purple Squad`,
       description,

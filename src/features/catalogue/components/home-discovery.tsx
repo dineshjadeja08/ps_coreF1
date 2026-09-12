@@ -146,7 +146,7 @@ export function HomeDiscovery() {
           <div>
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
               <h1 className="max-w-lg text-3xl font-bold leading-tight text-foreground sm:text-5xl">
-                Home services at <span className="text-primary">your doorstep</span>
+                Home Appliance Services at <span className="text-primary">Your Doorstep in Chennai</span>
               </h1>
             </motion.div>
 

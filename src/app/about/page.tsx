@@ -20,7 +20,7 @@ export const metadata: Metadata = {
 export default function AboutPage() {
   return (
     <>
-      <JsonLd data={localBusinessJsonLd("/about")} />
+      <JsonLd data={localBusinessJsonLd()} />
       <FooterLinkPage
         eyebrow="Purple Squad"
         title="About Purple Squad"

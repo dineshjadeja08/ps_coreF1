@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 
 import { publicCatalogueApi } from "@/features/catalogue/api";
+import type { ServiceDetail } from "@/features/catalogue/types";
 import { queryKeys } from "@/lib/api/query-keys";
 
 export function useServiceCategories() {
@@ -19,11 +20,12 @@ export function useServices(params?: { category?: string; search?: string; featu
   });
 }
 
-export function useServiceDetail(slug: string) {
+export function useServiceDetail(slug: string, initialData?: ServiceDetail) {
   return useQuery({
     queryKey: queryKeys.serviceDetail(slug),
     queryFn: () => publicCatalogueApi.getService(slug),
     enabled: Boolean(slug),
+    initialData,
   });
 }
 

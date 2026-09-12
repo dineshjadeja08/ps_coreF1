@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 
 import { Footer } from "@/components/layout/footer";
 import { Header } from "@/components/layout/header";
+import { InstantBookingBanner } from "@/components/layout/instant-booking-banner";
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 
 export function AppChrome({ children }: { children: ReactNode }) {
@@ -19,6 +20,7 @@ export function AppChrome({ children }: { children: ReactNode }) {
     <>
       <Header />
       <main className="flex-1">{children}</main>
+      <InstantBookingBanner />
       <Footer />
       <MobileBottomNav />
     </>

@@ -5,16 +5,25 @@ import { HomeDiscovery } from "@/features/catalogue/components/home-discovery";
 import { canonicalFor, defaultOgImagePath, localBusinessJsonLd, websiteJsonLd } from "@/lib/seo";
 
 export const metadata: Metadata = {
-  title: "Expert Home Services",
-  description: "Discover Purple Squad home services, check service availability, search the catalogue, and compare pricing.",
+  title: {
+    absolute: "Purple Squad | Home Appliance Services in Chennai",
+  },
+  description:
+    "Book trusted AC, appliance repair, cleaning, CCTV, geyser, and water purifier services at your doorstep in Chennai with Purple Squad.",
   alternates: {
     canonical: canonicalFor("/"),
   },
   openGraph: {
+    title: "Purple Squad | Home Appliance Services in Chennai",
+    description:
+      "Book trusted AC, appliance repair, cleaning, CCTV, geyser, and water purifier services at your doorstep in Chennai.",
     url: canonicalFor("/"),
     images: [defaultOgImagePath],
   },
   twitter: {
+    title: "Purple Squad | Home Appliance Services in Chennai",
+    description:
+      "Book trusted AC, appliance repair, cleaning, CCTV, geyser, and water purifier services at your doorstep in Chennai.",
     images: [defaultOgImagePath],
   },
 };
@@ -22,7 +31,7 @@ export const metadata: Metadata = {
 export default function Home() {
   return (
     <>
-      <JsonLd data={[localBusinessJsonLd("/"), websiteJsonLd()]} />
+      <JsonLd data={[localBusinessJsonLd(), websiteJsonLd()]} />
       <HomeDiscovery />
     </>
   );

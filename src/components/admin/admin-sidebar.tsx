@@ -29,7 +29,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/hooks";
 
-const sections = [
+export const adminNavigationSections = [
   {
     title: "Main",
     items: [
@@ -103,7 +103,7 @@ export function AdminSidebar() {
           </Link>
         </div>
         <nav className="flex-1 space-y-5 overflow-y-auto px-3 py-4">
-          {sections.map((section) => (
+          {adminNavigationSections.map((section) => (
             <div key={section.title}>
               <p className="px-3 text-[11px] font-bold uppercase text-slate-400">{section.title}</p>
               <div className="mt-2 space-y-1">

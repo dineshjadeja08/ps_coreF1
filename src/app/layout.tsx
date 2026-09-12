@@ -25,7 +25,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Purple Squad | Home Services in Chennai, Bangalore and Coimbatore",
+    default: "Purple Squad | Home Appliance Services in Chennai",
     template: "%s | Purple Squad",
   },
   description: siteConfig.description,
@@ -42,11 +42,11 @@ export const metadata: Metadata = {
     locale: "en_IN",
     url: "/",
     siteName: siteConfig.name,
-    title: "Purple Squad | Trusted Home Services",
+    title: "Purple Squad | Home Appliance Services in Chennai",
     description: siteConfig.description,
     images: [
       {
-        url: "/images/hero/purple-squad-home-services-hero.png",
+        url: "/images/hero/purple-squad-home-services-og.webp",
         width: 1200,
         height: 630,
         alt: "Purple Squad home service technician with appliances",
@@ -55,15 +55,13 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Purple Squad | Trusted Home Services",
+    title: "Purple Squad | Home Appliance Services in Chennai",
     description: siteConfig.description,
-    images: ["/images/hero/purple-squad-home-services-hero.png"],
+    images: ["/images/hero/purple-squad-home-services-og.webp"],
   },
   icons: {
-    icon: [
-      { url: "/favicon.ico" },
-      { url: "/ps-favicon.png", type: "image/png", sizes: "512x512" },
-    ],
+    icon: [{ url: "/purple-squad-favicon.png", type: "image/png", sizes: "192x192" }],
+    shortcut: "/purple-squad-favicon.png",
     apple: "/apple-icon.png",
   },
 };

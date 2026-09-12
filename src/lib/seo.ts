@@ -3,7 +3,7 @@ import type { Review, ServiceDetail, ServiceListItem } from "@/features/catalogu
 import { formatPrice, getCurrentPrice } from "@/features/catalogue/utils";
 
 export const serviceAreas = ["Chennai", "Bangalore", "Coimbatore"];
-export const defaultOgImagePath = "/images/hero/purple-squad-home-services-hero.png";
+export const defaultOgImagePath = "/images/hero/purple-squad-home-services-og.webp";
 
 export function absoluteUrl(path = "/") {
   if (/^https?:\/\//i.test(path)) return path;
@@ -20,13 +20,14 @@ export function compactDescription(value?: string | null, fallback = siteConfig.
   return text.length > 158 ? `${text.slice(0, 155).trim()}...` : text;
 }
 
-export function localBusinessJsonLd(path = "/") {
+export function localBusinessJsonLd() {
   return {
     "@context": "https://schema.org",
-    "@type": "LocalBusiness",
+    "@type": "HomeAndConstructionBusiness",
     "@id": `${siteConfig.url}/#localbusiness`,
     name: siteConfig.name,
-    url: canonicalFor(path),
+    url: siteConfig.url,
+    logo: absoluteUrl("/purple-squad-favicon.png"),
     image: absoluteUrl(defaultOgImagePath),
     telephone: "+917676076361",
     email: "support@purplesquad.in",
@@ -41,6 +42,19 @@ export function localBusinessJsonLd(path = "/") {
       "https://www.facebook.com/profile.php?id=61593384331661",
       "https://www.youtube.com/@PurpleSquadOfficial",
     ],
+  };
+}
+
+export function breadcrumbJsonLd(items: Array<{ name: string; path: string }>) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: items.map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: item.name,
+      item: canonicalFor(item.path),
+    })),
   };
 }
 

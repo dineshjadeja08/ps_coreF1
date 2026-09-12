@@ -15,11 +15,11 @@ export async function generateMetadata({ searchParams }: ServicesPageProps): Pro
   const { category, q } = await searchParams;
   const categories = await getServiceCategoriesForSeo();
   const selectedCategory = categories.find((item) => item.slug === category);
-  const title = selectedCategory ? `${selectedCategory.name} Services` : q ? `Search ${q}` : "Home Services";
+  const title = selectedCategory ? `${selectedCategory.name} Services in Chennai` : q ? `Search ${q}` : "Home Services in Chennai";
   const description = compactDescription(
     selectedCategory?.description,
     selectedCategory
-      ? `Book ${selectedCategory.name.toLowerCase()} services with Purple Squad in Chennai, Bangalore, and Coimbatore.`
+      ? `Book ${selectedCategory.name.toLowerCase()} services with Purple Squad in Chennai.`
       : q
         ? `Search Purple Squad services for ${q} and book trusted professionals.`
         : "Browse appliance repair, cleaning, CCTV, water purifier, geyser, TV, refrigerator, washing machine, microwave, and dishwasher services.",
@@ -32,7 +32,7 @@ export async function generateMetadata({ searchParams }: ServicesPageProps): Pro
   return {
     title,
     description,
-    keywords: selectedCategory ? [selectedCategory.name, `${selectedCategory.name} Chennai`, `${selectedCategory.name} Bangalore`, `${selectedCategory.name} Coimbatore`] : undefined,
+    keywords: selectedCategory ? [selectedCategory.name, `${selectedCategory.name} Chennai`] : undefined,
     alternates: {
       canonical: canonicalFor(path),
     },
