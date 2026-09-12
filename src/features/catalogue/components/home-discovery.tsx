@@ -199,10 +199,13 @@ export function HomeDiscovery() {
           />
           <div className="absolute inset-0 bg-gradient-to-r from-[#eee5fc] via-[#eee5fc]/95 to-[#eee5fc]/5 sm:via-[#eee5fc]/80 sm:to-transparent" />
           <div className="relative z-10 flex h-full max-w-[72%] flex-col justify-center p-5 sm:max-w-[48%] sm:p-7">
-            <p className="text-sm font-semibold text-primary">AC Service</p>
+            <p className="text-sm font-semibold uppercase tracking-wide text-primary">Limited-time offer</p>
             <h2 className="mt-1 text-2xl font-bold sm:text-3xl">Stay Cool, All Year</h2>
             <p className="mt-2 text-sm text-secondary">Professional AC service at your doorstep.</p>
-            <Button asChild size="sm" className="mt-4 w-fit"><Link href={serviceDetailHrefForQuery(allServices, "AC")}>Book AC Service <ArrowRight className="h-4 w-4" /></Link></Button>
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <span className="rounded-md bg-white/90 px-3 py-2 text-sm font-semibold text-foreground shadow-sm">AC Service from <strong className="text-lg text-primary">₹399</strong></span>
+              <Button asChild size="sm"><Link href={serviceDetailHrefForQuery(allServices, "AC")}>Book now <ArrowRight className="h-4 w-4" /></Link></Button>
+            </div>
           </div>
         </div>
       </section>

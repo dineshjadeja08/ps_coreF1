@@ -5,6 +5,7 @@ import type {
   AdminService,
   AdminServiceCategory,
   AdminServiceImage,
+  AdminServiceArea,
   AdminCustomer,
   AdminReportSummary,
   BalanceCollectionRequest,
@@ -61,6 +62,7 @@ export const apiPaths = {
   services: "/api/v1/services/",
   serviceDetail: (slug: string) => `/api/v1/services/${slug}/`,
   serviceReviews: (serviceId: UUID) => `/api/v1/services/${serviceId}/reviews/`,
+  faqs: "/api/v1/faqs/",
   addresses: "/api/v1/addresses/",
   addressDetail: (id: UUID) => `/api/v1/addresses/${id}/`,
   slots: "/api/v1/slots/",
@@ -77,6 +79,8 @@ export const apiPaths = {
   adminServiceDetail: (id: UUID) => `/api/v1/admin/services/${id}/`,
   adminServiceImages: (serviceId: UUID) => `/api/v1/admin/services/${serviceId}/images/`,
   adminServiceImageDetail: (serviceId: UUID, imageId: UUID) => `/api/v1/admin/services/${serviceId}/images/${imageId}/`,
+  adminServiceAreas: "/api/v1/admin/service-areas/",
+  adminServiceAreaDetail: (id: UUID) => `/api/v1/admin/service-areas/${id}/`,
   adminBookings: "/api/v1/admin/bookings/",
   adminBookingDetail: (id: UUID) => `/api/v1/admin/bookings/${id}/`,
   adminBookingAssignTechnician: (id: UUID) => `/api/v1/admin/bookings/${id}/assign-technician/`,
@@ -119,11 +123,12 @@ export const apiPaths = {
 
 export const catalogueApi = {
   listCategories: () => apiRequest<ServiceCategory[]>(apiPaths.serviceCategories, { cache: "no-store" }),
-  listServices: (query?: { category?: string; search?: string; featured?: boolean; page?: number; page_size?: number }) =>
+  listServices: (query?: { category?: string; search?: string; featured?: boolean; postal_code?: string; page?: number; page_size?: number }) =>
     apiRequest<PaginatedResponse<ServiceListItem>>(apiPaths.services, { query }),
   getService: (slug: string) => apiRequest<ServiceDetail>(apiPaths.serviceDetail(slug)),
   listServiceReviews: (serviceId: UUID) =>
     apiRequest<PaginatedResponse<Review>>(apiPaths.serviceReviews(serviceId), { query: { page_size: 3 } }),
+  listServiceFaqs: (serviceId: UUID) => apiRequest<FAQ[]>(apiPaths.faqs, { query: { service_id: serviceId } }),
   checkServiceArea: (postalCode: string) =>
     apiRequest<ServiceAreaCheckResponse>(apiPaths.serviceAreaCheck, { query: { postal_code: postalCode } }),
 };
@@ -249,6 +254,12 @@ export const authApi = {
 };
 
 export const adminApi = {
+  listServiceAreas: () => apiRequest<PaginatedResponse<AdminServiceArea>>(apiPaths.adminServiceAreas, { auth: true }),
+  createServiceArea: (body: Partial<AdminServiceArea> & { service_ids: UUID[] }) =>
+    apiRequest<AdminServiceArea>(apiPaths.adminServiceAreas, { method: "POST", body, auth: true }),
+  updateServiceArea: (id: UUID, body: Partial<AdminServiceArea> & { service_ids?: UUID[] }) =>
+    apiRequest<AdminServiceArea>(apiPaths.adminServiceAreaDetail(id), { method: "PATCH", body, auth: true }),
+  removeServiceArea: (id: UUID) => apiRequest<void>(apiPaths.adminServiceAreaDetail(id), { method: "DELETE", auth: true }),
   listCategories: () => apiRequest<PaginatedResponse<AdminServiceCategory>>(apiPaths.adminCategories, { auth: true }),
   createCategory: (body: FormData | Partial<AdminServiceCategory>) =>
     apiRequest<AdminServiceCategory>(apiPaths.adminCategories, {

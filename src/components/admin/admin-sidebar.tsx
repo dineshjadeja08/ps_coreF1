@@ -12,6 +12,7 @@ import {
   Image,
   LayoutDashboard,
   ListChecks,
+  MapPin,
   LogOut,
   MessageSquareText,
   Package,
@@ -39,6 +40,7 @@ const sections = [
       { label: "Payments", href: "/admin/payments", icon: CreditCard },
       { label: "Technicians", href: "/admin/technicians", icon: Wrench },
       { label: "Assignments", href: "/admin/assignments", icon: ListChecks },
+      { label: "Service Areas", href: "/admin/service-areas", icon: MapPin },
     ],
   },
   {

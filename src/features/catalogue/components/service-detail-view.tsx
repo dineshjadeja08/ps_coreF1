@@ -1,32 +1,22 @@
 "use client";
 
-import { Check, ChevronRight, Clock, Percent, ShieldCheck, Star } from "lucide-react";
+import * as Dialog from "@radix-ui/react-dialog";
+import { Check, ChevronRight, Clock, Percent, ShieldCheck, Star, X } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { useState } from "react";
 
 import { EmptyState } from "@/components/common/empty-state";
 import { ErrorState } from "@/components/common/error-state";
 import { SectionHeading } from "@/components/common/section-heading";
-import { Button } from "@/components/ui/button";
 import { routes } from "@/constants/routes";
 import { AddToCartButton, CartSummary } from "@/features/cart/cart-controls";
-import { ServiceIcon } from "@/features/catalogue/components/service-icon";
 import { ServiceImage } from "@/features/catalogue/components/service-image";
 import { ServiceDetailSkeleton } from "@/features/catalogue/components/skeletons";
-import { useServiceDetail, useServiceReviews, useServices } from "@/features/catalogue/queries";
+import { useServiceDetail, useServiceFaqs, useServiceReviews, useServices } from "@/features/catalogue/queries";
 import type { ServiceDetail, ServiceListItem } from "@/features/catalogue/types";
+import type { FAQ } from "@/types/api";
 import { formatDuration, formatPrice, getCurrentPrice, hasOfferPrice } from "@/features/catalogue/utils";
-
-function TextSection({ title, body }: { title: string; body?: string }) {
-  if (!body?.trim()) return null;
-
-  return (
-    <section className="rounded-lg border border-border bg-surface p-5 shadow-sm">
-      <h2 className="text-lg font-semibold text-foreground">{title}</h2>
-      <p className="mt-3 whitespace-pre-line text-sm leading-7 text-secondary">{body}</p>
-    </section>
-  );
-}
 
 function packageFamilyKey(service: Pick<ServiceListItem, "name" | "short_description" | "category">) {
   const text = `${service.name} ${service.short_description} ${service.category.name}`.toLowerCase();
@@ -66,6 +56,9 @@ export function ServiceDetailView() {
     page_size: 80,
   });
   const reviews = useServiceReviews(service.data?.id);
+  const [selectedPackage, setSelectedPackage] = useState<ServiceListItem | null>(null);
+  const selectedPackageDetail = useServiceDetail(selectedPackage?.slug ?? "");
+  const selectedPackageFaqs = useServiceFaqs(selectedPackage?.id);
 
   if (service.isLoading) {
     return <ServiceDetailSkeleton />;
@@ -92,13 +85,12 @@ export function ServiceDetailView() {
   const currentFamily = packageFamilyKey(detail);
   const familyPackages = allRelated.filter((item) => packageFamilyKey(item) === currentFamily);
   const packageServices = familyPackages.length > 1 ? familyPackages : [detail];
-  const serviceOptions = allRelated.length ? allRelated : [detail];
 
   return (
-    <div className="bg-[#f7f7f7] pb-24 md:pb-0">
+    <div className="overflow-x-clip bg-[#f7f7f7]">
       <section className="border-b border-border bg-white">
-        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-          <nav aria-label="Breadcrumb" className="mb-5 flex items-center gap-2 text-sm text-secondary">
+        <div className="mx-auto max-w-7xl px-3 py-5 sm:px-6 sm:py-6 lg:px-8">
+          <nav aria-label="Breadcrumb" className="mb-4 flex min-w-0 items-center gap-1.5 text-xs text-secondary sm:mb-5 sm:gap-2 sm:text-sm">
             <Link href={routes.home} className="hover:text-primary">
               Home
             </Link>
@@ -107,96 +99,53 @@ export function ServiceDetailView() {
               Services
             </Link>
             <ChevronRight className="h-4 w-4" />
-            <span className="text-foreground">{detail.name}</span>
+            <span className="min-w-0 truncate text-foreground">{detail.name}</span>
           </nav>
 
-          <div className="grid gap-6 lg:grid-cols-[250px_minmax(0,1fr)] lg:items-start">
-            <div>
-              <h1 className="text-3xl font-bold leading-tight text-foreground">{detail.name}</h1>
-              <p className="mt-2 flex items-center gap-2 text-sm font-semibold text-secondary">
-                <Star className="h-4 w-4 fill-primary text-primary" />
-                4.8 service quality when customer reviews are available
-              </p>
-
-              <aside className="mt-6 hidden rounded-lg border border-border bg-white p-4 lg:block">
-                <div className="flex items-center gap-3">
-                  <span className="text-xs font-semibold text-secondary">Select a service</span>
-                  <span className="h-px flex-1 bg-border" />
-                </div>
-                <div className="mt-4 grid grid-cols-2 gap-3">
-                  {serviceOptions.slice(0, 8).map((item) => (
-                    <Link key={item.id} href={routes.serviceDetail(item.slug)} className="group text-center">
-                      <ServiceIcon label={item.name} className="h-16 w-full rounded-md bg-[#f5f5f5]" imageClassName="p-2" />
-                      <span className="mt-2 line-clamp-2 block text-xs font-bold leading-4 text-foreground group-hover:text-primary">
-                        {item.name}
-                      </span>
-                    </Link>
-                  ))}
-                </div>
-              </aside>
+          <div className="grid gap-7 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
+            <div className="min-w-0 rounded-lg border border-border bg-white p-3 shadow-sm sm:p-4">
+              <ServiceImage
+                src={detail.cover_image}
+                alt={detail.name}
+                priority
+                className="aspect-[16/10] h-auto w-full rounded-lg bg-white sm:aspect-[16/7]"
+                imageClassName="object-contain sm:object-cover"
+              />
+              <div className="mt-5">
+                <h1 className="text-2xl font-bold leading-tight text-foreground sm:text-3xl">{detail.name}</h1>
+                <p className="mt-2 flex items-center gap-2 text-sm font-semibold text-secondary">
+                  <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+                  4.8 service quality
+                </p>
+              </div>
             </div>
 
-            <ServiceImage src={detail.cover_image} alt={detail.name} priority className="h-64 rounded-lg sm:h-[380px]" />
+            <aside className="hidden space-y-5 lg:block">
+              <CartSummary />
+              <div className="rounded-lg border border-border bg-white p-5 shadow-sm">
+                <p className="flex items-center gap-2 text-lg font-bold text-foreground"><ShieldCheck className="h-5 w-5 text-primary" />Why Purple Squad?</p>
+                <div className="mt-4 space-y-4 text-sm text-secondary">
+                  {["Verified and vetted professionals", "Transparent package pricing", "Matched to your service needs"].map((item) => <p key={item} className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />{item}</p>)}
+                </div>
+              </div>
+            </aside>
           </div>
-
-          {packageServices.length > 1 ? (
-            <section className="mt-6 rounded-lg border border-border bg-surface p-4">
-              <div className="flex items-center gap-3">
-                <span className="text-xs font-bold uppercase tracking-wide text-primary">Available packages</span>
-                <span className="h-px flex-1 bg-border" />
-              </div>
-              <div className="mobile-scroll-row mt-3 flex max-w-full gap-3 overflow-x-auto overscroll-x-contain pb-1">
-                {packageServices.map((item) => (
-                  <a
-                    key={item.id}
-                    href={`#package-${item.slug}`}
-                    className="w-48 shrink-0 rounded-md border border-border bg-white p-3 text-sm font-semibold leading-5 text-foreground hover:border-primary/40 hover:text-primary"
-                  >
-                    {item.name}
-                  </a>
-                ))}
-              </div>
-            </section>
-          ) : null}
         </div>
       </section>
 
-      <section className="mx-auto grid max-w-7xl gap-0 px-4 py-6 sm:px-6 lg:grid-cols-[250px_minmax(0,1fr)_280px] lg:px-8">
-        <aside className="hidden border-r border-border bg-white p-4 lg:block">
-          <div className="sticky top-28">
-            <div className="flex items-center gap-3">
-              <span className="text-xs font-semibold text-secondary">Packages</span>
-              <span className="h-px flex-1 bg-border" />
-            </div>
-            <div className="mt-4 space-y-2">
-              {packageServices.slice(0, 10).map((item) => (
-                <a key={item.id} href={`#package-${item.slug}`} className="block rounded-md px-3 py-2 text-sm font-semibold text-secondary hover:bg-muted hover:text-foreground">
-                  {item.name}
-                </a>
-              ))}
-            </div>
-          </div>
-        </aside>
-
-        <main className="border-border bg-white p-5 lg:border-r lg:p-7">
-          <div className="grid gap-4">
-            <TextSection title="Description" body={detail.description} />
-            <TextSection title="What's included" body={detail.whats_included} />
-            <TextSection title="What's excluded" body={detail.whats_excluded} />
-            <TextSection title="Important notes" body={detail.important_notes} />
-          </div>
-
-          <div className="mt-7 border-b border-border pb-5">
-            <p className="text-xs font-bold uppercase tracking-wide text-primary">Recommended</p>
+      <section className="mx-auto grid min-w-0 max-w-7xl gap-0 px-3 py-5 sm:px-6 sm:py-6 lg:grid-cols-[minmax(0,1fr)_280px] lg:px-8">
+        <main className="min-w-0 border-border bg-white p-4 sm:p-5 lg:border-r lg:p-7">
+          <div className="border-b border-border pb-5">
+            <p className="text-xs font-bold uppercase tracking-wide text-primary">Available services</p>
             <h2 className="mt-1 text-2xl font-bold text-foreground">{packageSectionTitle(detail)}</h2>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-secondary">
-              Select a package, confirm your address, pick a slot, and pay the booking advance.
+              Tap a service to view its full details and add it to your cart.
             </p>
           </div>
 
-          <div className="divide-y divide-border">
+          <div className="mt-4 grid gap-3">
             {packageServices.map((item, index) => (
-              <PackageRow key={item.id} service={item} featured={index === 0} />
+              <PackageRow key={item.id} service={item} featured={index === 0} onReadMore={() => setSelectedPackage(item)} />
             ))}
           </div>
         </main>
@@ -249,30 +198,33 @@ export function ServiceDetailView() {
         </section>
       ) : null}
 
-      <div className="fixed inset-x-0 bottom-[calc(var(--mobile-nav-height)+env(safe-area-inset-bottom))] z-30 border-t border-border bg-surface p-3 shadow-lg md:hidden">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
-          <div>
-            <p className="text-xs text-secondary">Starts at</p>
-            <p className="text-lg font-bold text-foreground">{formatPrice(getCurrentPrice(detail)) ?? "Price unavailable"}</p>
-          </div>
-          <AddToCartButton service={detail} />
-        </div>
-      </div>
+      <PackageDetailsDialog
+        open={Boolean(selectedPackage)}
+        service={selectedPackageDetail.data ?? selectedPackage}
+        loading={selectedPackageDetail.isLoading}
+        faqs={selectedPackageFaqs.data ?? []}
+        onOpenChange={(open) => { if (!open) setSelectedPackage(null); }}
+      />
     </div>
   );
 }
 
-function PackageRow({ service, featured }: { service: ServiceListItem; featured?: boolean }) {
+function PackageRow({ service, featured, onReadMore }: { service: ServiceListItem; featured?: boolean; onReadMore: () => void }) {
   const price = formatPrice(getCurrentPrice(service));
   const basePrice = formatPrice(service.base_price);
   const showOffer = hasOfferPrice(service) && basePrice;
   const duration = formatDuration(service.estimated_duration_minutes);
 
   return (
-    <article id={`package-${service.slug}`} className="grid gap-4 py-6 sm:grid-cols-[minmax(0,1fr)_116px] sm:items-start">
-      <div>
-        <p className="text-xs font-bold uppercase tracking-wide text-success">Package</p>
-        <h3 className="mt-1 text-lg font-bold text-foreground">{service.name}</h3>
+    <button
+      id={`package-${service.slug}`}
+      type="button"
+      onClick={onReadMore}
+      className="group grid min-w-0 gap-4 rounded-lg border border-border bg-white p-4 text-left transition hover:border-primary/40 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:p-5"
+    >
+      <div className="min-w-0">
+        <p className="text-xs font-bold uppercase tracking-wide text-success">Service</p>
+        <h3 className="mt-1 break-words text-lg font-bold text-foreground">{service.name}</h3>
         <div className="mt-2 flex flex-wrap items-center gap-2 text-xs font-semibold text-secondary">
           <span className="inline-flex items-center gap-1">
             <Star className="h-3.5 w-3.5 fill-primary text-primary" />
@@ -298,15 +250,76 @@ function PackageRow({ service, featured }: { service: ServiceListItem; featured?
           <span className="text-base font-bold text-foreground">{price ?? "View price"}</span>
           {showOffer ? <span className="text-xs text-muted-foreground line-through">{basePrice}</span> : null}
         </div>
-        <p className="mt-3 max-w-xl text-sm leading-6 text-secondary">{service.short_description || service.category.name}</p>
-        <Button asChild variant="outline" size="sm" className="mt-4">
-          <Link href={routes.serviceDetail(service.slug)}>View details</Link>
-        </Button>
       </div>
-      <div className="grid gap-2 rounded-lg bg-[#f1f1f3] p-3 text-center">
-        {showOffer ? <p className="text-3xl font-extrabold leading-8 text-success">Save</p> : null}
-        <AddToCartButton service={service} />
-      </div>
-    </article>
+      <span className="inline-flex items-center gap-1 self-end text-sm font-bold text-primary sm:self-center">
+        Read more
+        <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+      </span>
+    </button>
   );
+}
+
+function PackageDetailsDialog({
+  open,
+  service,
+  loading,
+  faqs,
+  onOpenChange,
+}: {
+  open: boolean;
+  service: ServiceListItem | ServiceDetail | null;
+  loading: boolean;
+  faqs: FAQ[];
+  onOpenChange: (open: boolean) => void;
+}) {
+  const detail = service as ServiceDetail | null;
+  const price = service ? formatPrice(getCurrentPrice(service)) : null;
+  const basePrice = service ? formatPrice(service.base_price) : null;
+  const showOffer = Boolean(service && hasOfferPrice(service) && basePrice);
+
+  return (
+    <Dialog.Root open={open} onOpenChange={onOpenChange}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/55 data-[state=open]:animate-in data-[state=closed]:animate-out" />
+        <Dialog.Content className="fixed inset-x-2 top-1/2 z-50 max-h-[94vh] -translate-y-1/2 overflow-x-hidden overflow-y-auto rounded-lg bg-white shadow-2xl outline-none sm:inset-x-auto sm:left-1/2 sm:max-h-[92vh] sm:w-[min(680px,calc(100vw-2rem))] sm:-translate-x-1/2">
+          {service ? <ServiceImage src={service.cover_image} alt={service.name} className="aspect-[16/10] h-auto w-full rounded-none bg-white sm:h-64 sm:aspect-auto" imageClassName="object-contain sm:object-cover" /> : null}
+          <Dialog.Close className="absolute right-3 top-3 grid h-10 w-10 place-items-center rounded-full bg-white/95 text-foreground shadow-md hover:bg-white" aria-label="Close package details">
+            <X className="h-5 w-5" />
+          </Dialog.Close>
+
+          <div className="min-w-0 border-b border-border p-4 sm:p-6">
+            {loading && !service ? <p className="text-sm text-secondary">Loading package details...</p> : null}
+            {service ? (
+              <div className="min-w-0 pr-10">
+                <Dialog.Title className="text-xl font-bold text-foreground sm:text-2xl">{service.name}</Dialog.Title>
+                <p className="mt-2 flex items-center gap-1.5 text-sm text-secondary"><Star className="h-4 w-4 fill-amber-400 text-amber-400" />4.8 customer rating</p>
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-baseline gap-2"><span className="text-xl font-bold text-foreground">{price ?? "Price unavailable"}</span>{showOffer ? <span className="text-sm text-muted-foreground line-through">{basePrice}</span> : null}</div>
+                  <AddToCartButton service={service} className="shrink-0" />
+                </div>
+              </div>
+            ) : null}
+          </div>
+
+          {detail ? (
+            <div className="min-w-0 divide-y divide-border px-4 sm:px-6">
+              <ModalSection title="Our Process" body={detail.description || detail.short_description} />
+              <ModalSection title="Included" body={detail.whats_included} />
+              <ModalSection title="Warranty & Important notes" body={detail.important_notes} />
+              <ModalSection title="Not Included" body={detail.whats_excluded} />
+              <section className="py-6">
+                <h3 className="text-lg font-bold text-foreground">Frequently Asked Questions</h3>
+                {faqs.length ? <div className="mt-3 divide-y divide-border rounded-md border border-border">{faqs.map((faq) => <details key={faq.id} className="group p-4"><summary className="cursor-pointer list-none pr-6 text-sm font-semibold text-foreground">{faq.question}</summary><p className="mt-3 whitespace-pre-line text-sm leading-6 text-secondary">{faq.answer}</p></details>)}</div> : <p className="mt-2 text-sm text-secondary">No package-specific questions have been added yet.</p>}
+              </section>
+            </div>
+          ) : null}
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
+  );
+}
+
+function ModalSection({ title, body }: { title: string; body?: string }) {
+  if (!body?.trim()) return null;
+  return <section className="min-w-0 py-5 sm:py-6"><h3 className="text-lg font-bold text-foreground">{title}</h3><p className="mt-3 whitespace-pre-line break-words text-sm leading-7 text-secondary">{body}</p></section>;
 }

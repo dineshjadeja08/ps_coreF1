@@ -102,6 +102,19 @@ export type AdminService = Omit<ServiceDetail, "category" | "effective_price"> &
   updated_at: ISODateTime;
 };
 
+export type AdminServiceArea = {
+  id: UUID;
+  name: string;
+  city: string;
+  state: string;
+  country: string;
+  postal_code: string;
+  is_active: boolean;
+  services: Array<Pick<ServiceListItem, "id" | "name" | "slug">>;
+  created_at: ISODateTime;
+  updated_at: ISODateTime;
+};
+
 export type FAQ = {
   id: UUID;
   question: string;

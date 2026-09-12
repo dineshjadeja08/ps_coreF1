@@ -1,5 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
+import { Mail, Phone } from "lucide-react";
+import type { ReactNode } from "react";
 
 import { routes } from "@/constants/routes";
 
@@ -43,18 +45,33 @@ export function Footer() {
   return (
     <footer className="border-t border-border bg-[#f4f4f4] pb-24 md:pb-0">
       <div className="page-container py-12">
-        <Link href={routes.home} className="inline-block" aria-label="Purple Squad home">
-          <Image
-            src="/images/brand/purple-squad-logo-tagline.jpg"
-            alt="Purple Squad — Service You Can Trust"
-            width={1600}
-            height={900}
-            sizes="(min-width: 640px) 224px, 192px"
-            className="h-auto w-48 object-contain mix-blend-multiply sm:w-56"
-          />
-        </Link>
+        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.45fr_1fr_1fr_1fr_1.2fr] lg:gap-8">
+          <div className="sm:col-span-2 lg:col-span-1">
+            <Link href={routes.home} className="inline-block" aria-label="Purple Squad home">
+              <Image
+                src="/images/brand/purple-squad-logo-tagline.jpg"
+                alt="Purple Squad — Service You Can Trust"
+                width={1600}
+                height={900}
+                sizes="(min-width: 1024px) 208px, 192px"
+                className="h-auto w-44 object-contain mix-blend-multiply sm:w-48 lg:w-52"
+              />
+            </Link>
+            <p className="mt-4 max-w-xs text-sm leading-6 text-secondary">
+              Trusted home services delivered by verified professionals, with clear pricing and support from booking to completion.
+            </p>
+            <div className="mt-5 grid gap-2">
+              <a href="tel:+917676076361" className="flex w-fit items-center gap-2 text-base font-bold text-foreground transition hover:text-primary">
+                <span className="grid h-9 w-9 place-items-center rounded-full bg-primary text-white"><Phone className="h-4 w-4" /></span>
+                76760 76361
+              </a>
+              <a href="mailto:support@purplesquad.in" className="flex w-fit items-center gap-2 text-sm font-semibold text-foreground transition hover:text-primary">
+                <span className="grid h-9 w-9 place-items-center rounded-full bg-white text-primary shadow-sm"><Mail className="h-4 w-4" /></span>
+                support@purplesquad.in
+              </a>
+            </div>
+          </div>
 
-        <div className="mt-12 grid gap-10 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_1fr]">
           {groups.map((group) => (
             <div key={group.title}>
               <h2 className="text-xl font-bold text-foreground">{group.title}</h2>
@@ -84,28 +101,39 @@ export function Footer() {
                 </Link>
               ))}
             </div>
-            <div className="mt-6 grid max-w-36 gap-3">
-              <span className="rounded-md bg-black px-3 py-2 text-center text-xs font-bold text-white">iOS app - coming soon</span>
-              <span className="rounded-md bg-black px-3 py-2 text-center text-xs font-bold text-white">Android app - coming soon</span>
+            <div className="mt-6 grid max-w-48 gap-3">
+              <AppBadge platform="App Store" eyebrow="Coming soon on the" icon={<AppleIcon />} />
+              <AppBadge platform="Google Play" eyebrow="Coming soon on" icon={<PlayStoreIcon />} />
             </div>
           </div>
         </div>
 
-        <div className="mt-10 border-t border-[#dedede] pt-8 text-xs leading-6 text-secondary">
-          <p>
-            <a href="mailto:support@purplesquad.in" className="hover:text-primary">
-              support@purplesquad.in
-            </a>{" "}
-            |{" "}
-            <a href="tel:+917676076361" className="hover:text-primary">
-              76760 76361
-            </a>
-          </p>
-          <p className="mt-3">© {new Date().getFullYear()} Purple Squad. All rights reserved.</p>
+        <div className="mt-10 border-t border-[#dedede] pt-6 text-xs leading-6 text-secondary">
+          <p>© {new Date().getFullYear()} Purple Squad. All rights reserved.</p>
         </div>
       </div>
     </footer>
   );
+}
+
+function AppBadge({ platform, eyebrow, icon }: { platform: string; eyebrow: string; icon: ReactNode }) {
+  return (
+    <div className="flex items-center gap-3 rounded-lg border border-slate-300 bg-white px-3 py-2.5 shadow-sm" aria-label={`${platform} app coming soon`}>
+      <span className="shrink-0 text-foreground">{icon}</span>
+      <span className="leading-none">
+        <span className="block text-[10px] font-semibold uppercase tracking-wide text-secondary">{eyebrow}</span>
+        <span className="mt-1 block text-base font-bold text-foreground">{platform}</span>
+      </span>
+    </div>
+  );
+}
+
+function AppleIcon() {
+  return <svg aria-hidden="true" className="h-7 w-7" viewBox="0 0 24 24" fill="currentColor"><path d="M17.05 12.54c.03-2.3 1.88-3.41 1.97-3.46a4.22 4.22 0 0 0-3.32-1.79c-1.4-.15-2.76.84-3.47.84-.72 0-1.81-.82-2.98-.79a4.4 4.4 0 0 0-3.7 2.25c-1.61 2.79-.41 6.89 1.13 9.15.77 1.1 1.67 2.34 2.84 2.3 1.15-.05 1.58-.74 2.97-.74 1.38 0 1.78.74 2.98.71 1.23-.02 2.01-1.11 2.75-2.22a9.1 9.1 0 0 0 1.26-2.57 3.96 3.96 0 0 1-2.43-3.68ZM14.79 5.81a4.03 4.03 0 0 0 .92-2.9 4.11 4.11 0 0 0-2.66 1.38 3.84 3.84 0 0 0-.95 2.8 3.4 3.4 0 0 0 2.69-1.28Z" /></svg>;
+}
+
+function PlayStoreIcon() {
+  return <svg aria-hidden="true" className="h-7 w-7" viewBox="0 0 24 24"><path fill="#34A853" d="M3.4 2.6A2 2 0 0 0 3 3.8v16.4c0 .46.15.86.4 1.18L13 12 3.4 2.6Z"/><path fill="#4285F4" d="m16.2 8.9-11-6.3c-.55-.31-1.08-.27-1.46 0L13 12l3.2-3.1Z"/><path fill="#FBBC04" d="M3.74 21.4c.38.27.91.31 1.46 0l11.02-6.28L13 12l-9.26 9.4Z"/><path fill="#EA4335" d="m20.1 11.12-3.88-2.22L13 12l3.22 3.12 3.88-2.2c1.2-.69 1.2-1.12 0-1.8Z"/></svg>;
 }
 
 function LinkedinIcon() {

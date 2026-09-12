@@ -12,7 +12,7 @@ export function useServiceCategories() {
   });
 }
 
-export function useServices(params?: { category?: string; search?: string; featured?: boolean; page_size?: number }) {
+export function useServices(params?: { category?: string; search?: string; featured?: boolean; postal_code?: string; page_size?: number }) {
   return useQuery({
     queryKey: queryKeys.services(params),
     queryFn: () => publicCatalogueApi.listServices(params),
@@ -31,6 +31,14 @@ export function useServiceReviews(serviceId?: string) {
   return useQuery({
     queryKey: serviceId ? queryKeys.serviceReviews(serviceId) : ["catalogue", "reviews", "missing"],
     queryFn: () => publicCatalogueApi.listServiceReviews(serviceId ?? ""),
+    enabled: Boolean(serviceId),
+  });
+}
+
+export function useServiceFaqs(serviceId?: string) {
+  return useQuery({
+    queryKey: ["catalogue", "faqs", serviceId ?? "missing"],
+    queryFn: () => publicCatalogueApi.listServiceFaqs(serviceId ?? ""),
     enabled: Boolean(serviceId),
   });
 }
