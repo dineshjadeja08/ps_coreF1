@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, KeyRound, Loader2, ShieldCheck, UserPlus } from "lucide-react";
+import { ArrowLeft, KeyRound, Loader2, MessageCircle, MessageSquareText, ShieldCheck, UserPlus } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -12,6 +12,7 @@ import { env } from "@/config/env";
 import { backendAuthApi } from "@/features/auth/api";
 import { useAuth } from "@/features/auth/hooks";
 import { mapBackendAuthError, mapOtpAuthError } from "@/features/auth/errors";
+import type { OtpDeliveryChannel } from "@/types/api";
 import {
   maskPhone,
   normalizeIndianPhone,
@@ -32,6 +33,7 @@ export function LoginForm() {
   const [mode, setMode] = useState<"login" | "signup" | "otp">("login");
   const [step, setStep] = useState<"password" | "phone" | "otp" | "success">("password");
   const [normalizedPhone, setNormalizedPhone] = useState("");
+  const [otpChannel, setOtpChannel] = useState<OtpDeliveryChannel>("SMS");
   const [message, setMessage] = useState("");
   const [cooldown, setCooldown] = useState(0);
   const [isSending, setIsSending] = useState(false);
@@ -79,7 +81,7 @@ export function LoginForm() {
     return { firstName: parts[0] ?? "", lastName: parts.slice(1).join(" ") };
   }
 
-  async function sendOtp(phone: string) {
+  async function sendOtp(phone: string, channel: OtpDeliveryChannel = otpChannel) {
     const normalized = normalizeIndianPhone(phone);
     if (!normalized) {
       phoneForm.setError("phone", { message: "Enter a valid Indian mobile number." });
@@ -90,8 +92,9 @@ export function LoginForm() {
     setMessage("");
 
     try {
-      await backendAuthApi.sendOtp(normalized);
+      await backendAuthApi.sendOtp(normalized, channel);
       setNormalizedPhone(normalized);
+      setOtpChannel(channel);
       setCooldown(60);
       setStep("otp");
       otpForm.reset({ otp: "" });
@@ -394,6 +397,37 @@ export function LoginForm() {
               <p className="mt-2 text-sm text-secondary">We&apos;ll send a one-time verification code.</p>
             )}
           </div>
+          <fieldset>
+            <legend className="text-sm font-semibold text-foreground">Receive OTP via</legend>
+            <div className="mt-2 grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                aria-pressed={otpChannel === "SMS"}
+                className={`flex min-h-14 items-center justify-center gap-2 rounded-lg border px-3 text-sm font-semibold transition-colors ${
+                  otpChannel === "SMS"
+                    ? "border-primary bg-primary-soft text-primary"
+                    : "border-border bg-surface text-secondary hover:border-primary/50"
+                }`}
+                onClick={() => setOtpChannel("SMS")}
+              >
+                <MessageSquareText className="h-5 w-5" />
+                SMS
+              </button>
+              <button
+                type="button"
+                aria-pressed={otpChannel === "WHATSAPP"}
+                className={`flex min-h-14 items-center justify-center gap-2 rounded-lg border px-3 text-sm font-semibold transition-colors ${
+                  otpChannel === "WHATSAPP"
+                    ? "border-primary bg-primary-soft text-primary"
+                    : "border-border bg-surface text-secondary hover:border-primary/50"
+                }`}
+                onClick={() => setOtpChannel("WHATSAPP")}
+              >
+                <MessageCircle className="h-5 w-5" />
+                WhatsApp
+              </button>
+            </div>
+          </fieldset>
           <Button type="submit" className="w-full" disabled={isSending}>
             {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
             Send OTP
@@ -418,7 +452,9 @@ export function LoginForm() {
             <label htmlFor="otp" className="text-sm font-semibold text-foreground">
               Enter verification code
             </label>
-            <p className="mt-1 text-sm text-secondary">We&apos;ve sent a 6 digit code to {maskPhone(normalizedPhone)}.</p>
+            <p className="mt-1 text-sm text-secondary">
+              We&apos;ve sent a 6 digit code via {otpChannel === "WHATSAPP" ? "WhatsApp" : "SMS"} to {maskPhone(normalizedPhone)}.
+            </p>
             <Input
               id="otp"
               inputMode="numeric"
@@ -439,7 +475,13 @@ export function LoginForm() {
             {isVerifying ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
             Verify OTP
           </Button>
-          <Button type="button" variant="ghost" className="w-full" disabled={cooldown > 0 || isSending} onClick={() => sendOtp(normalizedPhone)}>
+          <Button
+            type="button"
+            variant="ghost"
+            className="w-full"
+            disabled={cooldown > 0 || isSending}
+            onClick={() => sendOtp(normalizedPhone, otpChannel)}
+          >
             {cooldown > 0 ? `Resend code in ${Math.floor(cooldown / 60)}:${String(cooldown % 60).padStart(2, "0")}` : "Resend OTP"}
           </Button>
         </form>

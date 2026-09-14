@@ -503,12 +503,15 @@ export type Payment = {
   provider: string;
   provider_order_id: string | null;
   provider_payment_id: string | null;
+  provider_refund_id: string | null;
+  parent_payment: UUID | null;
   amount: DecimalString;
   currency: string;
   payment_type: string;
   status: string;
   signature_verified: boolean;
   paid_at: ISODateTime | null;
+  refunded_at: ISODateTime | null;
   created_at: ISODateTime;
   updated_at: ISODateTime;
 };
@@ -562,7 +565,10 @@ export type PasswordLoginRequest = {
 export type OtpSendResponse = {
   phone_number: string;
   request_id: string;
+  channel: OtpDeliveryChannel;
 };
+
+export type OtpDeliveryChannel = "SMS" | "WHATSAPP";
 
 export type TokenRefreshResponse = {
   access: string;

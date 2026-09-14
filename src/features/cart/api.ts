@@ -1,4 +1,5 @@
 import { apiRequest } from "@/lib/api/client";
+import { createIdempotencyKey } from "@/lib/idempotency";
 import type { Booking, BookingCreateRequest } from "@/types/api";
 import type { CartItem } from "./store";
 
@@ -13,7 +14,12 @@ export const cartApi = {
   async merge(items: CartItem[]) { return normalizeCart(await apiRequest<ServerCart>("/api/v1/cart/", { auth: true, method: "POST", body: { service_ids: items.map((item) => item.id), merge: true, booking_ids: Object.fromEntries(items.filter((item) => item.bookingId).map((item) => [item.id, item.bookingId])) } })); },
   async remove(id: string) { return normalizeCart(await apiRequest<ServerCart>(`/api/v1/cart/items/${encodeURIComponent(id)}/`, { auth: true, method: "DELETE" })); },
   async checkout(items: BookingCreateRequest[]) {
-    const result = await apiRequest<{ bookings: Booking[]; cart: ServerCart }>("/api/v1/cart/checkout/", { auth: true, method: "POST", body: { items } });
+    const result = await apiRequest<{ bookings: Booking[]; cart: ServerCart }>("/api/v1/cart/checkout/", {
+      auth: true,
+      method: "POST",
+      body: { items },
+      headers: { "Idempotency-Key": createIdempotencyKey("cart-checkout") },
+    });
     return { bookings: result.bookings, cart: normalizeCart(result.cart) };
   },
 };

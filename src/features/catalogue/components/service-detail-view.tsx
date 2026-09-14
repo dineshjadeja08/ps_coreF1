@@ -143,7 +143,7 @@ export function ServiceDetailView({ initialService }: { initialService?: Service
             </p>
           </div>
 
-          <div className="mt-4 grid gap-3">
+          <div className="mt-4 grid max-w-3xl gap-2.5">
             {packageServices.map((item, index) => (
               <PackageRow key={item.id} service={item} featured={index === 0} onReadMore={() => setSelectedPackage(item)} />
             ))}
@@ -216,16 +216,14 @@ function PackageRow({ service, featured, onReadMore }: { service: ServiceListIte
   const duration = formatDuration(service.estimated_duration_minutes);
 
   return (
-    <button
+    <article
       id={`package-${service.slug}`}
-      type="button"
-      onClick={onReadMore}
-      className="group grid min-w-0 gap-4 rounded-lg border border-border bg-white p-4 text-left transition hover:border-primary/40 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:p-5"
+      className="group grid min-w-0 gap-3 rounded-lg border border-border bg-white p-3 transition hover:border-primary/40 hover:shadow-sm sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:px-4"
     >
-      <div className="min-w-0">
+      <button type="button" onClick={onReadMore} className="min-w-0 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
         <p className="text-xs font-bold uppercase tracking-wide text-success">Service</p>
-        <h3 className="mt-1 break-words text-lg font-bold text-foreground">{service.name}</h3>
-        <div className="mt-2 flex flex-wrap items-center gap-2 text-xs font-semibold text-secondary">
+        <h3 className="mt-0.5 break-words text-base font-bold text-foreground sm:text-lg">{service.name}</h3>
+        <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs font-semibold text-secondary">
           <span className="inline-flex items-center gap-1">
             <Star className="h-3.5 w-3.5 fill-primary text-primary" />
             4.8
@@ -246,16 +244,19 @@ function PackageRow({ service, featured, onReadMore }: { service: ServiceListIte
             </>
           ) : null}
         </div>
-        <div className="mt-2 flex flex-wrap items-baseline gap-2">
+        <div className="mt-1.5 flex flex-wrap items-baseline gap-2">
           <span className="text-base font-bold text-foreground">{price ?? "View price"}</span>
           {showOffer ? <span className="text-xs text-muted-foreground line-through">{basePrice}</span> : null}
         </div>
+      </button>
+      <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+        <button type="button" onClick={onReadMore} className="inline-flex min-h-10 items-center gap-1 rounded-md px-2 text-sm font-bold text-primary hover:bg-primary-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+          Read more
+          <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+        </button>
+        <AddToCartButton service={service} />
       </div>
-      <span className="inline-flex items-center gap-1 self-end text-sm font-bold text-primary sm:self-center">
-        Read more
-        <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-      </span>
-    </button>
+    </article>
   );
 }
 

@@ -1,4 +1,5 @@
 import { apiRequest } from "@/lib/api/client";
+import { createIdempotencyKey } from "@/lib/idempotency";
 import type {
   Address,
   AddressRequest,
@@ -103,6 +104,8 @@ export const apiPaths = {
   adminCustomerSupportNotes: (id: UUID) => `/api/v1/admin/customers/${id}/support-notes/`,
   adminPayments: "/api/v1/admin/payments/",
   adminPaymentAdvanceOrder: (bookingId: UUID) => `/api/v1/admin/payments/booking/${bookingId}/advance-order/`,
+  adminPaymentRefund: (id: UUID) => `/api/v1/admin/payments/${id}/refund/`,
+  adminPaymentReconcileRefund: (id: UUID) => `/api/v1/admin/payments/${id}/reconcile-refund/`,
   adminNotifications: "/api/v1/admin/notifications/",
   adminNotificationCancel: (id: UUID) => `/api/v1/admin/notifications/${id}/cancel/`,
   adminNotificationRetry: (id: UUID) => `/api/v1/admin/notifications/${id}/retry/`,
@@ -167,6 +170,7 @@ export const bookingApi = {
       method: "POST",
       body,
       auth: true,
+      headers: { "Idempotency-Key": createIdempotencyKey("booking") },
     }),
   cancel: (id: UUID, body: BookingOperationRequest = {}) =>
     apiRequest<Booking>(apiPaths.cancelBooking(id), {
@@ -192,10 +196,11 @@ export const reviewApi = {
 };
 
 export const paymentApi = {
-  createAdvanceOrder: (bookingId: UUID) =>
+  createAdvanceOrder: (bookingId: UUID, idempotencyKey = createIdempotencyKey("payment")) =>
     apiRequest<PaymentOrder>(apiPaths.paymentOrder(bookingId), {
       method: "POST",
       auth: true,
+      headers: { "Idempotency-Key": idempotencyKey },
     }),
   verify: (body: PaymentVerifyRequest) =>
     apiRequest<PaymentVerifyResponse>(apiPaths.verifyPayment, {
@@ -221,10 +226,10 @@ export const authApi = {
       method: "POST",
       body: { phone_number: phoneNumber },
     }),
-  sendOtp: (phoneNumber: string) =>
+  sendOtp: (phoneNumber: string, channel: "SMS" | "WHATSAPP") =>
     apiRequest<OtpSendResponse>(apiPaths.otpSend, {
       method: "POST",
-      body: { phone_number: phoneNumber },
+      body: { phone_number: phoneNumber, channel },
     }),
   verifyOtp: (phoneNumber: string, otp: string) =>
     apiRequest<AuthLoginResponse>(apiPaths.otpVerify, {
@@ -418,6 +423,19 @@ export const adminApi = {
     apiRequest<PaginatedResponse<Payment>>(apiPaths.adminPayments, { auth: true, query }),
   createPaymentLink: (bookingId: UUID) =>
     apiRequest<PaymentOrder>(apiPaths.adminPaymentAdvanceOrder(bookingId), {
+      method: "POST",
+      auth: true,
+      headers: { "Idempotency-Key": createIdempotencyKey("admin-payment") },
+    }),
+  refundPayment: (id: UUID, body: { amount: string; reason?: string }) =>
+    apiRequest<Payment>(apiPaths.adminPaymentRefund(id), {
+      method: "POST",
+      body,
+      auth: true,
+      headers: { "Idempotency-Key": createIdempotencyKey("refund") },
+    }),
+  reconcileRefund: (id: UUID) =>
+    apiRequest<Payment>(apiPaths.adminPaymentReconcileRefund(id), {
       method: "POST",
       auth: true,
     }),

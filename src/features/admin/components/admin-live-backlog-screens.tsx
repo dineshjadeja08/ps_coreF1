@@ -13,7 +13,7 @@ import { AdminStatusBadge } from "@/components/admin/admin-status-badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { adminApi } from "@/lib/api/endpoints";
-import type { Lead } from "@/types/api";
+import type { Lead, Payment } from "@/types/api";
 
 function money(value: string | number | null | undefined) {
   return new Intl.NumberFormat("en-IN", { currency: "INR", style: "currency", maximumFractionDigits: 0 }).format(Number(value ?? 0));
@@ -96,7 +96,7 @@ function LeadRowActions({ lead, onChanged }: { lead: Lead; onChanged: () => void
   async function sendPaymentLink() {
     setBusy(true);
     try {
-      await adminApi.sendLeadPaymentLink(lead.id, { channel: "SMS" });
+      await adminApi.sendLeadPaymentLink(lead.id, { channel: "WHATSAPP" });
       onChanged();
     } finally {
       setBusy(false);
@@ -173,7 +173,7 @@ export function AdminLeadDetailScreen({ leadId }: { leadId: string }) {
     onSuccess: refresh,
   });
   const paymentLink = useMutation({
-    mutationFn: () => adminApi.sendLeadPaymentLink(leadId, { channel: "SMS" }),
+    mutationFn: () => adminApi.sendLeadPaymentLink(leadId, { channel: "WHATSAPP" }),
     onSuccess: refresh,
   });
 
@@ -303,6 +303,7 @@ function Detail({ label, value }: { label: string; value: string }) {
 }
 
 export function AdminPaymentsScreen() {
+  const queryClient = useQueryClient();
   const query = useQuery({ queryKey: ["admin", "payments"], queryFn: () => adminApi.listPayments({ page_size: 25 }) });
   return (
     <>
@@ -320,10 +321,48 @@ export function AdminPaymentsScreen() {
             { key: "amount", header: "Amount", render: (payment) => money(payment.amount) },
             { key: "provider", header: "Provider", render: (payment) => payment.provider },
             { key: "status", header: "Status", render: (payment) => <AdminStatusBadge status={payment.status} /> },
+            { key: "actions", header: "Actions", render: (payment) => <PaymentRowActions payment={payment} onChanged={() => void queryClient.invalidateQueries({ queryKey: ["admin", "payments"] })} /> },
           ]}
         />
       )}
     </>
+  );
+}
+
+function PaymentRowActions({ payment, onChanged }: { payment: Payment; onChanged: () => void }) {
+  const [amount, setAmount] = useState(payment.amount);
+  const [reason, setReason] = useState("");
+  const refund = useMutation({
+    mutationFn: () => adminApi.refundPayment(payment.id, { amount, reason }),
+    onSuccess: onChanged,
+  });
+  const reconcile = useMutation({
+    mutationFn: () => adminApi.reconcileRefund(payment.id),
+    onSuccess: onChanged,
+  });
+  const canRefund = payment.payment_type !== "REFUND" && payment.status === "SUCCESS" && Boolean(payment.provider_payment_id);
+
+  if (payment.payment_type === "REFUND") {
+    return (
+      <Button type="button" size="sm" variant="outline" onClick={() => reconcile.mutate()} disabled={reconcile.isPending}>
+        {reconcile.isPending ? "Checking" : "Reconcile"}
+      </Button>
+    );
+  }
+  if (!canRefund) return <span className="text-xs text-slate-400">Not refundable</span>;
+
+  return (
+    <details className="min-w-52">
+      <summary className="cursor-pointer text-sm font-semibold text-violet-700">Create refund</summary>
+      <div className="mt-2 space-y-2 rounded-md border border-slate-200 bg-white p-3 shadow-lg">
+        <Input value={amount} onChange={(event) => setAmount(event.target.value)} inputMode="decimal" aria-label="Refund amount" />
+        <Input value={reason} onChange={(event) => setReason(event.target.value)} placeholder="Refund reason" aria-label="Refund reason" />
+        <Button type="button" size="sm" className="w-full" onClick={() => refund.mutate()} disabled={refund.isPending || Number(amount) <= 0}>
+          {refund.isPending ? "Submitting" : `Refund ${money(amount)}`}
+        </Button>
+        {refund.isError ? <p className="text-xs text-red-600">{refund.error.message}</p> : null}
+      </div>
+    </details>
   );
 }
 
