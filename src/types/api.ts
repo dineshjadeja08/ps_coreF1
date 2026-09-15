@@ -549,6 +549,15 @@ export type AuthLoginResponse = {
   created: boolean;
 };
 
+export type AdminMfaRequiredResponse = {
+  mfa_required: true;
+  challenge_id: UUID;
+  channel: OtpDeliveryChannel;
+  expires_in: number;
+};
+
+export type PasswordLoginResponse = AuthLoginResponse | AdminMfaRequiredResponse;
+
 export type PasswordSignupRequest = {
   phone_number: string;
   password: string;
@@ -560,6 +569,7 @@ export type PasswordSignupRequest = {
 export type PasswordLoginRequest = {
   phone_number: string;
   password: string;
+  channel?: OtpDeliveryChannel;
 };
 
 export type OtpSendResponse = {
@@ -572,4 +582,5 @@ export type OtpDeliveryChannel = "SMS" | "WHATSAPP";
 
 export type TokenRefreshResponse = {
   access: string;
+  refresh?: string;
 };

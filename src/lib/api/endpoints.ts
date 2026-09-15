@@ -12,6 +12,7 @@ import type {
   BalanceCollectionRequest,
   Booking,
   AuthLoginResponse,
+  PasswordLoginResponse,
   OtpSendResponse,
   PaginatedResponse,
   PasswordLoginRequest,
@@ -54,6 +55,7 @@ export const apiPaths = {
   otpVerify: "/api/v1/auth/otp/verify/",
   passwordSignup: "/api/v1/auth/password/signup/",
   passwordLogin: "/api/v1/auth/password/login/",
+  adminMfaVerify: "/api/v1/auth/admin-mfa/verify/",
   devPhoneAuth: "/api/v1/auth/dev-phone/",
   refreshAuth: "/api/v1/auth/refresh/",
   logout: "/api/v1/auth/logout/",
@@ -217,9 +219,14 @@ export const authApi = {
       body,
     }),
   passwordLogin: (body: PasswordLoginRequest) =>
-    apiRequest<AuthLoginResponse>(apiPaths.passwordLogin, {
+    apiRequest<PasswordLoginResponse>(apiPaths.passwordLogin, {
       method: "POST",
       body,
+    }),
+  verifyAdminMfa: (challengeId: UUID, otp: string) =>
+    apiRequest<AuthLoginResponse>(apiPaths.adminMfaVerify, {
+      method: "POST",
+      body: { challenge_id: challengeId, otp },
     }),
   devPhoneLogin: (phoneNumber: string) =>
     apiRequest<AuthLoginResponse>(apiPaths.devPhoneAuth, {

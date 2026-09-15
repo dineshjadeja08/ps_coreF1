@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { setAuthTokens } from "@/features/auth/storage";
+import { getRefreshToken, setAuthTokens } from "@/features/auth/storage";
 import { apiRequest } from "@/lib/api/client";
 
 function installLocalStorage() {
@@ -42,7 +42,7 @@ describe("apiRequest auth behavior", () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(new Response(JSON.stringify({ detail: "Unauthorized" }), { status: 401, headers: { "content-type": "application/json" } }))
-      .mockResolvedValueOnce(new Response(JSON.stringify({ access: "new-access" }), { status: 200, headers: { "content-type": "application/json" } }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ access: "new-access", refresh: "rotated-refresh" }), { status: 200, headers: { "content-type": "application/json" } }))
       .mockResolvedValueOnce(new Response(JSON.stringify({ ok: true }), { status: 200, headers: { "content-type": "application/json" } }));
     vi.stubGlobal("fetch", fetchMock);
 
@@ -51,5 +51,6 @@ describe("apiRequest auth behavior", () => {
     expect(result.ok).toBe(true);
     expect(fetchMock).toHaveBeenCalledTimes(3);
     expect(fetchMock.mock.calls[2][1].headers.Authorization).toBe("Bearer new-access");
+    expect(getRefreshToken()).toBe("rotated-refresh");
   });
 });

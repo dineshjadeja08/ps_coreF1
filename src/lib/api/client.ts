@@ -1,5 +1,5 @@
 import { env } from "@/config/env";
-import { clearStoredSession, getAccessToken, getRefreshToken, setAccessToken } from "@/features/auth/storage";
+import { clearStoredSession, getAccessToken, getRefreshToken, setAuthTokens } from "@/features/auth/storage";
 import { ApiError, parseApiErrorPayload } from "@/lib/api/errors";
 
 type RequestOptions = Omit<RequestInit, "body"> & {
@@ -98,13 +98,13 @@ async function refreshAccessToken() {
       return null;
     }
 
-    const payload = (await response.json()) as { access?: string };
+    const payload = (await response.json()) as { access?: string; refresh?: string };
     if (!payload.access) {
       clearStoredSession();
       return null;
     }
 
-    setAccessToken(payload.access);
+    setAuthTokens({ access: payload.access, refresh: payload.refresh ?? refresh });
     return payload.access;
   } catch {
     clearStoredSession();

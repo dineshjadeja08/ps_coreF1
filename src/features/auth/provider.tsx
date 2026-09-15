@@ -5,7 +5,7 @@ import { ReactNode, createContext, useCallback, useContext, useEffect, useMemo, 
 
 import { backendAuthApi } from "@/features/auth/api";
 import type { AuthUser } from "@/features/auth/types";
-import type { UserProfileUpdateRequest } from "@/types/api";
+import type { AdminMfaRequiredResponse, OtpDeliveryChannel, UserProfileUpdateRequest } from "@/types/api";
 import {
   clearStoredSession,
   consumeIntendedRoute,
@@ -22,6 +22,8 @@ type AuthContextValue = {
   isLoading: boolean;
   loginWithOtp: (phoneNumber: string, otp: string) => Promise<AuthUser>;
   loginWithPassword: (phoneNumber: string, password: string) => Promise<AuthUser>;
+  startAdminMfa: (phoneNumber: string, password: string, channel: OtpDeliveryChannel) => Promise<AdminMfaRequiredResponse>;
+  completeAdminMfa: (challengeId: string, otp: string) => Promise<AuthUser>;
   signupWithPassword: (body: { phone_number: string; password: string; first_name?: string; last_name?: string; email?: string }) => Promise<AuthUser>;
   loginWithDevPhone: (phoneNumber: string) => Promise<AuthUser>;
   restoreSession: () => Promise<AuthUser | null>;
@@ -101,6 +103,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loginWithPassword = useCallback(async (phoneNumber: string, password: string) => {
     const response = await backendAuthApi.passwordLogin({ phone_number: phoneNumber, password });
+    if ("mfa_required" in response) {
+      throw new Error("Administrator accounts must complete MFA in the admin login portal.");
+    }
+    setAuthTokens(response.tokens);
+    setStoredUser(response.user);
+    setUser(response.user);
+    return response.user;
+  }, []);
+
+  const startAdminMfa = useCallback(async (phoneNumber: string, password: string, channel: OtpDeliveryChannel) => {
+    const response = await backendAuthApi.passwordLogin({ phone_number: phoneNumber, password, channel });
+    if (!("mfa_required" in response)) {
+      throw new Error("This account is not an administrator account.");
+    }
+    return response;
+  }, []);
+
+  const completeAdminMfa = useCallback(async (challengeId: string, otp: string) => {
+    const response = await backendAuthApi.verifyAdminMfa(challengeId, otp);
     setAuthTokens(response.tokens);
     setStoredUser(response.user);
     setUser(response.user);
@@ -152,6 +173,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isLoading,
       loginWithOtp,
       loginWithPassword,
+      startAdminMfa,
+      completeAdminMfa,
       signupWithPassword,
       loginWithDevPhone,
       restoreSession,
@@ -159,7 +182,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       logout,
       consumeReturnPath,
     }),
-    [consumeReturnPath, isLoading, loginWithDevPhone, loginWithOtp, loginWithPassword, logout, restoreSession, signupWithPassword, updateCurrentUser, user],
+    [completeAdminMfa, consumeReturnPath, isLoading, loginWithDevPhone, loginWithOtp, loginWithPassword, logout, restoreSession, signupWithPassword, startAdminMfa, updateCurrentUser, user],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
