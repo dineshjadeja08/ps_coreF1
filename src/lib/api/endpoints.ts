@@ -272,7 +272,7 @@ export const adminApi = {
   updateServiceArea: (id: UUID, body: Partial<AdminServiceArea> & { service_ids?: UUID[] }) =>
     apiRequest<AdminServiceArea>(apiPaths.adminServiceAreaDetail(id), { method: "PATCH", body, auth: true }),
   removeServiceArea: (id: UUID) => apiRequest<void>(apiPaths.adminServiceAreaDetail(id), { method: "DELETE", auth: true }),
-  listCategories: () => apiRequest<PaginatedResponse<AdminServiceCategory>>(apiPaths.adminCategories, { auth: true }),
+  listCategories: () => apiRequest<PaginatedResponse<AdminServiceCategory>>(apiPaths.adminCategories, { auth: true, query: { page_size: 100 } }),
   createCategory: (body: FormData | Partial<AdminServiceCategory>) =>
     apiRequest<AdminServiceCategory>(apiPaths.adminCategories, {
       method: "POST",

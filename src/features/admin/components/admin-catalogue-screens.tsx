@@ -1,8 +1,9 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { BookOpen, ImagePlus, Loader2, Package, Plus, Save, Trash2, Upload } from "lucide-react";
+import { ArrowRight, BookOpen, ImagePlus, Loader2, Package, Plus, Save, Trash2, Upload } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { FormEvent, useMemo, useState } from "react";
 
 import { AdminDataTable } from "@/components/admin/admin-data-table";
@@ -190,7 +191,20 @@ export function AdminCategoriesScreen() {
   const queryClient = useQueryClient();
   const [form, setForm] = useState<CategoryForm | null>(null);
   const [categoryImage, setCategoryImage] = useState<File | null>(null);
-  const query = useQuery({ queryKey: ["admin", "categories"], queryFn: adminApi.listCategories });
+  const categories = useQuery({ queryKey: ["admin", "categories"], queryFn: adminApi.listCategories });
+  const services = useQuery({
+    queryKey: ["admin", "services", "category-list"],
+    queryFn: () => adminApi.listServices({ page_size: 100 }),
+  });
+  const servicesByCategory = useMemo(() => {
+    const grouped = new Map<UUID, AdminService[]>();
+    for (const service of services.data?.results ?? []) {
+      const categoryServices = grouped.get(service.category) ?? [];
+      categoryServices.push(service);
+      grouped.set(service.category, categoryServices);
+    }
+    return grouped;
+  }, [services.data?.results]);
   const save = useMutation({
     mutationFn: (payload: CategoryForm) => {
       const body = new FormData();
@@ -222,8 +236,8 @@ export function AdminCategoriesScreen() {
   return (
     <>
       <AdminPageHeader
-        title="Categories"
-        description="Create and update the service groups customers see on the website."
+        title="Category catalogue"
+        description="Categories are the main service groups. Add individual services under the matching category."
         action={
           <Button type="button" onClick={() => setForm(categoryToForm())}>
             <Plus className="h-4 w-4" />
@@ -275,59 +289,124 @@ export function AdminCategoriesScreen() {
         </Panel>
       ) : null}
       <div className="mt-5">
-        {query.isLoading ? <Loading /> : query.isError ? <AdminErrorState message={query.error.message} onRetry={() => void query.refetch()} /> : (
-          <AdminDataTable
-            rows={query.data?.results ?? []}
-            getRowKey={(category) => category.id}
-            emptyIcon={BookOpen}
-            emptyTitle="No categories"
-            emptyMessage="Create your first customer-facing category."
-            columns={[
-              {
-                key: "name",
-                header: "Name",
-                render: (category) => (
-                  <div className="flex items-center gap-3">
-                    <div className="relative h-12 w-16 overflow-hidden rounded-lg bg-slate-100">
-                      {category.image_url ? <Image src={category.image_url} alt={category.name} fill unoptimized className="object-cover" /> : null}
+        {categories.isLoading || services.isLoading ? (
+          <Loading />
+        ) : categories.isError ? (
+          <AdminErrorState message={categories.error.message} onRetry={() => void categories.refetch()} />
+        ) : services.isError ? (
+          <AdminErrorState message={services.error.message} onRetry={() => void services.refetch()} />
+        ) : !categories.data?.results.length ? (
+          <div className="rounded-lg border border-dashed border-slate-300 bg-white p-10 text-center">
+            <BookOpen className="mx-auto h-8 w-8 text-slate-400" />
+            <h2 className="mt-3 font-bold text-slate-950">No categories</h2>
+            <p className="mt-1 text-sm text-slate-500">Create a category first, then add services under it.</p>
+          </div>
+        ) : (
+          <div className="grid gap-4">
+            {categories.data.results.map((category) => {
+              const categoryServices = servicesByCategory.get(category.id) ?? [];
+              return (
+                <section key={category.id} className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                  <div className="flex flex-col gap-4 border-b border-slate-200 bg-slate-50/80 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+                    <div className="flex min-w-0 items-center gap-4">
+                      <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-white">
+                        {category.image_url ? (
+                          <Image src={category.image_url} alt={category.name} fill unoptimized className="object-cover" />
+                        ) : (
+                          <BookOpen className="absolute inset-0 m-auto h-6 w-6 text-slate-400" />
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h2 className="text-lg font-bold text-slate-950">{category.name}</h2>
+                          <AdminStatusBadge status={category.is_active ? "ACTIVE" : "INACTIVE"} />
+                        </div>
+                        <p className="mt-1 text-sm text-slate-500">
+                          {categoryServices.length} {categoryServices.length === 1 ? "service" : "services"} · Order {category.display_order ?? 0} · /{category.slug}
+                        </p>
+                      </div>
                     </div>
-                    <span className="font-semibold text-slate-950">{category.name}</span>
+                    <div className="flex flex-wrap gap-2">
+                      <Button type="button" variant="outline" size="sm" onClick={() => setForm(categoryToForm(category))}>Edit category</Button>
+                      <Button asChild type="button" size="sm">
+                        <Link href={`/admin/catalogue/services?category=${encodeURIComponent(category.id)}&new=1`}>
+                          <Plus className="h-4 w-4" />
+                          Add service
+                        </Link>
+                      </Button>
+                      <Button type="button" variant="ghost" size="icon" onClick={() => remove.mutate(category.id)} aria-label={`Delete ${category.name}`}>
+                        <Trash2 className="h-4 w-4 text-red-600" />
+                      </Button>
+                    </div>
                   </div>
-                ),
-              },
-              { key: "slug", header: "Slug", render: (category) => category.slug },
-              { key: "order", header: "Order", render: (category) => category.display_order ?? 0 },
-              { key: "status", header: "Status", render: (category) => <AdminStatusBadge status={category.is_active ? "ACTIVE" : "INACTIVE"} /> },
-              {
-                key: "actions",
-                header: "Actions",
-                render: (category) => (
-                  <div className="flex gap-2">
-                    <Button type="button" variant="outline" size="sm" onClick={() => setForm(categoryToForm(category))}>Edit</Button>
-                    <Button type="button" variant="ghost" size="icon" onClick={() => remove.mutate(category.id)} aria-label={`Delete ${category.name}`}>
-                      <Trash2 className="h-4 w-4 text-red-600" />
-                    </Button>
-                  </div>
-                ),
-              },
-            ]}
-          />
+
+                  {categoryServices.length ? (
+                    <div className="divide-y divide-slate-100">
+                      {categoryServices.map((service) => (
+                        <div key={service.id} className="grid gap-3 px-4 py-4 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center sm:px-5">
+                          <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <p className="font-semibold text-slate-900">{service.name}</p>
+                              <AdminStatusBadge status={service.is_active ? "ACTIVE" : "INACTIVE"} />
+                            </div>
+                            <p className="mt-1 line-clamp-1 text-sm text-slate-500">{service.short_description || `Service under ${category.name}`}</p>
+                          </div>
+                          <p className="text-sm font-bold text-slate-900">{money(service.effective_price)}</p>
+                          <Button asChild variant="ghost" size="sm">
+                            <Link href={`/admin/catalogue/services?edit=${encodeURIComponent(service.id)}`}>
+                              Manage
+                              <ArrowRight className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-3 p-5 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+                      <span>No services have been added under this category.</span>
+                      <Button asChild variant="outline" size="sm">
+                        <Link href={`/admin/catalogue/services?category=${encodeURIComponent(category.id)}&new=1`}>Add the first service</Link>
+                      </Button>
+                    </div>
+                  )}
+                </section>
+              );
+            })}
+          </div>
         )}
       </div>
     </>
   );
 }
 
-export function AdminServicesScreen() {
+export function AdminServicesScreen({
+  initialCategoryId,
+  initialServiceId,
+  openNew = false,
+}: {
+  initialCategoryId?: string;
+  initialServiceId?: string;
+  openNew?: boolean;
+} = {}) {
   const queryClient = useQueryClient();
   const categories = useQuery({ queryKey: ["admin", "categories"], queryFn: adminApi.listCategories });
-  const services = useQuery({ queryKey: ["admin", "services"], queryFn: () => adminApi.listServices({ page_size: 50 }) });
-  const [form, setForm] = useState<ServiceForm | null>(null);
+  const services = useQuery({ queryKey: ["admin", "services"], queryFn: () => adminApi.listServices({ page_size: 100 }) });
+  const [formState, setForm] = useState<ServiceForm | null | undefined>(undefined);
   const [coverImage, setCoverImage] = useState<File | null>(null);
   const [galleryService, setGalleryService] = useState<AdminService | null>(null);
   const [galleryImage, setGalleryImage] = useState<File | null>(null);
   const firstCategory = categories.data?.results?.[0]?.id;
-  const categoryOptions = categories.data?.results ?? [];
+  const categoryOptions = useMemo(() => categories.data?.results ?? [], [categories.data?.results]);
+  const deepLinkedForm = useMemo(() => {
+    const serviceToEdit = services.data?.results.find((service) => service.id === initialServiceId);
+    if (serviceToEdit) return serviceToForm(serviceToEdit, firstCategory);
+    if (!openNew || !firstCategory) return null;
+    const categoryId = categoryOptions.some((category) => category.id === initialCategoryId)
+      ? initialCategoryId ?? firstCategory
+      : firstCategory;
+    return serviceToForm(undefined, categoryId);
+  }, [categoryOptions, firstCategory, initialCategoryId, initialServiceId, openNew, services.data?.results]);
+  const form = formState === undefined ? deepLinkedForm : formState;
 
   const save = useMutation({
     mutationFn: (payload: ServiceForm) => {
