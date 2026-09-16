@@ -143,7 +143,7 @@ export function BookingDetailScreen({ bookingId }: { bookingId: string }) {
               onClick={() => void downloadAuthenticatedFile(apiPaths.bookingInvoice(item.id), `invoice-${item.booking_number}.pdf`)}
             >
               <Download className="mr-2 h-4 w-4" />
-              Download GST invoice
+              Download invoice
             </Button>
           ) : null}
         </aside>
