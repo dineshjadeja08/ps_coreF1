@@ -25,6 +25,35 @@ function buildUrl(path: string, query?: RequestOptions["query"]) {
   return url.toString();
 }
 
+export async function downloadAuthenticatedFile(path: string, fallbackFilename: string) {
+  let accessToken = getAccessToken();
+  let response = await fetch(buildUrl(path), {
+    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+  });
+  if (response.status === 401) {
+    accessToken = await refreshAccessTokenOnce();
+    if (accessToken) {
+      response = await fetch(buildUrl(path), { headers: { Authorization: `Bearer ${accessToken}` } });
+    }
+  }
+  if (!response.ok) {
+    const contentType = response.headers.get("content-type") ?? "";
+    const payload = contentType.includes("application/json") ? await response.json() : await response.text();
+    const parsed = parseApiErrorPayload(payload);
+    throw new ApiError(parsed.message, response.status, payload, parsed.fieldErrors);
+  }
+  const disposition = response.headers.get("content-disposition") ?? "";
+  const filename = disposition.match(/filename="?([^";]+)"?/i)?.[1] ?? fallbackFilename;
+  const objectUrl = URL.createObjectURL(await response.blob());
+  const link = document.createElement("a");
+  link.href = objectUrl;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(objectUrl);
+}
+
 export async function apiRequest<T>(path: string, options: RequestOptions = {}) {
   const { body, token, auth, skipAuthRefresh, query, headers, ...init } = options;
   const accessToken = token ?? (auth ? getAccessToken() : null);

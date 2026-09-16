@@ -223,6 +223,24 @@ export type TimeSlot = {
   available_capacity: number;
 };
 
+export type AdminTimeSlot = TimeSlot & {
+  service_area_name: string;
+  is_active: boolean;
+};
+
+export type ScheduleClosure = {
+  id: UUID;
+  service_area: UUID | null;
+  service_area_name: string | null;
+  closure_type: "HOLIDAY" | "BLACKOUT" | "EMERGENCY";
+  start_date: ISODate;
+  end_date: ISODate;
+  reason: string;
+  is_active: boolean;
+  created_at: ISODateTime;
+  updated_at: ISODateTime;
+};
+
 export type BookingStatus =
   | "PENDING_PAYMENT"
   | "PAYMENT_FAILED"
@@ -245,6 +263,8 @@ export type PaymentStatus =
 export type Booking = {
   id: UUID;
   booking_number: string;
+  customer_name?: string;
+  customer_phone?: string;
   service: Record<string, unknown>;
   address_snapshot: unknown;
   service_date: ISODate;

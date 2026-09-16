@@ -7,6 +7,7 @@ export const env = {
   supportPhone: process.env.NEXT_PUBLIC_SUPPORT_PHONE ?? "",
   supportEmail: process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? "",
   supportWhatsapp: process.env.NEXT_PUBLIC_SUPPORT_WHATSAPP ?? "",
+  turnstileSiteKey: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? "",
   devPhoneLogin: {
     enabled: process.env.NEXT_PUBLIC_ENABLE_DEV_PHONE_LOGIN === "true",
     phone: process.env.NEXT_PUBLIC_DEV_LOGIN_PHONE ?? "",

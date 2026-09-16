@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, CalendarClock, CheckCircle2, Loader2, MapPin } from "lucide-react";
+import { ArrowLeft, CalendarClock, CheckCircle2, Download, Loader2, MapPin } from "lucide-react";
 import Link from "next/link";
 
 import { ErrorState } from "@/components/common/error-state";
@@ -21,6 +21,8 @@ import {
 import { getBookingPayability } from "@/features/payments/utils";
 import { BookingReviewForm } from "@/features/reviews/components/booking-review-form";
 import { canReviewBooking } from "@/features/reviews/utils";
+import { apiPaths } from "@/lib/api/endpoints";
+import { downloadAuthenticatedFile } from "@/lib/api/client";
 
 export function BookingDetailScreen({ bookingId }: { bookingId: string }) {
   const booking = useBooking(bookingId);
@@ -130,6 +132,18 @@ export function BookingDetailScreen({ bookingId }: { bookingId: string }) {
           {payability.alreadyPaid ? (
             <Button asChild className="mt-6 w-full" variant="secondary">
               <Link href={routes.bookingSuccess(item.id)}>View confirmation</Link>
+            </Button>
+          ) : null}
+
+          {item.payment_status === "PAID" || item.booking_status === "COMPLETED" ? (
+            <Button
+              type="button"
+              className="mt-3 w-full"
+              variant="outline"
+              onClick={() => void downloadAuthenticatedFile(apiPaths.bookingInvoice(item.id), `invoice-${item.booking_number}.pdf`)}
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Download GST invoice
             </Button>
           ) : null}
         </aside>

@@ -7,6 +7,7 @@ import type {
   AdminServiceCategory,
   AdminServiceImage,
   AdminServiceArea,
+  AdminTimeSlot,
   AdminCustomer,
   AdminReportSummary,
   BalanceCollectionRequest,
@@ -47,6 +48,7 @@ import type {
   AdminStaff,
   AdminReview,
   StaffGroup,
+  ScheduleClosure,
 } from "@/types/api";
 
 export const apiPaths = {
@@ -71,6 +73,7 @@ export const apiPaths = {
   slots: "/api/v1/slots/",
   bookings: "/api/v1/bookings/",
   bookingDetail: (id: UUID) => `/api/v1/bookings/${id}/`,
+  bookingInvoice: (id: UUID) => `/api/v1/bookings/${id}/invoice/`,
   cancelBooking: (id: UUID) => `/api/v1/bookings/${id}/cancel/`,
   rescheduleBooking: (id: UUID) => `/api/v1/bookings/${id}/reschedule/`,
   paymentOrder: (bookingId: UUID) => `/api/v1/bookings/${bookingId}/payments/order/`,
@@ -86,6 +89,7 @@ export const apiPaths = {
   adminServiceAreaDetail: (id: UUID) => `/api/v1/admin/service-areas/${id}/`,
   adminBookings: "/api/v1/admin/bookings/",
   adminBookingDetail: (id: UUID) => `/api/v1/admin/bookings/${id}/`,
+  adminBookingInvoice: (id: UUID) => `/api/v1/admin/bookings/${id}/invoice/`,
   adminBookingAssignTechnician: (id: UUID) => `/api/v1/admin/bookings/${id}/assign-technician/`,
   adminBookingRemoveTechnician: (id: UUID) => `/api/v1/admin/bookings/${id}/remove-technician/`,
   adminBookingStart: (id: UUID) => `/api/v1/admin/bookings/${id}/start/`,
@@ -93,6 +97,14 @@ export const apiPaths = {
   adminBookingCancel: (id: UUID) => `/api/v1/admin/bookings/${id}/cancel/`,
   adminBookingRecordBalance: (id: UUID) => `/api/v1/admin/bookings/${id}/record-balance/`,
   adminTechnicians: "/api/v1/admin/technicians/",
+  adminTimeSlots: "/api/v1/admin/time-slots/",
+  adminTimeSlotDetail: (id: UUID) => `/api/v1/admin/time-slots/${id}/`,
+  adminScheduleClosures: "/api/v1/admin/schedule-closures/",
+  adminScheduleClosureDetail: (id: UUID) => `/api/v1/admin/schedule-closures/${id}/`,
+  technicianJobs: "/api/v1/technician/jobs/",
+  technicianJobEnRoute: (id: UUID) => `/api/v1/technician/jobs/${id}/en-route/`,
+  technicianJobStart: (id: UUID) => `/api/v1/technician/jobs/${id}/start/`,
+  technicianJobComplete: (id: UUID) => `/api/v1/technician/jobs/${id}/complete/`,
   adminLeads: "/api/v1/admin/leads/",
   adminLeadDetail: (id: UUID) => `/api/v1/admin/leads/${id}/`,
   adminLeadConvert: (id: UUID) => `/api/v1/admin/leads/${id}/convert-to-booking/`,
@@ -233,10 +245,10 @@ export const authApi = {
       method: "POST",
       body: { phone_number: phoneNumber },
     }),
-  sendOtp: (phoneNumber: string, channel: "SMS" | "WHATSAPP") =>
+  sendOtp: (phoneNumber: string, channel: "SMS" | "WHATSAPP", captchaToken = "") =>
     apiRequest<OtpSendResponse>(apiPaths.otpSend, {
       method: "POST",
-      body: { phone_number: phoneNumber, channel },
+      body: { phone_number: phoneNumber, channel, captcha_token: captchaToken },
     }),
   verifyOtp: (phoneNumber: string, otp: string) =>
     apiRequest<AuthLoginResponse>(apiPaths.otpVerify, {
@@ -265,7 +277,24 @@ export const authApi = {
     }),
 };
 
+export const technicianApi = {
+  listJobs: () => apiRequest<PaginatedResponse<Booking>>(apiPaths.technicianJobs, { auth: true, query: { page_size: 100 } }),
+  markEnRoute: (id: UUID) => apiRequest<Booking>(apiPaths.technicianJobEnRoute(id), { method: "POST", body: {}, auth: true }),
+  startJob: (id: UUID) => apiRequest<Booking>(apiPaths.technicianJobStart(id), { method: "POST", body: {}, auth: true }),
+  completeJob: (id: UUID) => apiRequest<Booking>(apiPaths.technicianJobComplete(id), { method: "POST", body: {}, auth: true }),
+};
+
 export const adminApi = {
+  listTimeSlots: (query?: { service_area?: string; date?: string; page_size?: number }) =>
+    apiRequest<PaginatedResponse<AdminTimeSlot>>(apiPaths.adminTimeSlots, { auth: true, query }),
+  updateTimeSlot: (id: UUID, body: Partial<Pick<AdminTimeSlot, "capacity" | "is_active">>) =>
+    apiRequest<AdminTimeSlot>(apiPaths.adminTimeSlotDetail(id), { method: "PATCH", body, auth: true }),
+  listScheduleClosures: () =>
+    apiRequest<PaginatedResponse<ScheduleClosure>>(apiPaths.adminScheduleClosures, { auth: true, query: { page_size: 100 } }),
+  createScheduleClosure: (body: Pick<ScheduleClosure, "service_area" | "closure_type" | "start_date" | "end_date" | "reason" | "is_active">) =>
+    apiRequest<ScheduleClosure>(apiPaths.adminScheduleClosures, { method: "POST", body, auth: true }),
+  removeScheduleClosure: (id: UUID) =>
+    apiRequest<void>(apiPaths.adminScheduleClosureDetail(id), { method: "DELETE", auth: true }),
   listServiceAreas: () => apiRequest<PaginatedResponse<AdminServiceArea>>(apiPaths.adminServiceAreas, { auth: true }),
   createServiceArea: (body: Partial<AdminServiceArea> & { service_ids: UUID[] }) =>
     apiRequest<AdminServiceArea>(apiPaths.adminServiceAreas, { method: "POST", body, auth: true }),

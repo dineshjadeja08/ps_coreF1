@@ -12,6 +12,7 @@ import { env } from "@/config/env";
 import { backendAuthApi } from "@/features/auth/api";
 import { useAuth } from "@/features/auth/hooks";
 import { mapBackendAuthError, mapOtpAuthError } from "@/features/auth/errors";
+import { TurnstileWidget } from "@/features/auth/components/turnstile-widget";
 import type { OtpDeliveryChannel } from "@/types/api";
 import {
   maskPhone,
@@ -38,6 +39,8 @@ export function LoginForm() {
   const [cooldown, setCooldown] = useState(0);
   const [isSending, setIsSending] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState("");
+  const [captchaVersion, setCaptchaVersion] = useState(0);
 
   const phoneForm = useForm<PhoneLoginFormValues>({
     resolver: zodResolver(phoneLoginSchema),
@@ -87,12 +90,16 @@ export function LoginForm() {
       phoneForm.setError("phone", { message: "Enter a valid Indian mobile number." });
       return;
     }
+    if (env.turnstileSiteKey && !captchaToken) {
+      setMessage("Complete the security check before requesting an OTP.");
+      return;
+    }
 
     setIsSending(true);
     setMessage("");
 
     try {
-      await backendAuthApi.sendOtp(normalized, channel);
+      await backendAuthApi.sendOtp(normalized, channel, captchaToken);
       setNormalizedPhone(normalized);
       setOtpChannel(channel);
       setCooldown(60);
@@ -102,6 +109,8 @@ export function LoginForm() {
       setMessage(mapOtpAuthError(error));
     } finally {
       setIsSending(false);
+      setCaptchaToken("");
+      setCaptchaVersion((current) => current + 1);
     }
   }
 
@@ -116,13 +125,13 @@ export function LoginForm() {
     setMessage("");
 
     try {
-      await loginWithOtp(normalizedPhone, values.otp);
+      const authenticatedUser = await loginWithOtp(normalizedPhone, values.otp);
       const { firstName, lastName } = splitName(phoneForm.getValues("name"));
       if (firstName || lastName) {
         await updateCurrentUser({ first_name: firstName, last_name: lastName });
       }
       setStep("success");
-      router.replace(consumeReturnPath(fallback));
+      router.replace(authenticatedUser.role === "TECHNICIAN" ? "/technician/jobs" : consumeReturnPath(fallback));
     } catch (error) {
       setMessage(mapOtpAuthError(error));
     } finally {
@@ -140,9 +149,9 @@ export function LoginForm() {
     setIsVerifying(true);
     setMessage("");
     try {
-      await loginWithPassword(normalized, values.password);
+      const authenticatedUser = await loginWithPassword(normalized, values.password);
       setStep("success");
-      router.replace(consumeReturnPath(fallback));
+      router.replace(authenticatedUser.role === "TECHNICIAN" ? "/technician/jobs" : consumeReturnPath(fallback));
     } catch (error) {
       setMessage(mapBackendAuthError(error));
     } finally {
@@ -428,6 +437,7 @@ export function LoginForm() {
               </button>
             </div>
           </fieldset>
+          {env.turnstileSiteKey ? <TurnstileWidget key={`phone-${captchaVersion}`} siteKey={env.turnstileSiteKey} onToken={setCaptchaToken} /> : null}
           <Button type="submit" className="w-full" disabled={isSending}>
             {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
             Send OTP
@@ -475,6 +485,7 @@ export function LoginForm() {
             {isVerifying ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
             Verify OTP
           </Button>
+          {env.turnstileSiteKey && cooldown <= 0 ? <TurnstileWidget key={`resend-${captchaVersion}`} siteKey={env.turnstileSiteKey} onToken={setCaptchaToken} /> : null}
           <Button
             type="button"
             variant="ghost"

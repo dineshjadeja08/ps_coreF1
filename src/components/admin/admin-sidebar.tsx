@@ -41,6 +41,7 @@ export const adminNavigationSections = [
       { label: "Technicians", href: "/admin/technicians", icon: Wrench },
       { label: "Assignments", href: "/admin/assignments", icon: ListChecks },
       { label: "Service Areas", href: "/admin/service-areas", icon: MapPin },
+      { label: "Scheduling", href: "/admin/scheduling", icon: CalendarCheck },
     ],
   },
   {

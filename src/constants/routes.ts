@@ -10,6 +10,7 @@ export const routes = {
   bookingDetail: (id: string) => `/bookings/${id}`,
   profile: "/profile",
   admin: "/admin",
+  technicianJobs: "/technician/jobs",
   about: "/about",
   support: "/support",
   joinAsTechnician: "/join-as-technician",
