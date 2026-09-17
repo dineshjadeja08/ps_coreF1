@@ -487,6 +487,13 @@ export type AdminCustomer = User & {
   total_bookings: number;
   total_amount_spent: DecimalString | null;
   last_booking_at: ISODateTime | null;
+  addresses?: Array<{ id: UUID; label: string; recipient_name: string; city: string; postal_code: string; is_default: boolean; is_active: boolean }>;
+  leads?: Array<{ id: UUID; customer_name: string; primary_mobile: string; status: string; source: string; created_at: ISODateTime }>;
+  bookings?: Array<{ id: UUID; booking_number: string; service_date: ISODate; booking_status: string; payment_status: string; total_amount: DecimalString; created_at: ISODateTime }>;
+  payments?: Array<{ id: UUID; booking: UUID; amount: DecimalString; payment_type: string; status: string; paid_at: ISODateTime | null }>;
+  notifications?: Array<{ id: UUID; event: string; channel: string; status: string; created_at: ISODateTime; sent_at: ISODateTime | null }>;
+  reviews?: Array<{ id: UUID; rating: number; is_visible: boolean; created_at: ISODateTime }>;
+  support_notes?: Array<{ id: UUID; note: string; created_by: UUID | null; created_by_phone: string; created_at: ISODateTime; updated_at: ISODateTime }>;
 };
 
 export type AdminStaff = User & {
@@ -550,6 +557,8 @@ export type Notification = {
   provider: string;
   provider_message_id: string;
   send_attempts: number;
+  payload?: Record<string, unknown>;
+  error_message?: string;
   sent_at: ISODateTime | null;
   created_at: ISODateTime;
   updated_at: ISODateTime;

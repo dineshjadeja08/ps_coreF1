@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarCheck, Check, Copy, Download, Loader2 } from "lucide-react";
+import { CalendarCheck, Download, Loader2, Search } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
@@ -9,8 +9,8 @@ import { AdminErrorState } from "@/components/admin/admin-error-state";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminStatusBadge } from "@/components/admin/admin-status-badge";
 import { Button } from "@/components/ui/button";
-import { env } from "@/config/env";
-import { routes } from "@/constants/routes";
+import { Input } from "@/components/ui/input";
+import { AdminBookingOperations } from "@/features/admin/components/admin-booking-operations";
 import { adminApi } from "@/lib/api/endpoints";
 import { apiPaths } from "@/lib/api/endpoints";
 import { downloadAuthenticatedFile } from "@/lib/api/client";
@@ -21,22 +21,38 @@ function serviceName(booking: Booking) {
 }
 
 export function AdminBookingsScreen() {
-  const [copiedBookingId, setCopiedBookingId] = useState("");
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState("");
+  const [selectedId, setSelectedId] = useState("");
   const query = useQuery({
-    queryKey: ["admin", "bookings"],
-    queryFn: () => adminApi.listBookings({ page_size: 25 }),
+    queryKey: ["admin", "bookings", search, status],
+    queryFn: () => adminApi.listBookings({ page_size: 25, search: search || undefined, status: status || undefined }),
   });
-
-  async function copyPaymentLink(booking: Booking) {
-    const paymentUrl = new URL(routes.bookingPayment(booking.id), env.appUrl).toString();
-    await navigator.clipboard.writeText(paymentUrl);
-    setCopiedBookingId(booking.id);
-    window.setTimeout(() => setCopiedBookingId((current) => (current === booking.id ? "" : current)), 2500);
-  }
+  const selected = query.data?.results.find((booking) => booking.id === selectedId);
 
   return (
     <>
       <AdminPageHeader title="Bookings" description="See who booked, their contact number, service, payment, and operational status." />
+      <div className="mb-5 grid gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm md:grid-cols-[1fr_240px_auto]">
+        <div className="relative">
+          <Search className="absolute left-3 top-3.5 h-4 w-4 text-slate-400" />
+          <Input className="pl-9" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search booking number, customer or mobile" />
+        </div>
+        <select className="h-11 rounded-md border border-slate-200 bg-white px-3 text-sm" value={status} onChange={(event) => setStatus(event.target.value)}>
+          <option value="">All booking statuses</option>
+          {["PENDING_PAYMENT", "PAYMENT_FAILED", "CONFIRMED", "TECHNICIAN_ASSIGNED", "TECHNICIAN_EN_ROUTE", "IN_PROGRESS", "COMPLETED", "CANCELLED", "REFUND_PENDING", "REFUNDED"].map((value) => <option key={value} value={value}>{value.replaceAll("_", " ")}</option>)}
+        </select>
+        <Button type="button" variant="outline" onClick={() => { setSearch(""); setStatus(""); }}>Clear</Button>
+      </div>
+      {selected ? (
+        <section className="mb-5 rounded-xl border border-violet-200 bg-white shadow-sm">
+          <div className="flex items-center justify-between border-b border-slate-200 p-5">
+            <div><h2 className="font-bold text-slate-950">{selected.booking_number}</h2><p className="text-sm text-slate-500">{selected.customer_name} · {selected.customer_phone}</p></div>
+            <Button type="button" variant="ghost" size="sm" onClick={() => setSelectedId("")}>Close</Button>
+          </div>
+          <div className="p-5"><AdminBookingOperations booking={selected} onChanged={() => void query.refetch()} /></div>
+        </section>
+      ) : null}
       {query.isLoading ? (
         <div className="grid min-h-64 place-items-center">
           <Loader2 className="h-6 w-6 animate-spin text-violet-700" />
@@ -76,20 +92,10 @@ export function AdminBookingsScreen() {
               key: "actions",
               header: "Actions",
               render: (booking) => {
-                const canSharePaymentLink = booking.booking_status === "PENDING_PAYMENT" && booking.payment_status === "UNPAID";
                 const canDownloadInvoice = booking.payment_status === "PAID" || booking.booking_status === "COMPLETED";
                 return (
                   <div className="flex flex-wrap gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      disabled={!canSharePaymentLink}
-                      onClick={() => void copyPaymentLink(booking)}
-                    >
-                      {copiedBookingId === booking.id ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                      {copiedBookingId === booking.id ? "Copied" : "Copy pay link"}
-                    </Button>
+                    <Button type="button" variant="outline" size="sm" onClick={() => setSelectedId(booking.id)}>Manage</Button>
                     {canDownloadInvoice ? (
                       <Button
                         type="button"

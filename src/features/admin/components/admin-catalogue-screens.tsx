@@ -66,6 +66,8 @@ type BannerForm = {
   button_link: string;
   placement: HomepageBanner["placement"];
   display_order: string;
+  starts_at: string;
+  ends_at: string;
   is_active: boolean;
 };
 
@@ -143,6 +145,8 @@ function bannerToForm(banner?: HomepageBanner, placement: HomepageBanner["placem
     button_link: banner?.button_link ?? "",
     placement: banner?.placement ?? placement,
     display_order: String(banner?.display_order ?? 0),
+    starts_at: banner?.starts_at ? banner.starts_at.slice(0, 16) : "",
+    ends_at: banner?.ends_at ? banner.ends_at.slice(0, 16) : "",
     is_active: banner?.is_active ?? true,
   };
 }
@@ -454,6 +458,10 @@ export function AdminServicesScreen({
     mutationFn: ({ serviceId, imageId }: { serviceId: UUID; imageId: UUID }) => adminApi.removeServiceImage(serviceId, imageId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin", "services"] }),
   });
+  const updateImage = useMutation({
+    mutationFn: ({ serviceId, imageId, body }: { serviceId: UUID; imageId: UUID; body: { alt_text?: string; display_order?: number; is_active?: boolean } }) => adminApi.updateServiceImage(serviceId, imageId, body),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin", "services"] }),
+  });
 
   const selectedGalleryService = useMemo(
     () => services.data?.results.find((service) => service.id === galleryService?.id) ?? galleryService,
@@ -565,7 +573,10 @@ export function AdminServicesScreen({
                     <Image src={image.image} alt={image.alt_text || selectedGalleryService.name} fill unoptimized className="object-cover" />
                   </div>
                   <div className="flex items-center justify-between p-3">
-                    <span className="text-xs font-semibold text-slate-500">Order {image.display_order}</span>
+                    <div className="grid min-w-0 gap-2">
+                      <Input className="h-9" defaultValue={image.alt_text} aria-label="Image alt text" onBlur={(event) => { if (event.target.value !== image.alt_text) updateImage.mutate({ serviceId: selectedGalleryService.id, imageId: image.id, body: { alt_text: event.target.value } }); }} />
+                      <div className="flex items-center gap-2"><Input className="h-9 w-20" type="number" min="0" defaultValue={image.display_order} aria-label="Image display order" onBlur={(event) => { const value = Number(event.target.value); if (value !== image.display_order) updateImage.mutate({ serviceId: selectedGalleryService.id, imageId: image.id, body: { display_order: value } }); }} /><button type="button" onClick={() => updateImage.mutate({ serviceId: selectedGalleryService.id, imageId: image.id, body: { is_active: !image.is_active } })}><AdminStatusBadge status={image.is_active ? "ACTIVE" : "INACTIVE"} /></button></div>
+                    </div>
                     <Button type="button" variant="ghost" size="icon" onClick={() => removeImage.mutate({ serviceId: selectedGalleryService.id, imageId: image.id })}>
                       <Trash2 className="h-4 w-4 text-red-600" />
                     </Button>
@@ -643,7 +654,8 @@ export function AdminFaqsScreen() {
   const queryClient = useQueryClient();
   const categories = useQuery({ queryKey: ["admin", "categories"], queryFn: adminApi.listCategories });
   const services = useQuery({ queryKey: ["admin", "services"], queryFn: () => adminApi.listServices({ page_size: 100 }) });
-  const faqs = useQuery({ queryKey: ["admin", "faqs"], queryFn: () => adminApi.listFaqs({ page_size: 50 }) });
+  const [search, setSearch] = useState("");
+  const faqs = useQuery({ queryKey: ["admin", "faqs", search], queryFn: () => adminApi.listFaqs({ page_size: 50, search: search || undefined }) });
   const [form, setForm] = useState<FaqForm | null>(null);
   const firstCategory = categories.data?.results?.[0]?.id;
   const firstService = services.data?.results?.[0]?.id;
@@ -670,6 +682,7 @@ export function AdminFaqsScreen() {
   return (
     <>
       <AdminPageHeader title="FAQs" description="Publish answers for service and category pages." action={<Button type="button" onClick={() => setForm(faqToForm(undefined, firstCategory, firstService))}><Plus className="h-4 w-4" />New FAQ</Button>} />
+      <div className="mb-5 rounded-lg border border-slate-200 bg-white p-4 shadow-sm"><Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search FAQ questions and answers" /></div>
       {form ? (
         <Panel title={form.id ? "Edit FAQ" : "New FAQ"} onClose={() => setForm(null)}>
           <form className="grid gap-4 md:grid-cols-2" onSubmit={(event) => { event.preventDefault(); save.mutate(form); }}>
@@ -722,6 +735,8 @@ export function AdminBannersScreen({ placement, title }: { placement?: HomepageB
       body.set("button_link", payload.button_link);
       body.set("placement", payload.placement);
       body.set("display_order", payload.display_order || "0");
+      body.set("starts_at", payload.starts_at ? new Date(payload.starts_at).toISOString() : "");
+      body.set("ends_at", payload.ends_at ? new Date(payload.ends_at).toISOString() : "");
       body.set("is_active", String(payload.is_active));
       if (desktopImage) body.set("desktop_image", desktopImage);
       if (mobileImage) body.set("mobile_image", mobileImage);
@@ -750,6 +765,8 @@ export function AdminBannersScreen({ placement, title }: { placement?: HomepageB
             <Field label="Button text"><Input className={fieldClass} value={form.button_text} onChange={(event) => setForm({ ...form, button_text: event.target.value })} /></Field>
             <Field label="Button link"><Input className={fieldClass} value={form.button_link} onChange={(event) => setForm({ ...form, button_link: event.target.value })} /></Field>
             <Field label="Order"><Input className={fieldClass} type="number" value={form.display_order} onChange={(event) => setForm({ ...form, display_order: event.target.value })} /></Field>
+            <Field label="Starts at"><Input className={fieldClass} type="datetime-local" value={form.starts_at} onChange={(event) => setForm({ ...form, starts_at: event.target.value })} /></Field>
+            <Field label="Ends at"><Input className={fieldClass} type="datetime-local" value={form.ends_at} onChange={(event) => setForm({ ...form, ends_at: event.target.value })} /></Field>
             <label className="flex items-center gap-2 text-sm font-semibold text-slate-700"><input type="checkbox" checked={form.is_active} onChange={(event) => setForm({ ...form, is_active: event.target.checked })} />Active</label>
             <Field label="Description"><Textarea className="md:col-span-2" value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} /></Field>
             <div className="md:col-span-2"><Button type="submit" disabled={save.isPending}><Save className="h-4 w-4" />Save banner</Button>{save.isError ? <p className="mt-2 text-sm font-semibold text-red-600">{save.error.message}</p> : null}</div>

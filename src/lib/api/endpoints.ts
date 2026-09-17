@@ -293,6 +293,8 @@ export const adminApi = {
     apiRequest<PaginatedResponse<ScheduleClosure>>(apiPaths.adminScheduleClosures, { auth: true, query: { page_size: 100 } }),
   createScheduleClosure: (body: Pick<ScheduleClosure, "service_area" | "closure_type" | "start_date" | "end_date" | "reason" | "is_active">) =>
     apiRequest<ScheduleClosure>(apiPaths.adminScheduleClosures, { method: "POST", body, auth: true }),
+  updateScheduleClosure: (id: UUID, body: Partial<ScheduleClosure>) =>
+    apiRequest<ScheduleClosure>(apiPaths.adminScheduleClosureDetail(id), { method: "PATCH", body, auth: true }),
   removeScheduleClosure: (id: UUID) =>
     apiRequest<void>(apiPaths.adminScheduleClosureDetail(id), { method: "DELETE", auth: true }),
   listServiceAreas: () => apiRequest<PaginatedResponse<AdminServiceArea>>(apiPaths.adminServiceAreas, { auth: true }),
@@ -349,6 +351,8 @@ export const adminApi = {
       method: "DELETE",
       auth: true,
     }),
+  updateServiceImage: (serviceId: UUID, imageId: UUID, body: Partial<Pick<AdminServiceImage, "alt_text" | "display_order" | "is_active">>) =>
+    apiRequest<AdminServiceImage>(apiPaths.adminServiceImageDetail(serviceId, imageId), { method: "PATCH", body, auth: true }),
   listBookings: (query?: { page?: number; page_size?: number; status?: string; search?: string }) =>
     apiRequest<PaginatedResponse<Booking>>(apiPaths.adminBookings, { auth: true, query }),
   assignTechnician: (bookingId: UUID, body: { technician_id: UUID; notes?: string; reason?: string }) =>
@@ -477,6 +481,9 @@ export const adminApi = {
     }),
   listNotifications: (query?: { page?: number; page_size?: number; status?: string; event?: string; channel?: string; search?: string }) =>
     apiRequest<PaginatedResponse<Notification>>(apiPaths.adminNotifications, { auth: true, query }),
+  getNotification: (id: UUID) => apiRequest<Notification>(`${apiPaths.adminNotifications}${id}/`, { auth: true }),
+  createNotification: (body: Partial<Notification>) =>
+    apiRequest<Notification>(apiPaths.adminNotifications, { method: "POST", body, auth: true }),
   retryNotification: (id: UUID) =>
     apiRequest<Notification>(apiPaths.adminNotificationRetry(id), {
       method: "POST",
@@ -489,6 +496,8 @@ export const adminApi = {
       body: { reason },
       auth: true,
     }),
+  sendNotification: (id: UUID) =>
+    apiRequest<Notification>(apiPaths.adminNotificationSend(id), { method: "POST", body: {}, auth: true }),
   listFaqs: (query?: { page?: number; page_size?: number; search?: string }) =>
     apiRequest<PaginatedResponse<FAQ>>(apiPaths.adminFaqs, { auth: true, query }),
   createFaq: (body: Partial<FAQ>) =>
@@ -531,7 +540,7 @@ export const adminApi = {
     apiRequest<AdminReportSummary>(apiPaths.adminReportsSummary, { auth: true, query }),
   listStaff: (query?: { page?: number; page_size?: number; search?: string; role?: string }) =>
     apiRequest<PaginatedResponse<AdminStaff>>(apiPaths.adminStaff, { auth: true, query }),
-  updateStaff: (id: UUID, body: Partial<AdminStaff>) =>
+  updateStaff: (id: UUID, body: Partial<AdminStaff> & { group_ids?: number[] }) =>
     apiRequest<AdminStaff>(apiPaths.adminStaffDetail(id), {
       method: "PATCH",
       body,
