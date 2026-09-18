@@ -249,7 +249,13 @@ function PackageRow({ service, featured, onReadMore }: { service: ServiceListIte
           {showOffer ? <span className="text-xs text-muted-foreground line-through">{basePrice}</span> : null}
         </div>
       </button>
-      <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+      <div className="grid grid-cols-[72px_minmax(0,1fr)] items-center gap-2 sm:grid-cols-[76px_auto_auto] sm:justify-end">
+        <ServiceImage
+          src={service.cover_image}
+          alt={service.name}
+          className="aspect-square h-[72px] w-[72px] rounded-md border border-border bg-white sm:h-[76px] sm:w-[76px]"
+          imageClassName="object-cover"
+        />
         <button type="button" onClick={onReadMore} className="inline-flex min-h-10 items-center gap-1 rounded-md px-2 text-sm font-bold text-primary hover:bg-primary-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
           Read more
           <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />

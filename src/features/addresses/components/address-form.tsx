@@ -42,6 +42,7 @@ function toFormValues(address?: Address | null): AddressFormValues {
 export function AddressForm({ initialAddress, submitting, onSubmit, onCancel }: AddressFormProps) {
   const [detecting, setDetecting] = useState(false);
   const [detectMessage, setDetectMessage] = useState("");
+  const [detectFailed, setDetectFailed] = useState(false);
   const form = useForm<AddressFormValues>({
     resolver: zodResolver(addressSchema),
     defaultValues: toFormValues(initialAddress),
@@ -56,6 +57,7 @@ export function AddressForm({ initialAddress, submitting, onSubmit, onCancel }: 
   async function detectAddressFromLocation() {
     setDetecting(true);
     setDetectMessage("");
+    setDetectFailed(false);
     try {
       const detected = await detectCurrentAddress();
       for (const [name, value] of Object.entries(detected)) {
@@ -65,6 +67,7 @@ export function AddressForm({ initialAddress, submitting, onSubmit, onCancel }: 
       }
       setDetectMessage("Location detected. Check the address before saving.");
     } catch (error) {
+      setDetectFailed(true);
       setDetectMessage(error instanceof Error ? error.message : "Location detection failed.");
     } finally {
       setDetecting(false);
@@ -91,10 +94,10 @@ export function AddressForm({ initialAddress, submitting, onSubmit, onCancel }: 
         </div>
         <Button type="button" variant="outline" onClick={() => void detectAddressFromLocation()} disabled={detecting || submitting}>
           {detecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <LocateFixed className="h-4 w-4" />}
-          Auto detect address
+          {detectFailed ? "Retry location" : "Auto detect address"}
         </Button>
       </div>
-      {detectMessage ? <p className="mb-4 rounded-md bg-primary-soft p-3 text-sm text-primary">{detectMessage}</p> : null}
+      {detectMessage ? <p className={`mb-4 rounded-md p-3 text-sm ${detectFailed ? "bg-destructive/10 text-destructive" : "bg-primary-soft text-primary"}`}>{detectMessage}</p> : null}
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label htmlFor="label" className="text-sm font-semibold text-foreground">

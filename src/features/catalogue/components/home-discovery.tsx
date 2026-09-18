@@ -73,6 +73,15 @@ const appliancePopupOrder = [
 ] as const;
 
 const serviceSearchHref = (query: string) => `${routes.services}?q=${encodeURIComponent(query)}`;
+
+function categoryLandingHref(services: ServiceListItem[], query: string, name: string) {
+  const terms = `${query} ${name}`.toLowerCase().split(/\s+/).filter((term) => term.length > 2);
+  const service = services.find((item) => {
+    const searchable = `${item.name} ${item.slug} ${item.category.name} ${item.category.slug}`.toLowerCase();
+    return terms.some((term) => searchable.includes(term));
+  });
+  return service ? `/services/${encodeURIComponent(service.category.slug)}` : serviceSearchHref(query);
+}
 const preferredServiceSlugs: Record<string, string> = {
   AC: "ac-service",
   appliance: "washing-machine-repair-service",
@@ -212,7 +221,7 @@ export function HomeDiscovery() {
         </div>
         <HorizontalServiceRow label="Popular service categories" cardWidth="w-28 sm:w-40">
           {popularCategories.map((item) => (
-            <Link key={item.name} href={serviceSearchHref(item.query)} className="group flex flex-col items-center gap-3 rounded-xl border border-purple-100 bg-[#f8f5fc] p-3 text-center sm:p-5 transition hover:border-primary/40 hover:bg-primary-soft">
+            <Link key={item.name} href={categoryLandingHref(allServices, item.query, item.name)} className="group flex flex-col items-center gap-3 rounded-xl border border-purple-100 bg-[#f8f5fc] p-3 text-center sm:p-5 transition hover:border-primary/40 hover:bg-primary-soft">
               <Image src={item.image} alt="" width={88} height={88} className="h-14 w-14 object-contain sm:h-20 sm:w-20 transition group-hover:scale-105" />
               <h3 className="text-sm font-semibold group-hover:text-primary">{item.name}</h3>
             </Link>

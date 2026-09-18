@@ -76,6 +76,10 @@ export type ServiceListItem = {
   selling_price: DecimalString | null;
   effective_price: number;
   advance_amount: DecimalString;
+  advance_payment_type?: "FIXED" | "PERCENTAGE";
+  advance_payment_value?: DecimalString;
+  training_fee?: DecimalString;
+  training_fee_per_unit?: boolean;
   estimated_duration_minutes: number;
   cover_image: string;
   is_featured: boolean;
@@ -249,6 +253,7 @@ export type BookingStatus =
   | "TECHNICIAN_EN_ROUTE"
   | "IN_PROGRESS"
   | "COMPLETED"
+  | "CLOSED"
   | "CANCELLED"
   | "REFUND_PENDING"
   | "REFUNDED";
@@ -270,8 +275,11 @@ export type Booking = {
   service_date: ISODate;
   time_slot: Record<string, unknown>;
   problem_description: string;
+  contact_phone?: string;
+  quantity?: number;
   subtotal: DecimalString;
   discount_amount: DecimalString;
+  training_fee?: DecimalString;
   tax_amount: DecimalString;
   total_amount: DecimalString;
   advance_required: DecimalString;
@@ -287,6 +295,9 @@ export type Booking = {
   cancelled_at: ISODateTime | null;
   created_at: ISODateTime;
   updated_at: ISODateTime;
+  service_category?: string;
+  assigned_technician?: { id: UUID | null; user_id: UUID; name: string; phone: string } | null;
+  paid_at?: ISODateTime | null;
   status_history: BookingStatusHistory[];
 };
 
@@ -310,6 +321,8 @@ export type BookingCreateRequest = {
   slot_id: UUID;
   problem_description: string;
   customer_notes?: string;
+  contact_phone?: string;
+  quantity?: number;
 };
 
 export type BookingOperationRequest = {

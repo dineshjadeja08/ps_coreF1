@@ -7,6 +7,12 @@ type DetectedAddress = Partial<AddressFormValues> & {
   longitude: string;
 };
 
+function locationError(error: GeolocationPositionError) {
+  if (error.code === error.PERMISSION_DENIED) return new Error("Location permission is blocked. Allow location access in your browser, or enter the address manually.");
+  if (error.code === error.TIMEOUT) return new Error("Location detection timed out. Move near a window and try again, or enter the address manually.");
+  return new Error("Your current location could not be detected. Please retry or enter the address manually.");
+}
+
 type BigDataCloudResponse = {
   locality?: string;
   city?: string;
@@ -31,9 +37,14 @@ export function detectCurrentAddress(): Promise<DetectedAddress> {
         const longitude = position.coords.longitude.toFixed(7);
 
         try {
+          const controller = new AbortController();
+          const timeout = window.setTimeout(() => controller.abort(), 10000);
           const response = await fetch(
             `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`,
+            { signal: controller.signal },
           );
+          window.clearTimeout(timeout);
+          if (!response.ok) throw new Error("Reverse geocoding failed.");
           const payload = (await response.json()) as BigDataCloudResponse;
           resolve({
             latitude,
@@ -49,7 +60,7 @@ export function detectCurrentAddress(): Promise<DetectedAddress> {
           resolve({ latitude, longitude });
         }
       },
-      () => reject(new Error("Location permission was not available.")),
+      (error) => reject(locationError(error)),
       { enableHighAccuracy: true, timeout: 12000, maximumAge: 300000 },
     );
   });

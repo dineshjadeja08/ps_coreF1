@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { mergeCart, parseCart, type CartItem } from "./store";
-const sofa: CartItem = { id: "sofa", slug: "sofa-repair", name: "Sofa repair", price: 499 };
-const ac: CartItem = { id: "ac", slug: "ac-service", name: "AC service", price: 399 };
+const sofa: CartItem = { id: "sofa", slug: "sofa-repair", name: "Sofa repair", price: 499, quantity: 1 };
+const ac: CartItem = { id: "ac", slug: "ac-service", name: "AC service", price: 399, quantity: 1 };
 describe("cart storage", () => {
   it("restores multiple selections and an unfinished checkout", () => {
     const saved = [sofa, { ...ac, bookingId: "pending-booking" }];

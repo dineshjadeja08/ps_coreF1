@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertCircle, CheckCircle2, Clock, Loader2, MapPin, ShieldCheck } from "lucide-react";
+import { AlertCircle, CheckCircle2, Clock, MapPin, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -15,8 +15,6 @@ import { useAddresses, useAddressServiceability } from "@/features/addresses/que
 import type { Address } from "@/features/addresses/types";
 import { DateSelector } from "@/features/bookings/components/date-selector";
 import { SlotPicker } from "@/features/bookings/components/slot-picker";
-import { useCreateBooking } from "@/features/bookings/mutations";
-import { createBookingPayload, getBookingCreationErrorMessage, isSlotConflictError } from "@/features/bookings/utils";
 import { useServiceDetail } from "@/features/catalogue/queries";
 import { PriceDisplay } from "@/features/catalogue/components/price-display";
 import { ServiceImage } from "@/features/catalogue/components/service-image";
@@ -45,7 +43,6 @@ export function BookingSchedulingShell() {
 
   const service = useServiceDetail(serviceSlug);
   const addresses = useAddresses();
-  const createBooking = useCreateBooking();
   const defaultAddressId = useMemo(() => {
     const items = addresses.data?.results ?? [];
     return items.find((address) => address.is_default)?.id ?? items[0]?.id ?? "";
@@ -75,7 +72,6 @@ export function BookingSchedulingShell() {
   );
   const slotConflict =
     selectedSlotId && slots.data && !selectedSlot ? "That time is no longer available. Please choose another slot." : "";
-  const defaultProblemDescription = service.data ? `${service.data.name} service requested.` : "Service requested.";
 
   function updateUrl(next: { address?: string; date?: string; slot?: string | null }) {
     const params = new URLSearchParams(searchParams.toString());
@@ -104,33 +100,14 @@ export function BookingSchedulingShell() {
   }
 
   async function createFastBooking() {
-    if (!service.data || !selectedAddress || !selectedSlot || createBooking.isPending || !cart.ready) return;
+    if (!service.data || !selectedAddress || !selectedSlot || !cart.ready) return;
 
     const existing = cart.items.find((item) => item.slug === serviceSlug && item.bookingId);
     if (existing?.bookingId) { router.push(routes.bookingPayment(existing.bookingId)); return; }
     setSubmitError("");
-
-    try {
-      const bookService = (searchParams.get("cart") === "1" || cart.items.some((item) => item.slug === serviceSlug)) ? cart.checkout : createBooking.mutateAsync;
-      const booking = await bookService(
-        createBookingPayload({
-          serviceId: service.data.id,
-          addressId: selectedAddress.id,
-          slotId: selectedSlot.id,
-          problemDescription: problemDescription.trim() || defaultProblemDescription,
-          customerNotes,
-        }),
-      );
-      cart.markBooked();
-      router.push(routes.bookingPayment(booking.id));
-    } catch (error) {
-      setSubmitError(getBookingCreationErrorMessage(error));
-      if (isSlotConflictError(error)) {
-        setSelectedSlotId("");
-        await slots.refetch();
-        updateUrl({ slot: null });
-      }
-    }
+    window.sessionStorage.setItem("purple-squad-booking-notes", JSON.stringify({ problemDescription: problemDescription.trim(), customerNotes: customerNotes.trim() }));
+    const params = new URLSearchParams({ service: serviceSlug, address: selectedAddress.id, date: selectedDate, slot: selectedSlot.id });
+    router.push(`/book/review?${params.toString()}`);
   }
 
   const canContinue = Boolean(service.data && selectedAddress && serviceability.data?.is_supported && selectedDate && selectedSlot);
@@ -324,17 +301,10 @@ export function BookingSchedulingShell() {
           <Button
             type="button"
             className="mt-5 w-full"
-            disabled={!canContinue || createBooking.isPending || !cart.ready}
+            disabled={!canContinue || !cart.ready}
             onClick={() => void createFastBooking()}
           >
-            {createBooking.isPending ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Creating booking...
-              </>
-            ) : (
-              "Continue to payment"
-            )}
+            Continue to review
           </Button>
         </aside>
       </div>
@@ -346,10 +316,10 @@ export function BookingSchedulingShell() {
           </p>
           <Button
             type="button"
-            disabled={!canContinue || createBooking.isPending || !cart.ready}
+            disabled={!canContinue || !cart.ready}
             onClick={() => void createFastBooking()}
           >
-            {createBooking.isPending ? "Booking..." : "Pay"}
+            Review
           </Button>
         </div>
       </div>

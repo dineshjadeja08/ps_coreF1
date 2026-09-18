@@ -49,7 +49,11 @@ function useCartState() {
   });
   const mutation = useMutation({
     scope: { id: `cart-${accountId}` },
-    mutationFn: (action: { add: string } | { remove: string }) => "add" in action ? cartApi.add([action.add]) : cartApi.remove(action.remove),
+    mutationFn: (action: { add: string } | { remove: string } | { update: string; quantity: number }) => {
+      if ("add" in action) return cartApi.add([action.add]);
+      if ("update" in action) return cartApi.updateQuantity(action.update, action.quantity);
+      return cartApi.remove(action.remove);
+    },
     onMutate: () => queryClient.cancelQueries({ queryKey }),
     onSuccess: (data) => queryClient.setQueryData(queryKey, data),
   });
@@ -75,9 +79,14 @@ function useCartState() {
       if (isLoading) return;
       if (accountId) { mutation.mutate({ add: service.id }); return; }
       const price = Number(getCurrentPrice(service));
-      write(guestKey, mergeCart(parseCart(read(guestKey)), [{ id: service.id, slug: service.slug, name: service.name, price: Number.isFinite(price) && price >= 0 ? price : null }]));
+      write(guestKey, mergeCart(parseCart(read(guestKey)), [{ id: service.id, slug: service.slug, name: service.name, price: Number.isFinite(price) && price >= 0 ? price : null, quantity: 1, basePrice: Number(service.base_price), trainingFee: Number(service.training_fee ?? 0) }]));
     },
     remove(id: string) { if (accountId) mutation.mutate({ remove: id }); else write(guestKey, parseCart(read(guestKey)).filter((item) => item.id !== id)); },
+    updateQuantity(id: string, quantity: number) {
+      const safeQuantity = Math.max(1, Math.min(20, Math.trunc(quantity)));
+      if (accountId) { mutation.mutate({ update: id, quantity: safeQuantity }); return; }
+      write(guestKey, parseCart(read(guestKey)).map((item) => item.id === id ? { ...item, quantity: safeQuantity } : item));
+    },
     async checkout(payload: BookingCreateRequest) { return (await checkoutMutation.mutateAsync(payload)).bookings[0]; },
     markBooked: refresh, complete,
   };

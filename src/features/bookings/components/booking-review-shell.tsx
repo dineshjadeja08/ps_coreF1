@@ -1,9 +1,9 @@
 "use client";
 
-import { AlertCircle, ArrowLeft, CalendarClock, CheckCircle2, Loader2, PenLine, ShieldCheck } from "lucide-react";
+import { AlertCircle, ArrowLeft, CalendarClock, CheckCircle2, Loader2, Minus, PenLine, Phone, Plus, ShieldCheck, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 
 import { EmptyState } from "@/components/common/empty-state";
 import { ErrorState } from "@/components/common/error-state";
@@ -25,7 +25,7 @@ import {
   isSlotConflictError,
 } from "@/features/bookings/utils";
 import { useServiceDetail } from "@/features/catalogue/queries";
-import { PriceDisplay } from "@/features/catalogue/components/price-display";
+import { ServiceImage } from "@/features/catalogue/components/service-image";
 import { formatDuration } from "@/features/catalogue/utils";
 import { useAvailableSlots } from "@/features/slots/queries";
 import { formatSlotTime, isSlotAvailable } from "@/features/slots/utils";
@@ -41,7 +41,23 @@ export function BookingReviewShell() {
 
   const [problemDescription, setProblemDescription] = useState("");
   const [customerNotes, setCustomerNotes] = useState("");
+  const [contactPhone, setContactPhone] = useState("");
   const [submitError, setSubmitError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    try {
+      const raw = window.sessionStorage.getItem("purple-squad-booking-notes");
+      if (!raw) return;
+      const draft = JSON.parse(raw) as { problemDescription?: string; customerNotes?: string };
+      queueMicrotask(() => {
+        if (!active) return;
+        setProblemDescription(draft.problemDescription || "");
+        setCustomerNotes(draft.customerNotes || "");
+      });
+    } catch { /* The review form remains editable if saved draft data is unavailable. */ }
+    return () => { active = false; };
+  }, []);
 
   const hasDraft = Boolean(serviceSlug && addressId && selectedDate && slotId);
   const service = useServiceDetail(serviceSlug);
@@ -63,6 +79,21 @@ export function BookingReviewShell() {
   const selectedSlot = useMemo(() => (slots.data ?? []).find((slot) => slot.id === slotId && isSlotAvailable(slot)) ?? null, [slotId, slots.data]);
   const createBooking = useCreateBooking();
   const createdBooking = createBooking.data;
+  const cartItem = cart.items.find((item) => item.slug === serviceSlug);
+  const quantity = cartItem?.quantity ?? 1;
+  const effectiveUnitPrice = Number(service.data?.effective_price ?? 0);
+  const baseUnitPrice = Number(service.data?.base_price ?? effectiveUnitPrice);
+  const trainingFee = service.data
+    ? Number(service.data.training_fee ?? 0) * (service.data.training_fee_per_unit ? quantity : 1)
+    : 0;
+  const serviceTotal = effectiveUnitPrice * quantity;
+  const originalTotal = baseUnitPrice * quantity;
+  const total = serviceTotal + trainingFee;
+  const advanceValue = Number(service.data?.advance_payment_value ?? service.data?.advance_amount ?? 0);
+  const advance = service.data?.advance_payment_type === "PERCENTAGE"
+    ? Math.min(total, total * advanceValue / 100)
+    : Math.min(total, advanceValue);
+  const remaining = Math.max(0, total - advance);
 
   const loadingDraft = service.isLoading || addresses.isLoading || serviceability.isLoading || slots.isLoading || slots.isFetching;
   const staleSlot = Boolean(slotId && slots.data && !selectedSlot);
@@ -103,8 +134,11 @@ export function BookingReviewShell() {
           slotId: selectedSlot.id,
           problemDescription,
           customerNotes,
+          contactPhone: contactPhone || selectedAddress.phone,
+          quantity,
         }),
       );
+      window.sessionStorage.removeItem("purple-squad-booking-notes");
       cart.markBooked();
       router.replace(routes.bookingPayment(booking.id));
     } catch (error) {
@@ -196,6 +230,10 @@ export function BookingReviewShell() {
               We re-check your service, address and selected slot before creating the booking.
             </p>
           </section>
+          <section className="hidden items-center justify-between gap-5 rounded-md border border-border bg-surface p-5 shadow-sm lg:flex">
+            <div><h2 className="text-xl font-bold text-foreground">Confirm & Book Now</h2><p className="mt-1 text-sm text-secondary">Review the payment summary, then securely pay the advance.</p></div>
+            <Button type="submit" size="lg" disabled={!canSubmit} className="min-w-52">{createBooking.isPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Creating booking...</> : `Pay ${formatMoney(advance)} Now`}</Button>
+          </section>
 
           {loadingDraft ? <div className="h-28 animate-pulse rounded-md bg-muted" /> : null}
 
@@ -216,16 +254,12 @@ export function BookingReviewShell() {
           ) : null}
 
           {service.data && selectedAddress && selectedSlot ? (
-            <section className="grid gap-4 md:grid-cols-3">
-              <ReviewCard title="Service" actionHref={routes.services} actionLabel="Change service">
-                <h2 className="text-lg font-bold text-foreground">{service.data.name}</h2>
-                <p className="mt-1 text-sm text-secondary">{formatDuration(service.data.estimated_duration_minutes)}</p>
-                <div className="mt-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-secondary">Current listed price</p>
-                  <PriceDisplay service={service.data} compact />
-                </div>
+            <section className="grid gap-4">
+              <ReviewCard title="Send booking details to" actionHref={`/account?tab=addresses`} actionLabel="Edit phone">
+                <div className="relative"><Phone className="pointer-events-none absolute left-3 top-3.5 h-4 w-4 text-primary" /><input aria-label="Booking contact phone" inputMode="tel" value={contactPhone || selectedAddress.phone} onChange={(event) => setContactPhone(event.target.value)} className="h-11 w-full rounded-md border border-border bg-background pl-10 pr-3 text-sm font-bold outline-none focus:border-primary" /></div>
+                <p className="mt-1 text-sm text-secondary">Confirmation and technician updates will be sent to this number.</p>
               </ReviewCard>
-              <ReviewCard title="Address" actionHref={`/book?service=${encodeURIComponent(serviceSlug)}&date=${encodeURIComponent(selectedDate)}`} actionLabel="Change address">
+              <ReviewCard title="Service address" actionHref={`/book?service=${encodeURIComponent(serviceSlug)}&date=${encodeURIComponent(selectedDate)}`} actionLabel="Edit">
                 <h2 className="text-lg font-bold text-foreground">{selectedAddress.label}</h2>
                 <p className="mt-1 text-sm leading-6 text-secondary">
                   {selectedAddress.address_line_1}
@@ -233,7 +267,7 @@ export function BookingReviewShell() {
                   {`, ${selectedAddress.city}, ${selectedAddress.state} ${selectedAddress.postal_code}`}
                 </p>
               </ReviewCard>
-              <ReviewCard title="Schedule" actionHref={`/book?service=${encodeURIComponent(serviceSlug)}&address=${encodeURIComponent(addressId)}&date=${encodeURIComponent(selectedDate)}`} actionLabel="Change schedule">
+              <ReviewCard title="Service slot" actionHref={`/book?service=${encodeURIComponent(serviceSlug)}&address=${encodeURIComponent(addressId)}&date=${encodeURIComponent(selectedDate)}`} actionLabel="Edit">
                 <h2 className="text-lg font-bold text-foreground">{formatDisplayDate(selectedDate)}</h2>
                 <p className="mt-1 flex items-center gap-2 text-sm text-secondary">
                   <CalendarClock className="h-4 w-4 text-primary" />
@@ -270,31 +304,50 @@ export function BookingReviewShell() {
         </main>
 
         <aside className="rounded-md border border-border bg-surface p-5 shadow-[var(--shadow-card)] lg:sticky lg:top-28">
-          <h2 className="text-xl font-bold text-foreground">Booking Summary</h2>
-          <div className="mt-5 space-y-4">
-            <SummaryItem label="Pricing" value="To be confirmed by backend on booking creation" />
-            <SummaryItem label="Current listed price" value={service.data ? formatMoney(service.data.effective_price) : "Loading"} />
-          </div>
+          <h2 className="text-xl font-bold text-foreground">Payment summary</h2>
+          {service.data ? <div className="mt-5 flex gap-3 border-b border-border pb-5">
+            <ServiceImage src={service.data.cover_image} alt={service.data.name} className="h-20 w-20 shrink-0 rounded-md border border-border bg-white" imageClassName="object-cover" />
+            <div className="min-w-0 flex-1"><p className="font-bold text-foreground">{service.data.name}</p><p className="mt-1 text-sm text-secondary">{formatDuration(service.data.estimated_duration_minutes)}</p>
+              <div className="mt-3 inline-flex items-center rounded-md border border-border">
+                <button type="button" className="grid h-8 w-8 place-items-center" aria-label="Decrease quantity" disabled={quantity <= 1 || !cartItem} onClick={() => cartItem && cart.updateQuantity(cartItem.id, quantity - 1)}><Minus className="h-3.5 w-3.5" /></button>
+                <span className="min-w-8 text-center text-sm font-bold">{quantity}</span>
+                <button type="button" className="grid h-8 w-8 place-items-center" aria-label="Increase quantity" disabled={quantity >= 20 || !cartItem} onClick={() => cartItem && cart.updateQuantity(cartItem.id, quantity + 1)}><Plus className="h-3.5 w-3.5" /></button>
+              </div>
+            </div>
+          </div> : null}
+          <dl className="mt-5 space-y-3 text-sm">
+            <PriceRow label={`Service price × ${quantity}`} value={formatMoney(serviceTotal)} />
+            {originalTotal > serviceTotal ? <PriceRow label="Offer discount" value={`-${formatMoney(originalTotal - serviceTotal)}`} tone="success" /> : null}
+            {trainingFee > 0 ? <PriceRow label="Training fee" value={formatMoney(trainingFee)} /> : <PriceRow label="Training fee" value="Waived" tone="success" />}
+            <div className="border-t border-border pt-3"><PriceRow label="Total" value={formatMoney(total)} strong /></div>
+            <PriceRow label="Pay now (advance)" value={formatMoney(advance)} strong />
+            <PriceRow label="Remaining after service" value={formatMoney(remaining)} />
+          </dl>
+          <div className="mt-5 rounded-md bg-primary-soft p-4 text-sm text-primary"><p className="flex items-center gap-2 font-bold"><Sparkles className="h-4 w-4" />Please note</p><ul className="mt-2 list-disc space-y-1 pl-5 leading-6"><li>The provided cost is an approximate estimate.</li><li>Final estimation will be provided after inspection.</li></ul></div>
           <p className="mt-5 flex gap-2 rounded-md bg-primary-soft p-3 text-sm leading-6 text-primary">
             <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
             Your final amount is calculated securely by Purple Squad before payment.
           </p>
           {submitError ? <p className="mt-4 rounded-md bg-destructive/10 p-3 text-sm text-destructive">{submitError}</p> : null}
-          <Button type="submit" className="mt-5 w-full" disabled={!canSubmit} aria-disabled={!canSubmit}>
+          <Button type="submit" className="mt-5 w-full lg:hidden" disabled={!canSubmit} aria-disabled={!canSubmit}>
             {createBooking.isPending ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Creating your booking...
               </>
             ) : (
-              "Confirm & Continue to Payment"
+              `Pay ${formatMoney(advance)} Now`
             )}
           </Button>
-          <p className="mt-3 text-xs leading-5 text-secondary">No payment will be collected in this step.</p>
+          <p className="mt-3 text-xs leading-5 text-secondary">The remaining amount is payable after the service is completed.</p>
         </aside>
       </div>
     </form>
   );
+}
+
+function PriceRow({ label, value, strong, tone }: { label: string; value: string; strong?: boolean; tone?: "success" }) {
+  return <div className={`flex items-center justify-between gap-4 ${strong ? "text-base font-bold" : ""}`}><dt className="text-secondary">{label}</dt><dd className={tone === "success" ? "font-semibold text-success" : "font-semibold text-foreground"}>{value}</dd></div>;
 }
 
 function ReviewCard({ title, actionHref, actionLabel, children }: { title: string; actionHref: string; actionLabel: string; children: React.ReactNode }) {

@@ -12,6 +12,7 @@ const bookingStatusLabels: Record<BookingStatus, string> = {
   TECHNICIAN_EN_ROUTE: "Technician en route",
   IN_PROGRESS: "In progress",
   COMPLETED: "Completed",
+  CLOSED: "Closed",
   CANCELLED: "Cancelled",
   REFUND_PENDING: "Refund pending",
   REFUNDED: "Refunded",
@@ -148,13 +149,17 @@ export function createBookingPayload(input: {
   slotId: string;
   problemDescription: string;
   customerNotes?: string;
+  contactPhone?: string;
+  quantity?: number;
 }) {
   return {
     service_id: input.serviceId,
     address_id: input.addressId,
     slot_id: input.slotId,
     problem_description: input.problemDescription.trim(),
+    quantity: input.quantity ?? 1,
     ...(input.customerNotes?.trim() ? { customer_notes: input.customerNotes.trim() } : {}),
+    ...(input.contactPhone?.trim() ? { contact_phone: input.contactPhone.trim() } : {}),
   };
 }
 

@@ -37,6 +37,7 @@ export const adminNavigationSections = [
       { label: "Leads", href: "/admin/leads", icon: ClipboardList },
       { label: "Customers", href: "/admin/customers", icon: Users },
       { label: "Bookings", href: "/admin/bookings", icon: CalendarCheck },
+      { label: "Work Orders", href: "/admin/work-orders", icon: ListChecks },
       { label: "Payments", href: "/admin/payments", icon: CreditCard },
       { label: "Technicians", href: "/admin/technicians", icon: Wrench },
       { label: "Assignments", href: "/admin/assignments", icon: ListChecks },

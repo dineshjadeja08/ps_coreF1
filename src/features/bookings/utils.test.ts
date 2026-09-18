@@ -75,6 +75,7 @@ describe("booking utilities", () => {
       slot_id: "slot-1",
       problem_description: "Needs deep cleaning.",
       customer_notes: "Call first.",
+      quantity: 1,
     });
   });
 

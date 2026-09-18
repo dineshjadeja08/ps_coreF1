@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useRef } from "react";
 import type { ReactNode } from "react";
 
 import { AdminEmptyState } from "@/components/admin/admin-empty-state";
@@ -23,6 +26,18 @@ export function AdminDataTable<T>({
   emptyTitle: string;
   emptyMessage: string;
 }) {
+  const topRef = useRef<HTMLDivElement>(null);
+  const tableRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const top = topRef.current;
+    const table = tableRef.current;
+    if (!top || !table) return;
+    let syncing = false;
+    const fromTop = () => { if (!syncing) { syncing = true; table.scrollLeft = top.scrollLeft; syncing = false; } };
+    const fromTable = () => { if (!syncing) { syncing = true; top.scrollLeft = table.scrollLeft; syncing = false; } };
+    top.addEventListener("scroll", fromTop); table.addEventListener("scroll", fromTable);
+    return () => { top.removeEventListener("scroll", fromTop); table.removeEventListener("scroll", fromTable); };
+  }, [rows]);
   if (rows.length === 0) {
     return <AdminEmptyState icon={emptyIcon} title={emptyTitle} message={emptyMessage} />;
   }
@@ -44,7 +59,8 @@ export function AdminDataTable<T>({
         ))}
       </div>
 
-      <div className="hidden max-w-full overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm md:block">
+      <div ref={topRef} className="hidden max-w-full overflow-x-auto md:block"><div className="h-1" style={{ width: "max(100%, 1100px)" }} /></div>
+      <div ref={tableRef} className="hidden max-w-full overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm md:block">
         <table className="min-w-full divide-y divide-slate-200 text-sm">
           <thead className="bg-slate-50">
             <tr>

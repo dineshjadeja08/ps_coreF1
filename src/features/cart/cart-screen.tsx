@@ -11,7 +11,7 @@ import { useCart } from "./use-cart";
 export function CartScreen() {
   const cart = useCart();
   const next = cart.items[0];
-  const total = cart.total ?? cart.items.reduce((sum, item) => sum + (item.price ?? 0), 0);
+  const total = cart.total ?? cart.items.reduce((sum, item) => sum + (item.price ?? 0) * item.quantity + (item.trainingFee ?? 0), 0);
   const hasUnknownPrice = cart.items.some((item) => item.price === null);
   const canCheckout = cart.ready && !cart.error && next?.available !== false;
   const checkoutHref = next?.bookingId ? `/book/pay/${encodeURIComponent(next.bookingId)}` : `/book?service=${encodeURIComponent(next?.slug ?? "")}&cart=1`;

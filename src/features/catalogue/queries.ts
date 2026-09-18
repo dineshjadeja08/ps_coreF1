@@ -10,6 +10,7 @@ export function useServiceCategories() {
   return useQuery({
     queryKey: queryKeys.serviceCategories,
     queryFn: publicCatalogueApi.listCategories,
+    staleTime: 5 * 60_000,
   });
 }
 
@@ -17,6 +18,7 @@ export function useServices(params?: { category?: string; search?: string; featu
   return useQuery({
     queryKey: queryKeys.services(params),
     queryFn: () => publicCatalogueApi.listServices(params),
+    staleTime: 2 * 60_000,
   });
 }
 
@@ -26,6 +28,7 @@ export function useServiceDetail(slug: string, initialData?: ServiceDetail) {
     queryFn: () => publicCatalogueApi.getService(slug),
     enabled: Boolean(slug),
     initialData,
+    staleTime: 2 * 60_000,
   });
 }
 

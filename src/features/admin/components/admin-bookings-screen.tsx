@@ -40,7 +40,7 @@ export function AdminBookingsScreen() {
         </div>
         <select className="h-11 rounded-md border border-slate-200 bg-white px-3 text-sm" value={status} onChange={(event) => setStatus(event.target.value)}>
           <option value="">All booking statuses</option>
-          {["PENDING_PAYMENT", "PAYMENT_FAILED", "CONFIRMED", "TECHNICIAN_ASSIGNED", "TECHNICIAN_EN_ROUTE", "IN_PROGRESS", "COMPLETED", "CANCELLED", "REFUND_PENDING", "REFUNDED"].map((value) => <option key={value} value={value}>{value.replaceAll("_", " ")}</option>)}
+          {["PENDING_PAYMENT", "PAYMENT_FAILED", "CONFIRMED", "TECHNICIAN_ASSIGNED", "TECHNICIAN_EN_ROUTE", "IN_PROGRESS", "COMPLETED", "CLOSED", "CANCELLED", "REFUND_PENDING", "REFUNDED"].map((value) => <option key={value} value={value}>{value.replaceAll("_", " ")}</option>)}
         </select>
         <Button type="button" variant="outline" onClick={() => { setSearch(""); setStatus(""); }}>Clear</Button>
       </div>

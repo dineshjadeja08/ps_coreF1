@@ -3,6 +3,7 @@ import { z } from "zod";
 const itemSchema = z.object({
   id: z.string().min(1), slug: z.string().min(1), name: z.string().min(1),
   price: z.number().finite().nonnegative().nullable(), bookingId: z.string().min(1).optional(), available: z.boolean().optional(), advance: z.number().nonnegative().optional(),
+  quantity: z.number().int().min(1).max(20).default(1), basePrice: z.number().nonnegative().optional(), trainingFee: z.number().nonnegative().optional(),
 });
 export type CartItem = z.infer<typeof itemSchema>;
 export function parseCart(raw: string): CartItem[] {

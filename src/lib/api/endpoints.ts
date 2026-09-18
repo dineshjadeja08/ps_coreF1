@@ -51,6 +51,9 @@ import type {
   ScheduleClosure,
 } from "@/types/api";
 
+export type AdminSearchResult = { type: "WORK_ORDER" | "LEAD" | "CUSTOMER"; id: string; title: string; subtitle: string; url: string };
+export type AdminSearchResponse = { query: string; results: AdminSearchResult[] };
+
 export const apiPaths = {
   health: "/api/v1/health/",
   otpSend: "/api/v1/auth/otp/send/",
@@ -88,6 +91,10 @@ export const apiPaths = {
   adminServiceAreas: "/api/v1/admin/service-areas/",
   adminServiceAreaDetail: (id: UUID) => `/api/v1/admin/service-areas/${id}/`,
   adminBookings: "/api/v1/admin/bookings/",
+  adminWorkOrders: "/api/v1/admin/work-orders/",
+  adminWorkOrderDetail: (id: UUID) => `/api/v1/admin/work-orders/${id}/`,
+  adminWorkOrderClose: (id: UUID) => `/api/v1/admin/work-orders/${id}/close/`,
+  adminSearch: "/api/v1/admin/search/",
   adminBookingDetail: (id: UUID) => `/api/v1/admin/bookings/${id}/`,
   adminBookingInvoice: (id: UUID) => `/api/v1/admin/bookings/${id}/invoice/`,
   adminBookingAssignTechnician: (id: UUID) => `/api/v1/admin/bookings/${id}/assign-technician/`,
@@ -355,6 +362,11 @@ export const adminApi = {
     apiRequest<AdminServiceImage>(apiPaths.adminServiceImageDetail(serviceId, imageId), { method: "PATCH", body, auth: true }),
   listBookings: (query?: { page?: number; page_size?: number; status?: string; search?: string }) =>
     apiRequest<PaginatedResponse<Booking>>(apiPaths.adminBookings, { auth: true, query }),
+  listWorkOrders: (query?: { page?: number; page_size?: number; status?: string; payment_status?: string; search?: string }) =>
+    apiRequest<PaginatedResponse<Booking>>(apiPaths.adminWorkOrders, { auth: true, query }),
+  getWorkOrder: (id: UUID) => apiRequest<Booking>(apiPaths.adminWorkOrderDetail(id), { auth: true }),
+  closeWorkOrder: (id: UUID, notes = "") => apiRequest<Booking>(apiPaths.adminWorkOrderClose(id), { method: "POST", auth: true, body: { notes } }),
+  globalSearch: (query: string) => apiRequest<AdminSearchResponse>(apiPaths.adminSearch, { auth: true, query: { q: query } }),
   assignTechnician: (bookingId: UUID, body: { technician_id: UUID; notes?: string; reason?: string }) =>
     apiRequest<Booking>(apiPaths.adminBookingAssignTechnician(bookingId), {
       method: "POST",
