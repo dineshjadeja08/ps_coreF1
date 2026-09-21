@@ -321,7 +321,7 @@ export type BookingCreateRequest = {
   service_id: UUID;
   address_id: UUID;
   slot_id: UUID;
-  problem_description: string;
+  problem_description?: string;
   customer_notes?: string;
   contact_phone?: string;
   quantity?: number;

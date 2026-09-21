@@ -95,6 +95,17 @@ describe("booking utilities", () => {
     expect(payload).not.toHaveProperty("address_snapshot");
   });
 
+  it("omits optional instructions when they are blank", () => {
+    const payload = createBookingPayload({
+      serviceId: "service-1",
+      addressId: "address-1",
+      slotId: "slot-1",
+      problemDescription: "   ",
+    });
+
+    expect(payload).not.toHaveProperty("problem_description");
+  });
+
   it("uses backend booking pricing over current service pricing", () => {
     const currentServicePrice = "699.00";
     const createdBooking = booking({ total_amount: "749.00" });

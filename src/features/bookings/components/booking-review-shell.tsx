@@ -108,7 +108,7 @@ export function BookingReviewShell() {
           : staleSlot
             ? "slot"
             : null;
-  const canSubmit = Boolean(service.data?.id && selectedAddress?.id && selectedSlot?.id && problemDescription.trim() && !createBooking.isPending && cart.ready && !createdBooking && !blockedReason);
+  const canSubmit = Boolean(service.data?.id && selectedAddress?.id && selectedSlot?.id && !createBooking.isPending && cart.ready && !createdBooking && !blockedReason);
 
   function returnToScheduling(clearSlot = false) {
     const params = new URLSearchParams();
@@ -279,15 +279,13 @@ export function BookingReviewShell() {
 
           <section className="rounded-md border border-border bg-surface p-5 shadow-sm">
             <label htmlFor="problem-description" className="text-sm font-semibold text-foreground">
-              Problem description
+              Service instructions <span className="font-normal text-secondary">(optional)</span>
             </label>
             <textarea
               id="problem-description"
-              required
-              minLength={1}
               value={problemDescription}
               onChange={(event) => setProblemDescription(event.target.value)}
-              placeholder="Tell us what needs attention."
+              placeholder="Tell us what needs attention, if anything."
               className="mt-2 min-h-28 w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none transition focus:border-primary focus:ring-3 focus:ring-primary/15"
             />
             <label htmlFor="customer-notes" className="mt-4 block text-sm font-semibold text-foreground">

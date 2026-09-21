@@ -156,8 +156,8 @@ export function createBookingPayload(input: {
     service_id: input.serviceId,
     address_id: input.addressId,
     slot_id: input.slotId,
-    problem_description: input.problemDescription.trim(),
     quantity: input.quantity ?? 1,
+    ...(input.problemDescription.trim() ? { problem_description: input.problemDescription.trim() } : {}),
     ...(input.customerNotes?.trim() ? { customer_notes: input.customerNotes.trim() } : {}),
     ...(input.contactPhone?.trim() ? { contact_phone: input.contactPhone.trim() } : {}),
   };
