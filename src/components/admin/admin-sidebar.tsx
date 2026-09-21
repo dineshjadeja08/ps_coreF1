@@ -8,12 +8,10 @@ import {
   CreditCard,
   FileBarChart,
   FileClock,
-  Home,
   Image,
   LayoutDashboard,
   ListChecks,
   MapPin,
-  LogOut,
   MessageSquareText,
   Package,
   Plus,
@@ -25,10 +23,7 @@ import {
   Wrench,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-
-import { Button } from "@/components/ui/button";
-import { useAuth } from "@/features/auth/hooks";
+import { usePathname } from "next/navigation";
 
 export const adminNavigationSections = [
   {
@@ -87,16 +82,9 @@ export const adminNavigationSections = [
 
 export function AdminSidebar() {
   const pathname = usePathname();
-  const router = useRouter();
-  const { logout } = useAuth();
-
-  async function handleLogout() {
-    await logout();
-    router.replace("/admin/login");
-  }
 
   return (
-    <aside className="hidden h-screen w-72 shrink-0 border-r border-slate-200 bg-white text-slate-950 lg:sticky lg:top-0 lg:block">
+    <aside className="fixed inset-y-0 left-0 z-40 hidden h-screen w-72 border-r border-slate-200 bg-white text-slate-950 lg:block">
       <div className="flex h-full flex-col">
         <div className="border-b border-slate-200 px-5 py-5">
           <Link href="/admin/dashboard" className="flex items-center gap-3">
@@ -133,18 +121,6 @@ export function AdminSidebar() {
             </div>
           ))}
         </nav>
-        <div className="border-t border-slate-200 p-3">
-          <Button type="button" variant="outline" className="w-full" onClick={handleLogout}>
-            <LogOut className="h-4 w-4" />
-            Logout
-          </Button>
-          <Button asChild type="button" variant="ghost" className="mt-2 w-full text-slate-600">
-            <Link href="/">
-              <Home className="h-4 w-4" />
-              Customer site
-            </Link>
-          </Button>
-        </div>
       </div>
     </aside>
   );

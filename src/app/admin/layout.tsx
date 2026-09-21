@@ -18,7 +18,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     <PermissionGuard>
       <div className="flex min-h-screen min-w-0 overflow-x-hidden bg-slate-50">
         <AdminSidebar />
-        <div className="min-w-0 max-w-full flex-1">
+        <div className="min-w-0 max-w-full flex-1 lg:ml-72">
           <AdminTopbar />
           <div className="min-w-0 max-w-full px-3 py-4 sm:px-4 sm:py-6 lg:px-8">{children}</div>
         </div>
