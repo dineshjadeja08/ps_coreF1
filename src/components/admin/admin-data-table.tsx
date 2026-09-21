@@ -27,17 +27,37 @@ export function AdminDataTable<T>({
   emptyMessage: string;
 }) {
   const topRef = useRef<HTMLDivElement>(null);
+  const topTrackRef = useRef<HTMLDivElement>(null);
   const tableRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const top = topRef.current;
+    const track = topTrackRef.current;
     const table = tableRef.current;
-    if (!top || !table) return;
+    const tableElement = table?.querySelector("table");
+    if (!top || !track || !table || !tableElement) return;
     let syncing = false;
+    let frame = 0;
     const fromTop = () => { if (!syncing) { syncing = true; table.scrollLeft = top.scrollLeft; syncing = false; } };
     const fromTable = () => { if (!syncing) { syncing = true; top.scrollLeft = table.scrollLeft; syncing = false; } };
+    const updateTrack = () => {
+      window.cancelAnimationFrame(frame);
+      frame = window.requestAnimationFrame(() => {
+        track.style.width = `${tableElement.scrollWidth}px`;
+        top.style.visibility = tableElement.scrollWidth > table.clientWidth ? "visible" : "hidden";
+      });
+    };
     top.addEventListener("scroll", fromTop); table.addEventListener("scroll", fromTable);
-    return () => { top.removeEventListener("scroll", fromTop); table.removeEventListener("scroll", fromTable); };
-  }, [rows]);
+    const observer = new ResizeObserver(updateTrack);
+    observer.observe(table);
+    observer.observe(tableElement);
+    updateTrack();
+    return () => {
+      window.cancelAnimationFrame(frame);
+      observer.disconnect();
+      top.removeEventListener("scroll", fromTop);
+      table.removeEventListener("scroll", fromTable);
+    };
+  }, [rows.length, columns.length]);
   if (rows.length === 0) {
     return <AdminEmptyState icon={emptyIcon} title={emptyTitle} message={emptyMessage} />;
   }
@@ -59,7 +79,7 @@ export function AdminDataTable<T>({
         ))}
       </div>
 
-      <div ref={topRef} className="hidden max-w-full overflow-x-auto md:block"><div className="h-1" style={{ width: "max(100%, 1100px)" }} /></div>
+      <div ref={topRef} aria-label="Scroll table horizontally" className="sticky top-16 z-10 hidden max-w-full overflow-x-auto bg-slate-50/95 md:block"><div ref={topTrackRef} className="h-1" /></div>
       <div ref={tableRef} className="hidden max-w-full overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm md:block">
         <table className="min-w-full divide-y divide-slate-200 text-sm">
           <thead className="bg-slate-50">
