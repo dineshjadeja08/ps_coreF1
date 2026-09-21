@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
+import { AdminBrand } from "@/components/admin/admin-brand";
 import { adminNavigationSections } from "@/components/admin/admin-sidebar";
 import { Button } from "@/components/ui/button";
 
@@ -22,10 +23,7 @@ export function AdminMobileNav() {
           <button className="absolute inset-0 bg-slate-950/60" type="button" aria-label="Close admin navigation" onClick={() => setOpen(false)} />
           <nav className="relative flex h-full w-80 max-w-[88vw] flex-col overflow-y-auto bg-slate-950 p-4 text-white">
             <div className="mb-5 flex items-center justify-between">
-              <div>
-                <p className="font-bold">Purple Squad</p>
-                <p className="text-xs text-slate-400">Operations Portal</p>
-              </div>
+              <AdminBrand dark />
               <Button type="button" variant="ghost" size="icon" className="text-white" onClick={() => setOpen(false)} aria-label="Close admin navigation">
                 <X className="h-5 w-5" />
               </Button>

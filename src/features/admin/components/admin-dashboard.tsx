@@ -709,7 +709,7 @@ function AdminShell({ children }: { children: React.ReactNode }) {
               <ShieldCheck className="h-5 w-5" />
             </div>
             <p className="mt-4 text-sm font-semibold uppercase tracking-wide text-primary">Private Operations</p>
-            <h1 className="mt-2 text-3xl font-bold text-foreground">Purple Squad Admin Dashboard</h1>
+            <h1 className="mt-2 text-3xl font-bold text-foreground">PurpleSquad360 Dashboard</h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-secondary">
               Manage catalogue, service content, images, bookings, dispatch, balance collection, and completion from the frontend.
             </p>

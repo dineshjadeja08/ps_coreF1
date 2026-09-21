@@ -25,6 +25,8 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { AdminBrand } from "@/components/admin/admin-brand";
+
 export const adminNavigationSections = [
   {
     title: "Main",
@@ -87,13 +89,7 @@ export function AdminSidebar() {
     <aside className="fixed inset-y-0 left-0 z-40 hidden h-screen w-72 border-r border-slate-200 bg-white text-slate-950 lg:block">
       <div className="flex h-full flex-col">
         <div className="border-b border-slate-200 px-5 py-5">
-          <Link href="/admin/dashboard" className="flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-950 text-sm font-black text-white">PS</span>
-            <span>
-              <span className="block text-sm font-bold">Purple Squad</span>
-              <span className="block text-xs text-slate-500">Operations Portal</span>
-            </span>
-          </Link>
+          <AdminBrand />
         </div>
         <nav className="flex-1 space-y-5 overflow-y-auto px-3 py-4">
           {adminNavigationSections.map((section) => (

@@ -7,6 +7,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
+import { AdminBrand } from "@/components/admin/admin-brand";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/features/auth/hooks";
@@ -55,6 +56,7 @@ export function AdminLoginForm() {
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="w-full max-w-md rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+      <AdminBrand className="mb-7" />
       <div className="mb-6 flex items-start gap-3">
         <div className="grid h-11 w-11 place-items-center rounded-lg bg-violet-100 text-violet-700">
           <ShieldCheck className="h-5 w-5" />
