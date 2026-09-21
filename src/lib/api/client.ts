@@ -56,7 +56,16 @@ export async function downloadAuthenticatedFile(path: string, fallbackFilename: 
 
 export async function apiRequest<T>(path: string, options: RequestOptions = {}) {
   const { body, token, auth, skipAuthRefresh, query, headers, ...init } = options;
-  const accessToken = token ?? (auth ? getAccessToken() : null);
+  let accessToken = token ?? (auth ? getAccessToken() : null);
+
+  // Protected requests must never be sent anonymously while an existing
+  // session is still restoring/rotating its access token.
+  if (auth && !accessToken && !skipAuthRefresh) {
+    accessToken = await refreshAccessTokenOnce();
+  }
+  if (auth && !accessToken) {
+    throw new ApiError("Authentication is required.", 401, null);
+  }
 
   const response = await fetch(buildUrl(path, query), {
     ...init,
