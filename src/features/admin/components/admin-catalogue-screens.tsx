@@ -31,6 +31,7 @@ type ServiceForm = {
   name: string;
   slug: string;
   short_description: string;
+  landing_group: string;
   description: string;
   whats_included: string;
   whats_excluded: string;
@@ -106,6 +107,7 @@ function serviceToForm(service?: AdminService, firstCategory?: string): ServiceF
     name: service?.name ?? "",
     slug: service?.slug ?? "",
     short_description: service?.short_description ?? "",
+    landing_group: service?.landing_group ?? "",
     description: service?.description ?? "",
     whats_included: service?.whats_included ?? "",
     whats_excluded: service?.whats_excluded ?? "",
@@ -419,6 +421,7 @@ export function AdminServicesScreen({
       body.set("name", payload.name);
       body.set("slug", payload.slug);
       body.set("short_description", payload.short_description);
+      body.set("landing_group", payload.landing_group);
       body.set("description", payload.description);
       body.set("whats_included", payload.whats_included);
       body.set("whats_excluded", payload.whats_excluded);
@@ -498,6 +501,9 @@ export function AdminServicesScreen({
               <select className={`${fieldClass} h-11 rounded-lg border px-3 text-sm`} value={form.category} onChange={(event) => setForm({ ...form, category: event.target.value })} required>
                 {categoryOptions.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
               </select>
+            </Field>
+            <Field label="Landing page group">
+              <Input className={fieldClass} value={form.landing_group} onChange={(event) => setForm({ ...form, landing_group: event.target.value })} placeholder="Repair & Services" />
             </Field>
             <Field label="Base price">
               <Input className={fieldClass} type="number" min="0" value={form.base_price} onChange={(event) => setForm({ ...form, base_price: event.target.value })} required />

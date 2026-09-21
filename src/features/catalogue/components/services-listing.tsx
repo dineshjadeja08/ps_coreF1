@@ -52,7 +52,8 @@ export function ServicesListing({ mode = "browse", categorySlug }: ServicesListi
     () => (categories.data ?? []).find((item) => item.slug === category) ?? null,
     [categories.data, category],
   );
-  const serviceResults = services.data?.results ?? [];
+  const serviceResults = useMemo(() => services.data?.results ?? [], [services.data?.results]);
+  const groupedResults = useMemo(() => groupServices(serviceResults), [serviceResults]);
   const servicePool = allServices.data?.results ?? serviceResults;
   const serviceCounts = useMemo(() => getServiceCounts(servicePool), [servicePool]);
 
@@ -178,9 +179,16 @@ export function ServicesListing({ mode = "browse", categorySlug }: ServicesListi
           {services.isLoading ? <ServiceCardSkeletonGrid count={8} /> : null}
           {services.isError ? <ErrorState error={services.error} onRetry={() => services.refetch()} /> : null}
           {serviceResults.length ? (
-            <div className="space-y-3">
-              {serviceResults.map((service, index) => (
-                <ServicePackageRow key={service.id} service={service} highlight={index === 0 && Boolean(category || query)} />
+            <div className="space-y-7">
+              {groupedResults.map(([group, items], groupIndex) => (
+                <section key={group} aria-labelledby={`service-group-${groupIndex}`}>
+                  {category ? <h3 id={`service-group-${groupIndex}`} className="mb-3 text-xl font-bold text-foreground">{group}</h3> : null}
+                  <div className="space-y-3">
+                    {items.map((service, index) => (
+                      <ServicePackageRow key={service.id} service={service} highlight={groupIndex === 0 && index === 0 && Boolean(category || query)} />
+                    ))}
+                  </div>
+                </section>
               ))}
             </div>
           ) : null}
@@ -340,6 +348,8 @@ function CategoryLink({ label, href, active, count, visualSrc }: { label: string
 }
 
 function ServicePackageRow({ service, highlight }: { service: ServiceListItem; highlight?: boolean }) {
+  const [expanded, setExpanded] = useState(false);
+  const includedItems = service.whats_included?.split(/\r?\n/).filter(Boolean) ?? [];
   const currentPrice = formatPrice(getCurrentPrice(service));
   const basePrice = formatPrice(service.base_price);
   const showOffer = hasOfferPrice(service) && basePrice;
@@ -373,6 +383,8 @@ function ServicePackageRow({ service, highlight }: { service: ServiceListItem; h
                 </Link>
               </h3>
               <p className="mt-2 text-base font-medium leading-7 text-[#4b5563] md:line-clamp-none">{service.short_description || service.category.name}</p>
+              {includedItems.length ? <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-secondary">{includedItems.slice(0, expanded ? undefined : 2).map((item) => <li key={item}>{item}</li>)}</ul> : null}
+              {includedItems.length > 2 ? <button type="button" onClick={() => setExpanded((value) => !value)} className="mt-2 text-sm font-bold text-primary hover:underline">{expanded ? "Show less" : "Show more"}</button> : null}
             </div>
           </div>
           <div className="mt-3 flex flex-wrap gap-3 text-sm font-semibold text-[#52525b]">
@@ -396,12 +408,7 @@ function ServicePackageRow({ service, highlight }: { service: ServiceListItem; h
           </div>
           <div className="mt-3 grid gap-2">
             <AddToCartButton service={service} />
-            <Button asChild variant="outline">
-              <Link href={routes.serviceDetail(service.slug)}>
-                Details
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
+            <Button asChild variant="outline"><Link href={routes.serviceDetail(service.slug)}>Full details<ArrowRight className="h-4 w-4" /></Link></Button>
           </div>
         </div>
       </div>
@@ -450,4 +457,13 @@ function getServiceCounts(services: ServiceListItem[]) {
 
 function sumCounts(counts: Map<string, number>) {
   return Array.from(counts.values()).reduce((total, count) => total + count, 0);
+}
+
+function groupServices(services: ServiceListItem[]) {
+  const groups = new Map<string, ServiceListItem[]>();
+  for (const service of services) {
+    const group = service.landing_group?.trim() || "Services";
+    groups.set(group, [...(groups.get(group) ?? []), service]);
+  }
+  return Array.from(groups.entries());
 }

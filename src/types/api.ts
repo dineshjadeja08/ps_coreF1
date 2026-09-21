@@ -72,6 +72,8 @@ export type ServiceListItem = {
   name: string;
   slug: string;
   short_description: string;
+  whats_included?: string;
+  landing_group?: string;
   base_price: DecimalString;
   selling_price: DecimalString | null;
   effective_price: number;
