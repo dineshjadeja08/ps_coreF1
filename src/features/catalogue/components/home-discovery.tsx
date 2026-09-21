@@ -80,7 +80,7 @@ function categoryLandingHref(services: ServiceListItem[], query: string, name: s
     const searchable = `${item.name} ${item.slug} ${item.category.name} ${item.category.slug}`.toLowerCase();
     return terms.some((term) => searchable.includes(term));
   });
-  return service ? `/services/${encodeURIComponent(service.category.slug)}` : serviceSearchHref(query);
+  return service ? routes.serviceCategory(service.category.slug) : serviceSearchHref(query);
 }
 const preferredServiceSlugs: Record<string, string> = {
   AC: "ac-service",

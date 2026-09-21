@@ -2,6 +2,7 @@ export const routes = {
   home: "/",
   search: "/search",
   services: "/services",
+  serviceCategory: (slug: string) => `/services/${encodeURIComponent(slug)}`,
   serviceDetail: (slug: string) => `/services/${slug}`,
   book: "/book",
   bookingPayment: (bookingId: string) => `/book/pay/${bookingId}`,

@@ -2,11 +2,12 @@ import { Wrench } from "lucide-react";
 import Link from "next/link";
 
 import type { ServiceCategory } from "@/features/catalogue/types";
+import { routes } from "@/constants/routes";
 
 export function CategoryCard({ category }: { category: ServiceCategory }) {
   return (
     <Link
-      href={`/services/${encodeURIComponent(category.slug)}`}
+      href={routes.serviceCategory(category.slug)}
       className="group rounded-md border border-border bg-surface p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[var(--shadow-card)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
     >
       <div className="grid gap-3">

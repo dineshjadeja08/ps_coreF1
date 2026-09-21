@@ -60,7 +60,7 @@ export function ServicesListing({ mode = "browse", categorySlug }: ServicesListi
     event.preventDefault();
     const params = new URLSearchParams();
     if (searchText.trim()) params.set("q", searchText.trim());
-    const basePath = mode === "search" ? routes.search : categorySlug ? `/services/${encodeURIComponent(categorySlug)}` : routes.services;
+    const basePath = mode === "search" ? routes.search : categorySlug ? routes.serviceCategory(categorySlug) : routes.services;
     if (category && !categorySlug) params.set("category", category);
     router.push(params.toString() ? `${basePath}?${params.toString()}` : basePath);
   }
@@ -437,7 +437,7 @@ function BookingHelpPanel() {
 }
 
 function buildCategoryHref(slug: string, query?: string | null) {
-  return `/services/${encodeURIComponent(slug)}${query ? `?q=${encodeURIComponent(query)}` : ""}`;
+  return `${routes.serviceCategory(slug)}${query ? `?q=${encodeURIComponent(query)}` : ""}`;
 }
 
 function getServiceCounts(services: ServiceListItem[]) {
