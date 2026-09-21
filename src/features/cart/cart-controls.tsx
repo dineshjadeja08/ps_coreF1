@@ -9,9 +9,9 @@ import { useCart } from "./use-cart";
 export function AddToCartButton({ service, className }: { service: ServiceListItem; className?: string }) {
   const cart = useCart();
   const added = cart.items.some((item) => item.id === service.id);
-  return <div>{added ? <Button asChild size="sm" className={`min-h-10 ${className ?? ""}`}>
+  return <div className="min-w-0">{added ? <Button asChild size="sm" className={`min-h-10 max-w-full ${className ?? ""}`}>
     <Link href="/cart" aria-label={`${service.name} added. Proceed to cart`}><Check className="h-4 w-4" /><span aria-live="polite">Proceed to cart</span></Link>
-  </Button> : <Button type="button" size="sm" className={`min-h-10 ${className ?? ""}`} disabled={!cart.ready} onClick={() => cart.add(service)} aria-label={`Add ${service.name} to cart`}>
+  </Button> : <Button type="button" size="sm" className={`min-h-10 max-w-full ${className ?? ""}`} disabled={!cart.ready} onClick={() => cart.add(service)} aria-label={`Add ${service.name} to cart`}>
     <ShoppingCart className="h-4 w-4" /><span aria-live="polite">Add to cart</span>
   </Button>}{cart.error ? <p role="alert" className="mt-1 max-w-56 text-xs text-destructive">Cart could not sync. <Link href="/cart" className="underline">Review cart</Link></p> : null}</div>;
 }

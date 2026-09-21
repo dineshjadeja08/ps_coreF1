@@ -392,7 +392,7 @@ function CompactPackageCard({ service }: { service: ServiceListItem }) {
           <span className="text-base font-bold text-foreground">{currentPrice ?? "View price"}</span>
           {showOffer ? <span className="text-xs text-muted-foreground line-through">{basePrice}</span> : null}
         </div>
-        <AddToCartButton service={service} />
+        <AddToCartButton service={service} className="mt-3 w-full whitespace-nowrap" />
       </div>
     </article>
   );

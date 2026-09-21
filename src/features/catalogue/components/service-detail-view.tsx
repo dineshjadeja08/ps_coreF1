@@ -249,18 +249,20 @@ function PackageRow({ service, featured, onReadMore }: { service: ServiceListIte
           {showOffer ? <span className="text-xs text-muted-foreground line-through">{basePrice}</span> : null}
         </div>
       </button>
-      <div className="grid grid-cols-[72px_minmax(0,1fr)] items-center gap-2 sm:grid-cols-[76px_auto_auto] sm:justify-end">
+      <div className="grid min-w-0 grid-cols-[72px_minmax(0,1fr)] items-center gap-3 sm:grid-cols-[76px_minmax(220px,1fr)]">
         <ServiceImage
           src={service.cover_image}
           alt={service.name}
           className="aspect-square h-[72px] w-[72px] rounded-md border border-border bg-white sm:h-[76px] sm:w-[76px]"
           imageClassName="object-cover"
         />
-        <button type="button" onClick={onReadMore} className="inline-flex min-h-10 items-center gap-1 rounded-md px-2 text-sm font-bold text-primary hover:bg-primary-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-          Read more
-          <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-        </button>
-        <AddToCartButton service={service} />
+        <div className="grid min-w-0 gap-2 sm:grid-cols-2">
+          <button type="button" onClick={onReadMore} className="inline-flex min-h-10 w-full items-center justify-center gap-1 rounded-md px-2 text-sm font-bold text-primary hover:bg-primary-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+            Read more
+            <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+          </button>
+          <AddToCartButton service={service} className="w-full whitespace-nowrap" />
+        </div>
       </div>
     </article>
   );

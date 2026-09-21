@@ -45,9 +45,9 @@ export function ServiceCard({ service }: { service: ServiceListItem }) {
             {duration}
           </div>
         ) : null}
-        <div className="flex items-end justify-between gap-3">
+        <div className="flex flex-col items-stretch gap-3 min-[420px]:flex-row min-[420px]:items-end min-[420px]:justify-between">
           <PriceDisplay service={service} compact />
-          <AddToCartButton service={service} />
+          <AddToCartButton service={service} className="w-full whitespace-nowrap min-[420px]:w-auto" />
         </div>
       </div>
     </article>
