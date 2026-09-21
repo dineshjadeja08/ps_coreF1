@@ -16,6 +16,7 @@ import {
   LogOut,
   MessageSquareText,
   Package,
+  Plus,
   Settings,
   Shield,
   SlidersHorizontal,
@@ -35,6 +36,8 @@ export const adminNavigationSections = [
     items: [
       { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
       { label: "Leads", href: "/admin/leads", icon: ClipboardList },
+      { label: "Create Lead", href: "/admin/leads/create", icon: Plus, child: true },
+      { label: "Lead List", href: "/admin/leads", icon: ListChecks, child: true },
       { label: "Customers", href: "/admin/customers", icon: Users },
       { label: "Bookings", href: "/admin/bookings", icon: CalendarCheck },
       { label: "Work Orders", href: "/admin/work-orders", icon: ListChecks },
@@ -110,13 +113,14 @@ export function AdminSidebar() {
               <p className="px-3 text-[11px] font-bold uppercase text-slate-400">{section.title}</p>
               <div className="mt-2 space-y-1">
                 {section.items.map((item) => {
-                  const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+                  const child = "child" in item && item.child;
+                  const active = pathname === item.href || (!child && pathname.startsWith(`${item.href}/`));
                   const Icon = item.icon;
                   return (
                     <Link
                       key={item.href}
                       href={item.href}
-                      className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold transition ${
+                      className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold transition ${child ? "ml-7 text-xs" : ""} ${
                         active ? "bg-slate-950 text-white" : "text-slate-600 hover:bg-slate-100 hover:text-slate-950"
                       }`}
                     >

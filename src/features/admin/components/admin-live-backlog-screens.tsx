@@ -1,6 +1,7 @@
 "use client";
 
-import { Bell, CalendarClock, CreditCard, IndianRupee, Loader2, MessageSquareText, Phone, Plus, Search, Users } from "lucide-react";
+import * as Dialog from "@radix-ui/react-dialog";
+import { Bell, CalendarClock, CreditCard, IndianRupee, Loader2, MessageSquareText, Phone, Plus, Search, Users, X } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useState } from "react";
@@ -22,7 +23,8 @@ function money(value: string | number | null | undefined) {
 export function AdminLeadsScreen() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
-  const [filters, setFilters] = useState({ status: "", funnel_status: "", payment_status: "", source: "", assigned_to: "", service: "", created_from: "", created_to: "", follow_up_date: "", ordering: "-last_activity_at" });
+  const [page, setPage] = useState(1);
+  const [filters, setFilters] = useState({ status: "OPEN", funnel_status: "", payment_status: "", source: "", assigned_to: "", service: "", service_search: "", city: "", mobile: "", request_id: "", created_from: "", created_to: "", follow_up_date: "", ordering: "-last_activity_at" });
   const [showCreate, setShowCreate] = useState(false);
   const [createForm, setCreateForm] = useState({ customer_name: "", primary_mobile: "", required_service: "", source: "MANUAL", quoted_amount: "", advance_amount: "", city: "", pincode: "" });
   const services = useQuery({ queryKey: ["admin", "services", "lead-options"], queryFn: () => adminApi.listServices({ page_size: 100 }) });
@@ -31,6 +33,7 @@ export function AdminLeadsScreen() {
     queryKey: ["admin", "leads", search, filters],
     queryFn: () => adminApi.listLeads({
       page_size: 25,
+      page,
       search: search || undefined,
       status: filters.status || undefined,
       funnel_status: filters.funnel_status || undefined,
@@ -38,6 +41,10 @@ export function AdminLeadsScreen() {
       source: filters.source || undefined,
       assigned_to: filters.assigned_to || undefined,
       service: filters.service || undefined,
+      service_search: filters.service_search || undefined,
+      city: filters.city || undefined,
+      mobile: filters.mobile || undefined,
+      request_id: filters.request_id || undefined,
       created_from: filters.created_from || undefined,
       created_to: filters.created_to || undefined,
       follow_up_date: filters.follow_up_date || undefined,
@@ -67,12 +74,13 @@ export function AdminLeadsScreen() {
   });
   const clearFilters = () => {
     setSearch("");
-    setFilters({ status: "", funnel_status: "", payment_status: "", source: "", assigned_to: "", service: "", created_from: "", created_to: "", follow_up_date: "", ordering: "-last_activity_at" });
+    setPage(1);
+    setFilters({ status: "OPEN", funnel_status: "", payment_status: "", source: "", assigned_to: "", service: "", service_search: "", city: "", mobile: "", request_id: "", created_from: "", created_to: "", follow_up_date: "", ordering: "-last_activity_at" });
   };
 
   return (
     <>
-      <AdminPageHeader title="Leads" description="Service interest, unpaid bookings, phone-call follow-up, and payment-link operations." action={<Button type="button" onClick={() => setShowCreate((value) => !value)}><Plus className="h-4 w-4" />Create lead</Button>} />
+      <AdminPageHeader title="Lead List" description="Pre-payment enquiries from customers and customer care." action={<Button asChild><Link href="/admin/leads/create"><Plus className="h-4 w-4" />Create Lead</Link></Button>} />
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-7">
         <AdminMetricCard icon={Users} label="All leads" value={summary.data?.all_leads ?? "-"} />
         <AdminMetricCard icon={Search} label="Visited" value={summary.data?.visited ?? "-"} />
@@ -101,18 +109,16 @@ export function AdminLeadsScreen() {
       ) : null}
       <div className="mt-4 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-          <Input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search name, mobile, lead ID, booking number, service"
-            className="border-slate-200"
-          />
+          <Input value={filters.service_search} onChange={(event) => setFilters({ ...filters, service_search: event.target.value })} placeholder="Search by service" />
+          <Input value={filters.city} onChange={(event) => setFilters({ ...filters, city: event.target.value })} placeholder="Search by city" />
+          <Input value={filters.mobile} onChange={(event) => setFilters({ ...filters, mobile: event.target.value })} placeholder="Mobile number" />
+          <Input value={filters.request_id} onChange={(event) => setFilters({ ...filters, request_id: event.target.value })} placeholder="Request ID / Job ID" />
           <select
             value={filters.status}
             onChange={(event) => setFilters({ ...filters, status: event.target.value })}
             className="h-11 rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-violet-600"
           >
-            <option value="">All lead statuses</option>{["NEW", "CONTACTED", "QUALIFIED", "CONVERTED", "LOST", "CLOSED"].map((value) => <option key={value}>{value}</option>)}
+            <option value="OPEN">OPEN</option>{["NEW", "CONTACTED", "INTERESTED", "FOLLOW_UP", "CONVERTED", "LOST", "CLOSED"].map((value) => <option key={value}>{value}</option>)}
           </select>
           <select value={filters.funnel_status} onChange={(event) => setFilters({ ...filters, funnel_status: event.target.value })} className="h-11 rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700">
             <option value="">All funnel statuses</option>
@@ -137,20 +143,19 @@ export function AdminLeadsScreen() {
           emptyTitle="No leads"
           emptyMessage="Manual and website leads will appear here."
           columns={[
-            { key: "id", header: "Lead", render: (lead) => <span className="font-mono text-xs text-slate-600">{lead.id.slice(0, 8)}</span> },
-            { key: "name", header: "Customer", render: (lead) => <span className="font-semibold text-slate-950">{lead.customer_name}</span> },
-            { key: "mobile", header: "Mobile", render: (lead) => lead.primary_mobile },
+            { key: "id", header: "No (Lead ID)", render: (lead) => <span className="font-mono text-xs text-slate-600">{lead.lead_number || lead.id.slice(0, 8)}</span> },
+            { key: "name", header: "Customer", render: (lead) => <span><span className="block font-semibold text-slate-950">{lead.customer_name}</span><span className="text-xs text-slate-500">{lead.primary_mobile}</span></span> },
             { key: "service", header: "Service", render: (lead) => lead.service_name || "-" },
-            { key: "source", header: "Source", render: (lead) => lead.source },
+            { key: "location", header: "Location", render: (lead) => [lead.city, lead.pincode].filter(Boolean).join(" · ") || "-" },
             { key: "funnel", header: "Funnel", render: (lead) => <AdminStatusBadge status={lead.funnel_status || lead.status} /> },
             { key: "payment", header: "Payment", render: (lead) => <AdminStatusBadge status={lead.payment_status} /> },
             { key: "amount", header: "Amount", render: (lead) => money(lead.quoted_amount) },
-            { key: "followup", header: "Follow-up", render: (lead) => lead.follow_up_at ? new Date(lead.follow_up_at).toLocaleDateString("en-IN") : "-" },
-            { key: "staff", header: "Staff", render: (lead) => lead.assigned_staff_phone || "-" },
+            { key: "created", header: "Created On", render: (lead) => new Date(lead.created_at).toLocaleString("en-IN") },
             { key: "actions", header: "Actions", render: (lead) => <LeadRowActions lead={lead} onChanged={() => void query.refetch()} /> },
           ]}
         />
       )}
+      {query.data ? <div className="mt-4 flex items-center justify-between text-sm text-slate-600"><span>{query.data.count ? `${(page - 1) * 25 + 1}–${Math.min(page * 25, query.data.count)} of ${query.data.count}` : "0 leads"}</span><div className="flex gap-2"><Button type="button" size="sm" variant="outline" disabled={!query.data.previous} onClick={() => setPage((value) => Math.max(1, value - 1))}>Previous</Button><Button type="button" size="sm" variant="outline" disabled={!query.data.next} onClick={() => setPage((value) => value + 1)}>Next</Button></div></div> : null}
     </>
   );
 }
@@ -260,10 +265,11 @@ export function AdminLeadDetailScreen({ leadId }: { leadId: string }) {
   const [adminNotes, setAdminNotes] = useState("");
   const [funnelStatus, setFunnelStatus] = useState("");
   const [paymentChannel, setPaymentChannel] = useState<"SMS" | "WHATSAPP">("WHATSAPP");
-  const [bookingId, setBookingId] = useState("");
   const [conversionNotes, setConversionNotes] = useState("");
+  const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [scheduleDate, setScheduleDate] = useState("");
+  const [scheduleTime, setScheduleTime] = useState("");
   const [manualPayment, setManualPayment] = useState({ amount: "", method: "MANUAL_CASH" as "MANUAL_CASH" | "MANUAL_UPI" | "MANUAL_CARD" | "MANUAL_BANK_TRANSFER", reference: "", payment_date: new Date().toISOString().slice(0, 10), note: "", confirm: false });
-  const bookings = useQuery({ queryKey: ["admin", "bookings", "lead-conversion", leadId], queryFn: () => adminApi.listBookings({ page_size: 100 }) });
 
   const refresh = () => {
     void queryClient.invalidateQueries({ queryKey: ["admin", "lead", leadId] });
@@ -282,13 +288,19 @@ export function AdminLeadDetailScreen({ leadId }: { leadId: string }) {
     onSuccess: refresh,
   });
   const paymentLink = useMutation({
-    mutationFn: () => adminApi.sendLeadPaymentLink(leadId, { channel: paymentChannel }),
+    mutationFn: (payment_scope: "FULL" | "ADVANCE") => adminApi.sendLeadPaymentLink(leadId, { channel: paymentChannel, payment_scope }),
     onSuccess: refresh,
   });
   const convert = useMutation({
-    mutationFn: () => adminApi.convertLead(leadId, { booking_id: bookingId, notes: conversionNotes }),
+    mutationFn: () => adminApi.convertLead(leadId, { notes: conversionNotes }),
     onSuccess: refresh,
   });
+  const schedule = useMutation({
+    mutationFn: () => adminApi.scheduleLead(leadId, { preferred_date: scheduleDate, preferred_slot: scheduleTime }),
+    onSuccess: () => { setScheduleOpen(false); refresh(); },
+  });
+  const reminder = useMutation({ mutationFn: () => adminApi.sendLeadReminder(leadId, { channel: "SMS" }), onSuccess: refresh });
+  const close = useMutation({ mutationFn: () => adminApi.updateLead(leadId, { status: "CLOSED" }), onSuccess: refresh });
   const recordManualPayment = useMutation({
     mutationFn: () => adminApi.recordLeadManualPayment(leadId, manualPayment),
     onSuccess: () => {
@@ -304,6 +316,7 @@ export function AdminLeadDetailScreen({ leadId }: { leadId: string }) {
   const item = lead.data;
   const currentAdminNotes = adminNotes || item.admin_notes;
   const currentFunnelStatus = funnelStatus || item.funnel_status;
+  const isScheduled = Boolean(item.preferred_date && item.preferred_slot);
 
   return (
     <>
@@ -322,6 +335,10 @@ export function AdminLeadDetailScreen({ leadId }: { leadId: string }) {
               <Detail label="Advance" value={money(item.advance_amount)} />
               <Detail label="Address" value={[item.address, item.city, item.pincode].filter(Boolean).join(", ") || "-"} />
               <Detail label="Preferred slot" value={[item.preferred_date, item.preferred_slot].filter(Boolean).join(" ") || "-"} />
+            </div>
+            <div className="mt-5 flex flex-wrap gap-3 border-t border-slate-100 pt-4">
+              <button type="button" className="text-sm font-bold text-violet-700 hover:underline" onClick={() => reminder.mutate()} disabled={reminder.isPending}>Reminder Notification to Customer</button>
+              <button type="button" className="text-sm font-bold text-red-700 hover:underline" onClick={() => close.mutate()} disabled={close.isPending || item.status === "CLOSED"}>Close Ticket</button>
             </div>
           </div>
 
@@ -389,38 +406,20 @@ export function AdminLeadDetailScreen({ leadId }: { leadId: string }) {
           </div>
 
           <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="text-base font-bold text-slate-950">Payment link</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
-              Sends the existing booking payment URL through the configured notification provider. This does not mark payment as paid.
-            </p>
-            {item.payment_link_url ? (
-              <a href={item.payment_link_url} target="_blank" className="mt-3 block break-all text-sm font-semibold text-violet-700" rel="noreferrer">
-                {item.payment_link_url}
-              </a>
-            ) : null}
-            <select className="mt-3 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm" value={paymentChannel} onChange={(event) => setPaymentChannel(event.target.value as typeof paymentChannel)}>
-              <option value="WHATSAPP">WhatsApp</option>
-              <option value="SMS">SMS</option>
-            </select>
-            <Button
-              type="button"
-              className="mt-3 w-full"
-              onClick={() => paymentLink.mutate()}
-              disabled={paymentLink.isPending || item.payment_status === "PAID" || Number(item.advance_amount ?? 0) <= 0}
-            >
-              {paymentLink.isPending ? "Sending" : "Send payment link"}
-            </Button>
-          </div>
-
-          <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="text-base font-bold text-slate-950">Convert to booking</h2>
-            <select className="mt-3 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm" value={bookingId} onChange={(event) => setBookingId(event.target.value)}>
-              <option value="">Select existing booking</option>
-              {bookings.data?.results.map((booking) => <option key={booking.id} value={booking.id}>{booking.booking_number} · {booking.customer_phone}</option>)}
-            </select>
-            <Input className="mt-3" value={conversionNotes} onChange={(event) => setConversionNotes(event.target.value)} placeholder="Conversion notes" />
-            <Button type="button" className="mt-3 w-full" disabled={!bookingId || convert.isPending || item.status === "CONVERTED"} onClick={() => convert.mutate()}>{convert.isPending ? "Converting" : "Convert lead"}</Button>
+            <h2 className="text-base font-bold text-slate-950">Line Items & Conversion</h2>
+            {item.line_items?.length ? <div className="mt-4 overflow-x-auto"><table className="w-full text-left text-sm"><thead><tr className="border-b border-slate-200 text-xs uppercase text-slate-500"><th className="py-2">Package</th><th>Unit</th><th className="text-right">Cost</th></tr></thead><tbody>{item.line_items.map((line) => <tr key={line.service_id} className="border-b border-slate-100"><td className="py-3 font-semibold">{line.package_name}</td><td>{line.quantity}</td><td className="text-right">{money(line.unit_cost)}</td></tr>)}</tbody></table></div> : <p className="mt-4 rounded bg-slate-50 p-4 text-sm text-slate-500">No Line Items</p>}
+            <dl className="mt-4 space-y-2 border-t border-slate-200 pt-4 text-sm"><div className="flex justify-between"><dt>Sub Total</dt><dd>{money(item.subtotal)}</dd></div><div className="flex justify-between"><dt>Tax</dt><dd>{money(item.tax_amount)}</dd></div><div className="flex justify-between"><dt>Training Fee</dt><dd>{money(item.training_fee)}</dd></div><div className="flex justify-between text-base font-black"><dt>TOTAL</dt><dd>{money(item.total_amount)}</dd></div></dl>
+            <div className="mt-5 flex items-center justify-between rounded-md bg-slate-50 p-3 text-sm"><span><strong>Schedule Job</strong><span className="mt-1 block text-xs text-slate-500">{isScheduled ? `${item.preferred_date} at ${item.preferred_slot}` : "Not scheduled"}</span></span><button type="button" className="font-bold text-violet-700 hover:underline" onClick={() => setScheduleOpen(true)}>Update</button></div>
+            <select className="mt-4 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm" value={paymentChannel} onChange={(event) => setPaymentChannel(event.target.value as typeof paymentChannel)}><option value="WHATSAPP">WhatsApp</option><option value="SMS">SMS</option></select>
+            <Input className="mt-3" value={conversionNotes} onChange={(event) => setConversionNotes(event.target.value)} placeholder="Conversion notes (optional)" />
+            <div className="mt-3 grid gap-2">
+              <Button type="button" disabled={!isScheduled || paymentLink.isPending || Number(item.quoted_amount ?? item.total_amount ?? 0) <= 0} onClick={() => paymentLink.mutate("FULL")}>Send Payment Link</Button>
+              <Button type="button" variant="outline" disabled={!isScheduled || convert.isPending || item.status === "CONVERTED"} onClick={() => convert.mutate()}>{convert.isPending ? "Creating" : "Create work order"}</Button>
+              <Button type="button" variant="outline" disabled={!isScheduled || paymentLink.isPending || Number(item.advance_amount ?? 0) <= 0} onClick={() => paymentLink.mutate("ADVANCE")}>Partial Payment Link</Button>
+            </div>
+            {item.payment_link_url ? <a href={item.payment_link_url} target="_blank" className="mt-3 block break-all text-xs font-semibold text-violet-700" rel="noreferrer">{item.payment_link_url}</a> : null}
             {convert.isError ? <p className="mt-2 text-xs text-red-600">{convert.error.message}</p> : null}
+            <div className="mt-5 border-t border-slate-200 pt-4 text-xs leading-5 text-slate-600"><p className="font-bold">Before confirming work order verify the details.</p><ol className="mt-2 list-decimal space-y-1 pl-4"><li>A professional partner will contact you within 10–20 minutes.</li><li>After discussing your requirements, a service estimate will be shared before starting the work.</li></ol></div>
           </div>
 
           <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
@@ -440,8 +439,35 @@ export function AdminLeadDetailScreen({ leadId }: { leadId: string }) {
           </div>
         </aside>
       </div>
+      <Dialog.Root open={scheduleOpen} onOpenChange={setScheduleOpen}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50" />
+          <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[min(680px,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-xl bg-white p-5 shadow-2xl sm:p-6">
+            <div className="flex items-start justify-between"><div><Dialog.Title className="text-xl font-black text-slate-950">Schedule Job</Dialog.Title><Dialog.Description className="mt-1 text-sm text-slate-500">Choose a service date and hourly arrival time.</Dialog.Description></div><Dialog.Close className="grid h-9 w-9 place-items-center rounded-full hover:bg-slate-100"><X className="h-5 w-5" /></Dialog.Close></div>
+            <div className="mt-5 flex gap-2 overflow-x-auto pb-2">{nextLeadDates().map((date) => <button key={date.value} type="button" onClick={() => setScheduleDate(date.value)} className={`min-w-20 rounded-lg border px-3 py-2 text-sm font-bold ${scheduleDate === date.value ? "border-violet-700 bg-violet-700 text-white" : "border-slate-200"}`}>{date.label}</button>)}<label className="min-w-32 rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold">Select Custom<input type="date" min={new Date().toISOString().slice(0, 10)} value={scheduleDate} onChange={(event) => setScheduleDate(event.target.value)} className="mt-1 block w-full bg-transparent" /></label></div>
+            <div className="mt-5 grid grid-cols-3 gap-2 sm:grid-cols-4">{leadTimes.map((time) => <button key={time} type="button" onClick={() => setScheduleTime(time)} className={`rounded-md border px-2 py-2 text-sm font-semibold ${scheduleTime === time ? "border-violet-700 bg-violet-50 text-violet-800" : "border-slate-200"}`}>{formatLeadTime(time)}</button>)}</div>
+            {schedule.isError ? <p className="mt-3 text-sm text-red-600">{schedule.error.message}</p> : null}
+            <Button type="button" className="mt-6 w-full" disabled={!scheduleDate || !scheduleTime || schedule.isPending} onClick={() => schedule.mutate()}>{schedule.isPending ? "Saving" : "Submit"}</Button>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
     </>
   );
+}
+
+const leadTimes = Array.from({ length: 12 }, (_, index) => `${String(index + 8).padStart(2, "0")}:00`);
+
+function nextLeadDates() {
+  return Array.from({ length: 7 }, (_, index) => {
+    const date = new Date();
+    date.setDate(date.getDate() + index);
+    return { value: date.toISOString().slice(0, 10), label: new Intl.DateTimeFormat("en-IN", { weekday: "short", day: "numeric" }).format(date) };
+  });
+}
+
+function formatLeadTime(value: string) {
+  const [hour] = value.split(":").map(Number);
+  return `${hour % 12 || 12}:00 ${hour >= 12 ? "PM" : "AM"}`;
 }
 
 function Detail({ label, value }: { label: string; value: string }) {

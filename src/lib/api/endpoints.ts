@@ -120,6 +120,8 @@ export const apiPaths = {
   adminLeadSendPaymentLink: (id: UUID) => `/api/v1/admin/leads/${id}/send-payment-link/`,
   adminLeadRecordContact: (id: UUID) => `/api/v1/admin/leads/${id}/record-contact/`,
   adminLeadRecordManualPayment: (id: UUID) => `/api/v1/admin/leads/${id}/record-manual-payment/`,
+  adminLeadSchedule: (id: UUID) => `/api/v1/admin/leads/${id}/schedule/`,
+  adminLeadReminder: (id: UUID) => `/api/v1/admin/leads/${id}/send-reminder/`,
   adminCustomers: "/api/v1/admin/customers/",
   adminCustomerDetail: (id: UUID) => `/api/v1/admin/customers/${id}/`,
   adminCustomerSupportNotes: (id: UUID) => `/api/v1/admin/customers/${id}/support-notes/`,
@@ -413,6 +415,10 @@ export const adminApi = {
     source?: string;
     assigned_to?: UUID;
     service?: UUID;
+    service_search?: string;
+    city?: string;
+    mobile?: string;
+    request_id?: string;
     created_from?: string;
     created_to?: string;
     follow_up_date?: string;
@@ -435,18 +441,22 @@ export const adminApi = {
       body,
       auth: true,
     }),
-  convertLead: (id: UUID, body: { booking_id: UUID; notes?: string }) =>
+  convertLead: (id: UUID, body: { booking_id?: UUID; notes?: string }) =>
     apiRequest<Lead>(apiPaths.adminLeadConvert(id), {
       method: "POST",
       body,
       auth: true,
     }),
-  sendLeadPaymentLink: (id: UUID, body: { channel: "SMS" | "WHATSAPP" }) =>
+  sendLeadPaymentLink: (id: UUID, body: { channel: "SMS" | "WHATSAPP"; payment_scope?: "FULL" | "ADVANCE" }) =>
     apiRequest<Lead & { payment_link_created?: boolean }>(apiPaths.adminLeadSendPaymentLink(id), {
       method: "POST",
       body,
       auth: true,
     }),
+  scheduleLead: (id: UUID, body: { preferred_date: string; preferred_slot: string }) =>
+    apiRequest<Lead>(apiPaths.adminLeadSchedule(id), { method: "POST", body, auth: true }),
+  sendLeadReminder: (id: UUID, body: { channel: "SMS" | "WHATSAPP" }) =>
+    apiRequest<Lead>(apiPaths.adminLeadReminder(id), { method: "POST", body, auth: true }),
   recordLeadContact: (id: UUID, body: { note: string; next_follow_up_at?: string }) =>
     apiRequest<Lead>(apiPaths.adminLeadRecordContact(id), {
       method: "POST",

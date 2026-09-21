@@ -433,6 +433,7 @@ export type AdminDashboardSummary = {
 
 export type Lead = {
   id: UUID;
+  lead_number?: string;
   customer: UUID | null;
   customer_name: string;
   primary_mobile: string;
@@ -470,6 +471,11 @@ export type Lead = {
   last_activity_at: ISODateTime;
   converted_booking: UUID | null;
   booking_number?: string;
+  line_items?: Array<{ service_id: UUID; package_name: string; quantity: number; unit_cost: DecimalString }>;
+  subtotal?: DecimalString;
+  tax_amount?: DecimalString;
+  training_fee?: DecimalString;
+  total_amount?: DecimalString;
   created_at: ISODateTime;
   updated_at: ISODateTime;
   activities?: LeadActivity[];
