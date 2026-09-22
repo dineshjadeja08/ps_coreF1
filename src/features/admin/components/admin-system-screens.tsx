@@ -60,44 +60,115 @@ export function AdminReportsScreen() {
   );
 }
 
+type StaffForm = {
+  phone_number: string;
+  password: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  role: AdminStaff["role"];
+  is_verified: boolean;
+  is_active: boolean;
+  is_staff: boolean;
+  group_ids: number[];
+};
+
+const emptyStaffForm: StaffForm = {
+  phone_number: "",
+  password: "",
+  first_name: "",
+  last_name: "",
+  email: "",
+  role: "ADMIN",
+  is_verified: true,
+  is_active: true,
+  is_staff: true,
+  group_ids: [],
+};
+
 export function AdminStaffScreen() {
   const queryClient = useQueryClient();
   const [selected, setSelected] = useState<AdminStaff | null>(null);
-  const [form, setForm] = useState<{ first_name: string; last_name: string; email: string; role: AdminStaff["role"]; is_verified: boolean; is_active: boolean; is_staff: boolean; group_ids: number[] }>({ first_name: "", last_name: "", email: "", role: "ADMIN", is_verified: false, is_active: true, is_staff: true, group_ids: [] });
+  const [editorMode, setEditorMode] = useState<"create" | "edit" | null>(null);
+  const [form, setForm] = useState<StaffForm>(emptyStaffForm);
   const staff = useQuery({ queryKey: ["admin", "staff"], queryFn: () => adminApi.listStaff({ page_size: 50 }) });
   const groups = useQuery({ queryKey: ["admin", "staff-groups"], queryFn: adminApi.listStaffGroups });
   const save = useMutation({
-    mutationFn: () => adminApi.updateStaff(selected!.id, form),
+    mutationFn: () => {
+      if (editorMode === "create") {
+        return adminApi.createStaff({
+          phone_number: form.phone_number,
+          password: form.password,
+          first_name: form.first_name,
+          last_name: form.last_name,
+          email: form.email,
+          role: form.role === "SUPER_ADMIN" ? "SUPER_ADMIN" : "ADMIN",
+          group_ids: form.group_ids,
+        });
+      }
+      if (!selected) throw new Error("Select a staff member to edit.");
+      return adminApi.updateStaff(selected.id, {
+        first_name: form.first_name,
+        last_name: form.last_name,
+        email: form.email,
+        role: form.role,
+        is_verified: form.is_verified,
+        is_active: form.is_active,
+        is_staff: form.is_staff,
+        group_ids: form.group_ids,
+      });
+    },
     onSuccess: async () => {
-      setSelected(null);
+      closeEditor();
       await queryClient.invalidateQueries({ queryKey: ["admin", "staff"] });
     },
   });
+  function closeEditor() {
+    setSelected(null);
+    setEditorMode(null);
+    setForm(emptyStaffForm);
+    save.reset();
+  }
+  function create() {
+    setSelected(null);
+    setEditorMode("create");
+    setForm(emptyStaffForm);
+    save.reset();
+  }
   function edit(user: AdminStaff) {
     setSelected(user);
-    setForm({ first_name: user.first_name, last_name: user.last_name, email: user.email ?? "", role: user.role, is_verified: user.is_verified, is_active: user.is_active, is_staff: user.is_staff, group_ids: user.groups.map((group) => group.id) });
+    setEditorMode("edit");
+    setForm({ phone_number: user.phone_number, password: "", first_name: user.first_name, last_name: user.last_name, email: user.email ?? "", role: user.role, is_verified: user.is_verified, is_active: user.is_active, is_staff: user.is_staff, group_ids: user.groups.map((group) => group.id) });
+    save.reset();
   }
   function toggleGroup(id: number) {
     setForm({ ...form, group_ids: form.group_ids.includes(id) ? form.group_ids.filter((value) => value !== id) : [...form.group_ids, id] });
   }
+  const canSave = editorMode === "edit" || Boolean(form.phone_number.trim() && form.password.length >= 8);
   return (
     <>
-      <AdminPageHeader title="Staff and Roles" description="Control admin and technician access from the operations portal." />
-      {selected ? (
+      <AdminPageHeader
+        title="Staff and Roles"
+        description="Control admin and technician access from the operations portal. Only super administrators can manage staff accounts."
+        action={<Button type="button" onClick={create}>Add administrator</Button>}
+      />
+      {editorMode ? (
         <section className="mb-5 rounded-xl border border-violet-200 bg-white p-5 shadow-sm">
-          <div className="flex items-center justify-between"><div><h2 className="font-bold text-slate-950">Edit staff member</h2><p className="text-sm text-slate-500">{selected.phone_number}</p></div><Button type="button" variant="ghost" size="sm" onClick={() => setSelected(null)}>Close</Button></div>
-          <form className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4" onSubmit={(event) => { event.preventDefault(); save.mutate(); }}>
+          <div className="flex items-center justify-between"><div><h2 className="font-bold text-slate-950">{editorMode === "create" ? "Add administrator" : "Edit staff member"}</h2><p className="text-sm text-slate-500">{editorMode === "create" ? "Create secure credentials for a new admin staff member." : selected?.phone_number}</p></div><Button type="button" variant="ghost" size="sm" onClick={closeEditor}>Close</Button></div>
+          <form className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4" onSubmit={(event) => { event.preventDefault(); if (canSave) save.mutate(); }}>
+            {editorMode === "create" ? <Input inputMode="tel" value={form.phone_number} onChange={(event) => setForm({ ...form, phone_number: event.target.value })} placeholder="Phone in +91 format" required /> : null}
+            {editorMode === "create" ? <Input type="password" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} placeholder="Temporary password (8+ characters)" minLength={8} required /> : null}
             <Input value={form.first_name} onChange={(event) => setForm({ ...form, first_name: event.target.value })} placeholder="First name" />
             <Input value={form.last_name} onChange={(event) => setForm({ ...form, last_name: event.target.value })} placeholder="Last name" />
             <Input type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} placeholder="Email" />
-            <select className="h-11 rounded-md border border-slate-200 bg-white px-3 text-sm" value={form.role} onChange={(event) => setForm({ ...form, role: event.target.value as AdminStaff["role"] })}><option value="TECHNICIAN">Technician</option><option value="ADMIN">Admin</option><option value="SUPER_ADMIN">Super admin</option></select>
-            <div className="flex flex-wrap gap-4 md:col-span-2 xl:col-span-4">
+            <select className="h-11 rounded-md border border-slate-200 bg-white px-3 text-sm" value={form.role} onChange={(event) => setForm({ ...form, role: event.target.value as AdminStaff["role"] })}>{editorMode === "edit" ? <option value="TECHNICIAN">Technician</option> : null}<option value="ADMIN">Admin</option><option value="SUPER_ADMIN">Super admin</option></select>
+            {editorMode === "edit" ? <div className="flex flex-wrap gap-4 md:col-span-2 xl:col-span-4">
               <label className="flex items-center gap-2 text-sm font-semibold"><input type="checkbox" checked={form.is_verified} onChange={(event) => setForm({ ...form, is_verified: event.target.checked })} />Verified</label>
               <label className="flex items-center gap-2 text-sm font-semibold"><input type="checkbox" checked={form.is_active} onChange={(event) => setForm({ ...form, is_active: event.target.checked })} />Active</label>
               <label className="flex items-center gap-2 text-sm font-semibold"><input type="checkbox" checked={form.is_staff} onChange={(event) => setForm({ ...form, is_staff: event.target.checked })} />Staff access</label>
-            </div>
+            </div> : null}
             <div className="md:col-span-2 xl:col-span-4"><p className="text-xs font-bold uppercase text-slate-500">Permission groups</p><div className="mt-2 flex flex-wrap gap-2">{groups.data?.map((group) => <label key={group.id} className="flex items-center gap-2 rounded-md border border-slate-200 px-3 py-2 text-sm"><input type="checkbox" checked={form.group_ids.includes(group.id)} onChange={() => toggleGroup(group.id)} />{group.name}</label>)}</div></div>
-            <div className="md:col-span-2 xl:col-span-4"><Button type="submit" disabled={save.isPending}><Save className="h-4 w-4" />{save.isPending ? "Saving" : "Save staff"}</Button>{save.isError ? <p className="mt-2 text-sm text-red-600">{save.error.message}</p> : null}</div>
+            <div className="md:col-span-2 xl:col-span-4"><Button type="submit" disabled={!canSave || save.isPending}><Save className="h-4 w-4" />{save.isPending ? "Saving" : editorMode === "create" ? "Create administrator" : "Save staff"}</Button>{save.isError ? <p className="mt-2 text-sm text-red-600">{save.error.message}</p> : null}</div>
           </form>
         </section>
       ) : null}

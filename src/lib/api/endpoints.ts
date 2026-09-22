@@ -296,7 +296,7 @@ export const technicianApi = {
 export const adminApi = {
   listTimeSlots: (query?: { service_area?: string; date?: string; page_size?: number }) =>
     apiRequest<PaginatedResponse<AdminTimeSlot>>(apiPaths.adminTimeSlots, { auth: true, query }),
-  updateTimeSlot: (id: UUID, body: Partial<Pick<AdminTimeSlot, "capacity" | "is_active">>) =>
+  updateTimeSlot: (id: UUID, body: Partial<Pick<AdminTimeSlot, "date" | "start_time" | "end_time" | "capacity" | "is_active">>) =>
     apiRequest<AdminTimeSlot>(apiPaths.adminTimeSlotDetail(id), { method: "PATCH", body, auth: true }),
   listScheduleClosures: () =>
     apiRequest<PaginatedResponse<ScheduleClosure>>(apiPaths.adminScheduleClosures, { auth: true, query: { page_size: 100 } }),
@@ -562,6 +562,8 @@ export const adminApi = {
     apiRequest<AdminReportSummary>(apiPaths.adminReportsSummary, { auth: true, query }),
   listStaff: (query?: { page?: number; page_size?: number; search?: string; role?: string }) =>
     apiRequest<PaginatedResponse<AdminStaff>>(apiPaths.adminStaff, { auth: true, query }),
+  createStaff: (body: { phone_number: string; password: string; first_name?: string; last_name?: string; email?: string; role: "ADMIN" | "SUPER_ADMIN"; group_ids?: number[] }) =>
+    apiRequest<AdminStaff>(apiPaths.adminStaff, { method: "POST", body, auth: true }),
   updateStaff: (id: UUID, body: Partial<AdminStaff> & { group_ids?: number[] }) =>
     apiRequest<AdminStaff>(apiPaths.adminStaffDetail(id), {
       method: "PATCH",
