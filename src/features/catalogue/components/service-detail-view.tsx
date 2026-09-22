@@ -47,6 +47,18 @@ function packageSectionTitle(service: ServiceDetail) {
   return `${service.name} packages`;
 }
 
+function landingImage(service: ServiceListItem) {
+  return service.landing_thumbnail || service.cover_image;
+}
+
+function popupImage(service: ServiceListItem) {
+  return service.popup_cover_image || service.landing_thumbnail || service.cover_image;
+}
+
+function listImage(service: ServiceListItem) {
+  return service.list_image || service.landing_thumbnail || service.cover_image;
+}
+
 export function ServiceDetailView({ initialService }: { initialService?: ServiceDetail | null }) {
   const params = useParams<{ slug: string }>();
   const slug = params.slug;
@@ -105,7 +117,7 @@ export function ServiceDetailView({ initialService }: { initialService?: Service
           <div className="grid gap-7 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
             <div className="min-w-0 rounded-lg border border-border bg-white p-3 shadow-sm sm:p-4">
               <ServiceImage
-                src={detail.cover_image}
+                src={landingImage(detail)}
                 alt={`${detail.name} service by Purple Squad in Chennai`}
                 priority
                 className="aspect-[16/10] h-auto w-full rounded-lg bg-white sm:aspect-[16/7]"
@@ -251,7 +263,7 @@ function PackageRow({ service, featured, onReadMore }: { service: ServiceListIte
       </button>
       <div className="grid min-w-0 grid-cols-[72px_minmax(0,1fr)] items-center gap-3 sm:grid-cols-[76px_minmax(220px,1fr)]">
         <ServiceImage
-          src={service.cover_image}
+          src={listImage(service)}
           alt={service.name}
           className="aspect-square h-[72px] w-[72px] rounded-md border border-border bg-white sm:h-[76px] sm:w-[76px]"
           imageClassName="object-cover"
@@ -291,7 +303,7 @@ function PackageDetailsDialog({
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/55 data-[state=open]:animate-in data-[state=closed]:animate-out" />
         <Dialog.Content className="fixed inset-x-2 top-1/2 z-50 max-h-[94vh] -translate-y-1/2 overflow-x-hidden overflow-y-auto rounded-lg bg-white shadow-2xl outline-none sm:inset-x-auto sm:left-1/2 sm:max-h-[92vh] sm:w-[min(680px,calc(100vw-2rem))] sm:-translate-x-1/2">
-          {service ? <ServiceImage src={service.cover_image} alt={service.name} className="aspect-[16/10] h-auto w-full rounded-none bg-white sm:h-64 sm:aspect-auto" imageClassName="object-contain sm:object-cover" /> : null}
+          {service ? <ServiceImage src={popupImage(service)} alt={service.name} className="aspect-[16/10] h-auto w-full rounded-none bg-white" imageClassName="object-cover" /> : null}
           <Dialog.Close className="absolute right-3 top-3 grid h-10 w-10 place-items-center rounded-full bg-white/95 text-foreground shadow-md hover:bg-white" aria-label="Close package details">
             <X className="h-5 w-5" />
           </Dialog.Close>

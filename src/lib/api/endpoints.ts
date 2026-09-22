@@ -2,7 +2,9 @@ import { apiRequest } from "@/lib/api/client";
 import { createIdempotencyKey } from "@/lib/idempotency";
 import type {
   Address,
+  AddressAutocompleteResponse,
   AddressRequest,
+  LocationAddress,
   AdminService,
   AdminServiceCategory,
   AdminServiceImage,
@@ -66,6 +68,8 @@ export const apiPaths = {
   logout: "/api/v1/auth/logout/",
   me: "/api/v1/auth/me/",
   serviceAreaCheck: "/api/v1/service-areas/check/",
+  locationReverseGeocode: "/api/v1/location/reverse-geocode/",
+  locationAutocomplete: "/api/v1/location/autocomplete/",
   serviceCategories: "/api/v1/service-categories/",
   services: "/api/v1/services/",
   serviceDetail: (slug: string) => `/api/v1/services/${slug}/`,
@@ -160,6 +164,16 @@ export const catalogueApi = {
 };
 
 export const addressApi = {
+  reverseGeocode: (latitude: string, longitude: string) =>
+    apiRequest<LocationAddress>(apiPaths.locationReverseGeocode, {
+      auth: true,
+      query: { lat: latitude, lng: longitude },
+    }),
+  autocomplete: (input: string) =>
+    apiRequest<AddressAutocompleteResponse>(apiPaths.locationAutocomplete, {
+      auth: true,
+      query: { input },
+    }),
   list: () => apiRequest<PaginatedResponse<Address>>(apiPaths.addresses, { auth: true }),
   create: (body: AddressRequest) =>
     apiRequest<Address>(apiPaths.addresses, {

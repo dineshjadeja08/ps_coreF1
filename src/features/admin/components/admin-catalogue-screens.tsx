@@ -399,6 +399,9 @@ export function AdminServicesScreen({
   const services = useQuery({ queryKey: ["admin", "services"], queryFn: () => adminApi.listServices({ page_size: 100 }) });
   const [formState, setForm] = useState<ServiceForm | null | undefined>(undefined);
   const [coverImage, setCoverImage] = useState<File | null>(null);
+  const [landingThumbnail, setLandingThumbnail] = useState<File | null>(null);
+  const [popupCoverImage, setPopupCoverImage] = useState<File | null>(null);
+  const [listImage, setListImage] = useState<File | null>(null);
   const [galleryService, setGalleryService] = useState<AdminService | null>(null);
   const [galleryImage, setGalleryImage] = useState<File | null>(null);
   const firstCategory = categories.data?.results?.[0]?.id;
@@ -436,11 +439,17 @@ export function AdminServicesScreen({
       body.set("is_popular", String(payload.is_popular));
       body.set("is_active", String(payload.is_active));
       if (coverImage) body.set("cover_image", coverImage);
+      if (landingThumbnail) body.set("landing_thumbnail", landingThumbnail);
+      if (popupCoverImage) body.set("popup_cover_image", popupCoverImage);
+      if (listImage) body.set("list_image", listImage);
       return payload.id ? adminApi.updateService(payload.id, body) : adminApi.createService(body);
     },
     onSuccess: async () => {
       setForm(null);
       setCoverImage(null);
+      setLandingThumbnail(null);
+      setPopupCoverImage(null);
+      setListImage(null);
       await queryClient.invalidateQueries({ queryKey: ["admin", "services"] });
     },
   });
@@ -528,6 +537,15 @@ export function AdminServicesScreen({
             </Field>
             <Field label="Cover image">
               <Input className={fieldClass} type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => setCoverImage(event.target.files?.[0] ?? null)} />
+            </Field>
+            <Field label="Landing thumbnail (1600 × 700, 16:7)">
+              <Input className={fieldClass} type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => setLandingThumbnail(event.target.files?.[0] ?? null)} />
+            </Field>
+            <Field label="Popup cover (1200 × 750, 8:5)">
+              <Input className={fieldClass} type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => setPopupCoverImage(event.target.files?.[0] ?? null)} />
+            </Field>
+            <Field label="Service list image (600 × 600, 1:1)">
+              <Input className={fieldClass} type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => setListImage(event.target.files?.[0] ?? null)} />
             </Field>
             <div className="flex flex-wrap items-center gap-4 pt-6 text-sm font-semibold text-slate-700 lg:col-span-2">
               {(["is_active", "is_featured", "is_popular"] as const).map((key) => (

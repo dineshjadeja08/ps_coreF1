@@ -44,6 +44,30 @@ export type ServiceAreaCheckResponse = {
   service_area: Record<string, unknown> | null;
 };
 
+export type LocationAddress = {
+  formatted_address: string;
+  house_number: string;
+  street: string;
+  locality: string;
+  city: string;
+  state: string;
+  pincode: string;
+  country: string;
+  latitude: number | null;
+  longitude: number | null;
+};
+
+export type AddressSuggestion = LocationAddress & {
+  id: string;
+  description: string;
+  main_text: string;
+  secondary_text: string;
+};
+
+export type AddressAutocompleteResponse = {
+  suggestions: AddressSuggestion[];
+};
+
 export type Review = {
   id: UUID;
   booking: UUID;
@@ -84,6 +108,9 @@ export type ServiceListItem = {
   training_fee_per_unit?: boolean;
   estimated_duration_minutes: number;
   cover_image: string;
+  landing_thumbnail?: string | null;
+  popup_cover_image?: string | null;
+  list_image?: string | null;
   is_featured: boolean;
   is_popular: boolean;
   display_order: number;
