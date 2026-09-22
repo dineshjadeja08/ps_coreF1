@@ -1,6 +1,5 @@
 "use client";
 
-import * as Dialog from "@radix-ui/react-dialog";
 import { motion } from "framer-motion";
 import {
   ArrowRight,
@@ -10,20 +9,18 @@ import {
   Play,
   CheckCircle2,
   Star,
-  X,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import { EmptyState } from "@/components/common/empty-state";
 import { ErrorState } from "@/components/common/error-state";
 import { Button } from "@/components/ui/button";
 import { trustPromises } from "@/config/design";
 import { env } from "@/config/env";
 import { routes } from "@/constants/routes";
 import { AddToCartButton } from "@/features/cart/cart-controls";
-import { ServiceIcon } from "@/features/catalogue/components/service-icon";
+import { openApplianceSelector } from "@/features/catalogue/components/appliance-selector-dialog";
 import { ServiceImage } from "@/features/catalogue/components/service-image";
 import { ServiceCardSkeletonGrid } from "@/features/catalogue/components/skeletons";
 import { useServices } from "@/features/catalogue/queries";
@@ -31,57 +28,36 @@ import type { ServiceListItem } from "@/features/catalogue/types";
 import { formatPrice, getCurrentPrice, hasOfferPrice } from "@/features/catalogue/utils";
 
 const homeCategories = [
-  { name: "Home Appliances", query: "appliance", image: "/images/categories/home-appliances-repair.png" },
-  { name: "Water Tank Cleaning", query: "water tank", image: "/images/service-icons/water-tank.png" },
-  { name: "Sofa Repair", query: "sofa", image: "/images/service-icons/sofa-repair.png" },
-  { name: "Mosquito Net", query: "mosquito", image: "/images/service-icons/mosquito-net.png" },
+  { name: "Home Appliances", slug: "home-appliances-repair", description: "Repair and appliance care", image: "/images/categories/home-appliances-repair.png", opensApplianceSelector: true },
+  { name: "Water Tank Cleaning", slug: "water-tank-cleaning", description: "Cleaner, safer water storage", image: "/images/service-icons/water-tank.png" },
+  { name: "Sofa Repair", slug: "sofa-repair-inspection-charge", description: "Upholstery and frame fixes", image: "/images/service-icons/sofa-repair.png" },
+  { name: "Mosquito Net", slug: "mosquito-net-inspection-charge", description: "Custom-fit home protection", image: "/images/service-icons/mosquito-net.png" },
 ];
 
 const popularCategories = [
-  ...homeCategories,
-  ...[
-    ["AC Service", "AC", "ac"],
-    ["Washing Machine", "washing machine", "washing-machine"],
-    ["Refrigerator", "refrigerator", "refrigerator"],
-    ["Water Purifier", "water purifier", "water-purifier"],
-    ["TV Repair", "TV", "tv"],
-    ["Geyser", "geyser", "geyser"],
-    ["Microwave", "microwave", "microwave"],
-    ["Dishwasher", "dishwasher", "dishwasher"],
-  ].map(([name, query, icon]) => ({ name, query, image: `/images/service-icons/${icon}.png` })),
-];
-
-const spotlights = [
-  { title: "Give your sofa a fresh start", label: "Sofa repair", description: "Comfort worth coming home to.", query: "sofa", image: "/images/hero/sofa-repair.webp" },
-  { title: "Cleaner tanks. Fresher homes.", label: "Water tank cleaning", description: "Care for your home's water storage.", query: "water tank", image: "/images/hero/water-tank-cleaning.webp" },
-  { title: "Everyday appliances, expert care", label: "Home appliances", description: "Keep your home running smoothly.", query: "washing machine", image: "/images/hero/washing-machine-service.webp" },
-  { title: "Stay cool, all year", label: "AC service", description: "Give your cooling the care it deserves.", query: "AC", image: "/images/hero/ac-service.webp" },
-  { title: "Fresh air. Peaceful evenings.", label: "Mosquito net", description: "Find the right net for your home.", query: "mosquito", image: "/images/services/mosquito-net.png" },
-  { title: "Keep the freshness going", label: "Refrigerator repair", description: "Expert care for your kitchen essential.", query: "refrigerator", image: "/images/services/refrigerator.png" },
-];
-
-const appliancePopupOrder = [
-  { family: "AC Service", label: "AC" },
-  { family: "Washing Machine", label: "Washing Machine" },
-  { family: "Refrigerator", label: "Refrigerator" },
-  { family: "Microwave Oven", label: "Microwave" },
-  { family: "Geyser", label: "Geyser" },
-  { family: "Water Purifier", label: "Water Purifier" },
-  { family: "TV Repair", label: "TV" },
-  { family: "CCTV Camera", label: "CCTV" },
-  { family: "Dishwasher", label: "Dishwasher" },
+  { name: "Water Tank Cleaning", slug: "water-tank-cleaning", image: "/images/service-icons/water-tank.png" },
+  { name: "Sofa Repair", slug: "sofa-repair-inspection-charge", image: "/images/service-icons/sofa-repair.png" },
+  { name: "Mosquito Net", slug: "mosquito-net-inspection-charge", image: "/images/service-icons/mosquito-net.png" },
+  { name: "AC Service", slug: "ac-services", image: "/images/service-icons/ac.png" },
+  { name: "Washing Machine", slug: "washing-machine-repair-service", image: "/images/service-icons/washing-machine.png" },
+  { name: "Refrigerator", slug: "refrigerator-repair-services", image: "/images/service-icons/refrigerator.png" },
+  { name: "Water Purifier", slug: "water-purifier-repair-services", image: "/images/service-icons/water-purifier.png" },
+  { name: "TV Repair", slug: "tv-repair-services", image: "/images/service-icons/tv.png" },
+  { name: "Geyser", slug: "geyser-repair-services", image: "/images/service-icons/geyser.png" },
+  { name: "Microwave", slug: "microwave-oven-repair-services", image: "/images/service-icons/microwave.png" },
+  { name: "Dishwasher", slug: "dishwasher-repair-service", image: "/images/service-icons/dishwasher.png" },
+  { name: "Cleaning Services", image: "/images/categories/cleaning.png", comingSoon: true },
 ] as const;
 
-const serviceSearchHref = (query: string) => `${routes.services}?q=${encodeURIComponent(query)}`;
+const spotlights = [
+  { title: "Give your sofa a fresh start", label: "Sofa repair", description: "Comfort worth coming home to.", slug: "sofa-repair-inspection-charge", image: "/images/hero/sofa-repair.webp" },
+  { title: "Cleaner tanks. Fresher homes.", label: "Water tank cleaning", description: "Care for your home's water storage.", slug: "water-tank-cleaning", image: "/images/hero/water-tank-cleaning.webp" },
+  { title: "Everyday appliances, expert care", label: "Home appliances", description: "Keep your home running smoothly.", slug: "home-appliances-repair", image: "/images/hero/washing-machine-service.webp", opensApplianceSelector: true },
+  { title: "Stay cool, all year", label: "AC service", description: "Give your cooling the care it deserves.", slug: "ac-services", image: "/images/hero/ac-service.webp" },
+  { title: "Fresh air. Peaceful evenings.", label: "Mosquito net", description: "Find the right net for your home.", slug: "mosquito-net-inspection-charge", image: "/images/services/mosquito-net.png" },
+  { title: "Keep the freshness going", label: "Refrigerator repair", description: "Expert care for your kitchen essential.", slug: "refrigerator-repair-services", image: "/images/services/refrigerator.png" },
+];
 
-function categoryLandingHref(services: ServiceListItem[], query: string, name: string) {
-  const terms = `${query} ${name}`.toLowerCase().split(/\s+/).filter((term) => term.length > 2);
-  const service = services.find((item) => {
-    const searchable = `${item.name} ${item.slug} ${item.category.name} ${item.category.slug}`.toLowerCase();
-    return terms.some((term) => searchable.includes(term));
-  });
-  return service ? routes.serviceCategory(service.category.slug) : serviceSearchHref(query);
-}
 const preferredServiceSlugs: Record<string, string> = {
   AC: "ac-service",
   appliance: "washing-machine-repair-service",
@@ -92,82 +68,58 @@ const preferredServiceSlugs: Record<string, string> = {
   "water tank": "water-tank-cleaning",
 };
 
-function serviceDetailHrefForQuery(services: ServiceListItem[], query: string) {
-  const preferred = preferredServiceSlugs[query];
-  if (preferred && services.some((item) => item.slug === preferred)) {
-    return routes.serviceDetail(preferred);
-  }
-  const normalized = query.toLowerCase();
-  const service = services.find((item) => {
-    const searchable = `${item.name} ${item.slug} ${item.short_description} ${item.category.name}`.toLowerCase();
-    return searchable.includes(normalized);
-  });
-  return service ? routes.serviceDetail(service.slug) : serviceSearchHref(query);
-}
-
-function serviceFamilyFor(service: ServiceListItem) {
-  const text = `${service.name} ${service.short_description} ${service.category.name}`.toLowerCase();
-  if (text.includes("washing")) return "Washing Machine";
-  if (text.includes("refrigerator") || text.includes("fridge")) return "Refrigerator";
-  if (text.includes("cctv")) return "CCTV Camera";
-  if (text.includes("wall mount")) return "TV Wall Mount";
-  if (text.includes("tv")) return "TV Repair";
-  if (text.includes("geyser")) return "Geyser";
-  if (text.includes("purifier")) return "Water Purifier";
-  if (text.includes("microwave")) return "Microwave Oven";
-  if (text.includes("dishwasher")) return "Dishwasher";
-  if (text.includes("chimney")) return "Chimney";
-  if (text.includes("full house")) return "Full House Cleaning";
-  if (text.includes("bathroom")) return "Bathroom Cleaning";
-  if (text.includes("water tank")) return "Water Tank Cleaning";
-  if (text.includes("ac")) return "AC Service";
-  return service.category.name;
-}
-
-function serviceFamilies(services: ServiceListItem[]) {
-  const groups = new Map<string, ServiceListItem[]>();
-  for (const service of services) {
-    const family = serviceFamilyFor(service);
-    groups.set(family, [...(groups.get(family) ?? []), service]);
-  }
-  return Array.from(groups.entries()).map(([name, items]) => ({ name, services: items }));
-}
-
 export function HomeDiscovery() {
   const services = useServices({ page_size: 80 });
   const featured = useServices({ featured: true, page_size: 10 });
-  const [applianceDialogOpen, setApplianceDialogOpen] = useState(false);
 
   const allServices = useMemo(() => services.data?.results ?? [], [services.data?.results]);
-  const visibleServices = Array.from(new Map(
+  const servicePool = Array.from(new Map(
     [...(featured.data?.results ?? []), ...allServices].map((service) => [service.id, service]),
   ).values());
-  const applianceServices = useMemo(() => {
-    const allowedFamilies = new Set<string>(appliancePopupOrder.map((item) => item.family));
-    return allServices.filter((service) => allowedFamilies.has(serviceFamilyFor(service)));
-  }, [allServices]);
+  const visibleServices = ["sofa", "water tank", "mosquito"].flatMap((query) => {
+    const preferredSlug = preferredServiceSlugs[query];
+    const service = servicePool.find((item) => item.slug === preferredSlug) ?? servicePool.find((item) => {
+      const searchable = `${item.name} ${item.slug} ${item.short_description} ${item.category.name}`.toLowerCase();
+      return searchable.includes(query);
+    });
+    return service ? [service] : [];
+  });
   const whatsappUrl = env.supportWhatsapp ? `https://wa.me/${env.supportWhatsapp.replace(/\D/g, "")}` : routes.support;
 
   return (
     <div className="min-w-0 bg-white">
       <section className="overflow-hidden border-b border-border bg-white">
-        <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1fr)] lg:px-8 lg:py-9">
-          <div>
+        <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 sm:px-6 lg:min-h-[600px] lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1fr)] lg:items-stretch lg:px-8 lg:py-9">
+          <div className="flex min-w-0 flex-col justify-center">
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
-              <h1 className="max-w-lg text-3xl font-bold leading-tight text-foreground sm:text-5xl">
+              <h1 className="max-w-xl text-[2.15rem] font-bold leading-[1.08] text-foreground sm:text-[3.25rem] lg:text-[3.4rem]">
                 Home Appliance Services at <span className="text-primary">Your Doorstep in Chennai</span>
               </h1>
             </motion.div>
 
-            <p className="mt-3 text-base text-secondary sm:text-lg">Trusted professionals. Hassle-free service.</p>
-            <div className="mt-7 grid grid-cols-3 gap-2.5 sm:gap-3">
+            <p className="mt-4 text-lg text-secondary sm:text-xl">Trusted professionals. Hassle-free service.</p>
+            <div className="mt-5 grid grid-cols-3 divide-x divide-zinc-200 rounded-xl border border-zinc-200 bg-zinc-50/70 px-2 py-3">
+              {[
+                ["4.8", "Service quality"],
+                ["4", "Featured categories"],
+                ["100%", "Upfront pricing"],
+              ].map(([value, label]) => (
+                <div key={label} className="min-w-0 px-2 text-center sm:px-3">
+                  <p className="text-sm font-extrabold text-foreground sm:text-base">{value}</p>
+                  <p className="mt-0.5 text-[10px] font-medium leading-4 text-zinc-500 sm:text-xs">{label}</p>
+                </div>
+              ))}
+            </div>
+            <div className="mt-5 grid grid-cols-2 gap-3">
               {homeCategories.map((item) => {
-                const content = <><Image src={item.image} alt="" width={64} height={64} className="h-12 w-12 object-contain sm:h-16 sm:w-16" /><span className="line-clamp-2 text-xs font-semibold leading-4 sm:text-sm">{item.name}</span></>;
-                const tileClass = "flex aspect-square min-w-0 flex-col items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white p-2 text-center shadow-[0_2px_8px_rgba(24,24,27,0.04)] transition hover:border-primary/40 hover:bg-primary-soft hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:p-4";
-                if (item.query === "appliance") {
-                  return <button key={item.name} type="button" onClick={() => setApplianceDialogOpen(true)} className={tileClass}>{content}</button>;
-                }
-                return <Link key={item.name} href={serviceDetailHrefForQuery(allServices, item.query)} className={tileClass}>{content}</Link>;
+                const className = "flex min-h-36 min-w-0 flex-col items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white p-4 text-center shadow-[0_2px_8px_rgba(24,24,27,0.04)] transition hover:border-primary/40 hover:bg-primary-soft hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:p-5";
+                const content = <><Image src={item.image} alt="" width={88} height={88} className="h-16 w-16 object-contain sm:h-20 sm:w-20" /><span className="line-clamp-2 text-sm font-bold leading-5">{item.name}</span><span className="line-clamp-1 text-[11px] font-medium text-zinc-500 sm:text-xs">{item.description}</span></>;
+
+                return item.opensApplianceSelector ? (
+                  <button key={item.name} type="button" className={className} onClick={openApplianceSelector}>{content}</button>
+                ) : (
+                  <Link key={item.name} href={routes.serviceCategory(item.slug)} className={className}>{content}</Link>
+                );
               })}
             </div>
             <Button asChild className="mt-6"><Link href={routes.services}>Book a Service <ArrowRight className="h-4 w-4" /></Link></Button>
@@ -206,13 +158,13 @@ export function HomeDiscovery() {
             <p className="mt-2 text-sm text-secondary">Professional AC service at your doorstep.</p>
             <div className="mt-3 flex flex-wrap items-center gap-3">
               <span className="rounded-md bg-white/90 px-3 py-2 text-sm font-semibold text-foreground shadow-sm">AC Service from <strong className="text-lg text-primary">₹399</strong></span>
-              <Button asChild size="sm"><Link href={serviceDetailHrefForQuery(allServices, "AC")}>Book now <ArrowRight className="h-4 w-4" /></Link></Button>
+              <Button asChild size="sm"><Link href={routes.serviceCategory("ac-services")}>Book now <ArrowRight className="h-4 w-4" /></Link></Button>
             </div>
           </div>
         </div>
       </section>
 
-      <SpotlightCarousel services={allServices} />
+      <SpotlightCarousel />
 
       <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-5 flex items-center justify-between gap-4">
@@ -220,12 +172,15 @@ export function HomeDiscovery() {
           <Link href={routes.services} className="flex min-h-9 shrink-0 items-center gap-1 rounded-full border border-primary/30 px-3 text-xs font-bold text-primary transition hover:bg-primary-soft sm:text-sm">See all <ArrowRight className="h-3.5 w-3.5" /></Link>
         </div>
         <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-4 sm:gap-3 lg:grid-cols-6">
-          {popularCategories.map((item) => (
-            <Link key={item.name} href={categoryLandingHref(allServices, item.query, item.name)} className="group flex aspect-square min-w-0 flex-col items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white p-2 text-center shadow-[0_2px_8px_rgba(24,24,27,0.04)] transition hover:border-primary/40 hover:bg-primary-soft sm:p-4">
-              <Image src={item.image} alt="" width={88} height={88} className="h-12 w-12 object-contain transition group-hover:scale-105 sm:h-16 sm:w-16" />
-              <h3 className="line-clamp-2 text-xs font-semibold leading-4 group-hover:text-primary sm:text-sm">{item.name}</h3>
-            </Link>
-          ))}
+          {popularCategories.map((item) => {
+            const content = <><Image src={item.image} alt="" width={88} height={88} className={`h-12 w-12 object-contain transition sm:h-16 sm:w-16 ${"comingSoon" in item ? "grayscale opacity-55" : "group-hover:scale-105"}`} /><h3 className={`line-clamp-2 text-xs font-semibold leading-4 sm:text-sm ${"comingSoon" in item ? "text-zinc-500" : "group-hover:text-primary"}`}>{item.name}</h3>{"comingSoon" in item ? <span className="rounded-full bg-amber-100 px-2 py-1 text-[9px] font-bold uppercase tracking-wide text-amber-800 sm:text-[10px]">Coming soon</span> : null}</>;
+
+            if ("comingSoon" in item) {
+              return <div key={item.name} aria-disabled="true" className="relative flex aspect-square min-w-0 cursor-not-allowed flex-col items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 p-2 text-center shadow-[0_2px_8px_rgba(24,24,27,0.04)] sm:p-4">{content}</div>;
+            }
+
+            return <Link key={item.name} href={routes.serviceCategory(item.slug)} className="group flex aspect-square min-w-0 flex-col items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white p-2 text-center shadow-[0_2px_8px_rgba(24,24,27,0.04)] transition hover:border-primary/40 hover:bg-primary-soft sm:p-4">{content}</Link>;
+          })}
         </div>
       </section>
 
@@ -246,9 +201,11 @@ export function HomeDiscovery() {
           {services.isLoading || featured.isLoading ? <ServiceCardSkeletonGrid /> : null}
           {services.isError ? <ErrorState error={services.error} onRetry={() => services.refetch()} /> : null}
           {visibleServices.length ? (
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+            <div className="mobile-scroll-row flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain pb-2 md:grid md:grid-cols-3 md:overflow-visible md:pb-0">
               {visibleServices.map((service) => (
-                <CompactPackageCard key={service.id} service={service} />
+                <div key={service.id} className="w-[82%] shrink-0 snap-start sm:w-[56%] md:w-auto">
+                  <CompactPackageCard service={service} />
+                </div>
               ))}
             </div>
           ) : null}
@@ -271,12 +228,10 @@ export function HomeDiscovery() {
         </aside>
       </section>
 
-      <CategoryServicesDialog open={applianceDialogOpen} services={applianceServices} onClose={() => setApplianceDialogOpen(false)} />
     </div>
   );
 }
-
-function SpotlightCarousel({ services }: { services: ServiceListItem[] }) {
+function SpotlightCarousel() {
   const row = useRef<HTMLDivElement>(null);
   const [start, setStart] = useState(0);
   const [last, setLast] = useState(5);
@@ -324,16 +279,16 @@ function SpotlightCarousel({ services }: { services: ServiceListItem[] }) {
         const card = element?.firstElementChild as HTMLElement | null;
         if (element && card) setStart(Math.min(last, Math.round(element.scrollLeft / (card.offsetWidth + 16))));
       }}>
-        {spotlights.map((item) => <Link key={item.query} href={serviceDetailHrefForQuery(services, item.query)} className="group relative aspect-[3/2] w-[84%] shrink-0 snap-start overflow-hidden rounded-lg sm:w-[calc((100%-1rem)/2)] lg:w-[calc((100%-2rem)/3)] focus-visible:outline-2 focus-visible:outline-primary">
-          <Image src={item.image} alt={item.label} fill sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 84vw" className="object-cover transition duration-300 group-hover:scale-[1.02]" />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/45 to-transparent" />
-          <div className="absolute inset-0 flex max-w-[76%] flex-col items-start justify-end p-4 text-white sm:p-5">
-            <span className="rounded-full bg-white/90 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-primary">{item.label}</span>
-            <h3 className="mt-2 text-lg font-bold leading-tight sm:text-xl">{item.title}</h3>
-            <p className="mt-1 line-clamp-2 text-xs leading-5 text-white/85 sm:text-sm">{item.description}</p>
-            <span className="mt-2 inline-flex items-center gap-2 text-sm font-semibold">Explore <ArrowRight className="h-4 w-4" /></span>
-          </div>
-        </Link>)}
+        {spotlights.map((item) => {
+          const className = "group relative aspect-[3/2] w-[84%] shrink-0 snap-start overflow-hidden rounded-lg text-left sm:w-[calc((100%-1rem)/2)] lg:w-[calc((100%-2rem)/3)] focus-visible:outline-2 focus-visible:outline-primary";
+          const content = <><Image src={item.image} alt={item.label} fill sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 84vw" className="object-cover transition duration-300 group-hover:scale-[1.02]" /><div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/45 to-transparent" /><div className="absolute inset-0 flex max-w-[76%] flex-col items-start justify-end p-4 text-white sm:p-5"><span className="rounded-full bg-white/90 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-primary">{item.label}</span><h3 className="mt-2 text-lg font-bold leading-tight sm:text-xl">{item.title}</h3><p className="mt-1 line-clamp-2 text-xs leading-5 text-white/85 sm:text-sm">{item.description}</p><span className="mt-2 inline-flex items-center gap-2 text-sm font-semibold">Explore <ArrowRight className="h-4 w-4" /></span></div></>;
+
+          return item.opensApplianceSelector ? (
+            <button key={item.slug} type="button" onClick={openApplianceSelector} className={className}>{content}</button>
+          ) : (
+            <Link key={item.slug} href={routes.serviceCategory(item.slug)} className={className}>{content}</Link>
+          );
+        })}
       </div>
       <div className="mt-1 flex justify-center gap-1">{Array.from({ length: last + 1 }, (_, index) => <button key={index} type="button" aria-label={`Show spotlight ${index + 1}`} aria-current={start === index ? "true" : undefined} onClick={() => { setPaused(true); goTo(index); }} className="grid h-11 w-11 place-items-center rounded-full focus-visible:outline-2 focus-visible:outline-primary"><span className={`h-2 rounded-full ${start === index ? "w-6 bg-primary" : "w-2 bg-primary/25"}`} /></button>)}</div>
     </section>
@@ -342,12 +297,17 @@ function SpotlightCarousel({ services }: { services: ServiceListItem[] }) {
 
 function HeroImageMosaic() {
   const cards = [
-    { image: "/images/hero/ac-service.webp", title: "AC Service", query: "AC" },
-    { image: "/images/hero/washing-machine-service.webp", title: "Appliance Repair", query: "washing machine" },
-    { image: "/images/hero/water-tank-cleaning.webp", title: "Water Tank Cleaning", query: "water tank" },
-    { image: "/images/hero/sofa-repair.webp", title: "Sofa Repair", query: "sofa" },
+    { image: "/images/hero/ac-service.webp", title: "AC Service", slug: "ac-services" },
+    { image: "/images/hero/washing-machine-service.webp", title: "Appliance Repair", slug: "home-appliances-repair", opensApplianceSelector: true },
+    { image: "/images/hero/water-tank-cleaning.webp", title: "Water Tank Cleaning", slug: "water-tank-cleaning" },
+    { image: "/images/hero/sofa-repair.webp", title: "Sofa Repair", slug: "sofa-repair-inspection-charge" },
   ];
-  return <div className="grid min-w-0 grid-cols-2 content-start gap-3">{cards.map((card) => <Link key={card.image} href={serviceSearchHref(card.query)} className="group relative aspect-[3/2] overflow-hidden rounded-md focus-visible:outline-2 focus-visible:outline-primary"><Image src={card.image} alt={`Purple Squad ${card.title}`} fill priority sizes="(min-width: 1024px) 28vw, 46vw" className="object-cover transition duration-300 group-hover:scale-[1.02]" /><span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent px-3 pb-3 pt-8 text-xs font-bold text-white sm:text-sm">{card.title}</span></Link>)}</div>;
+  return <div className="hidden min-w-0 grid-cols-2 grid-rows-2 gap-3 lg:grid">{cards.map((card) => {
+    const className = "group relative min-h-0 overflow-hidden rounded-md text-left focus-visible:outline-2 focus-visible:outline-primary";
+    const content = <><Image src={card.image} alt={`Purple Squad ${card.title}`} fill priority sizes="(min-width: 1024px) 28vw, 46vw" className="object-cover transition duration-300 group-hover:scale-[1.02]" /><span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent px-3 pb-3 pt-8 text-xs font-bold text-white sm:text-sm">{card.title}</span></>;
+
+    return card.opensApplianceSelector ? <button key={card.image} type="button" onClick={openApplianceSelector} className={className}>{content}</button> : <Link key={card.image} href={routes.serviceCategory(card.slug)} className={className}>{content}</Link>;
+  })}</div>;
 }
 
 function CompactPackageCard({ service }: { service: ServiceListItem }) {
@@ -378,90 +338,5 @@ function CompactPackageCard({ service }: { service: ServiceListItem }) {
         <AddToCartButton service={service} className="mt-3 w-full whitespace-nowrap rounded-full px-2 text-xs sm:text-sm" />
       </div>
     </article>
-  );
-}
-
-function CategoryServicesDialog({
-  open,
-  services,
-  onClose,
-}: {
-  open: boolean;
-  services: ServiceListItem[];
-  onClose: () => void;
-}) {
-  const families = useMemo(() => {
-    const byName = new Map(serviceFamilies(services).map((family) => [family.name, family]));
-    return appliancePopupOrder.flatMap((item) => {
-      const family = byName.get(item.family);
-      return family ? [{ ...family, label: item.label }] : [];
-    });
-  }, [services]);
-
-  function closeDialog() {
-    onClose();
-  }
-
-  function landingHrefForFamily(family: string) {
-    const preferredSlugs: Record<string, string> = {
-      "AC Service": "ac-service",
-      "CCTV Camera": "cctv-cameras-repair-installation",
-      Dishwasher: "dishwasher-repair-service",
-      Geyser: "geyser-repair-services",
-      "Microwave Oven": "microwave-oven-repair-services",
-      Refrigerator: "refrigerator-repair-services",
-      "TV Repair": "tv-repair-services",
-      "TV Wall Mount": "tv-wall-mount-installation",
-      "Washing Machine": "washing-machine-repair-service",
-      "Water Purifier": "water-purifier-repair-services",
-    };
-    const preferred = preferredSlugs[family];
-    const service = services.find((item) => item.slug === preferred) ?? services.find((item) => serviceFamilyFor(item) === family);
-    return service ? routes.serviceDetail(service.slug) : routes.services;
-  }
-
-  return (
-    <Dialog.Root open={open} onOpenChange={(nextOpen) => !nextOpen && closeDialog()}>
-      <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/70" />
-        <Dialog.Content
-          className="fixed inset-x-0 bottom-0 z-50 max-h-[88dvh] overflow-y-auto rounded-t-3xl bg-white px-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-18px_70px_rgba(0,0,0,0.24)] focus:outline-none sm:left-1/2 sm:top-1/2 sm:bottom-auto sm:max-h-[85dvh] sm:w-[calc(100vw-2rem)] sm:max-w-[540px] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl sm:p-6"
-        >
-          <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-zinc-300 sm:hidden" aria-hidden="true" />
-          <Dialog.Close asChild>
-            <Button type="button" variant="ghost" size="icon" className="absolute right-3 top-3 rounded-md bg-white shadow-sm" aria-label="Close appliance popup">
-              <X className="h-5 w-5" />
-            </Button>
-          </Dialog.Close>
-          <Dialog.Title className="px-10 text-center text-xl font-bold text-foreground sm:pr-12 sm:text-left sm:text-2xl">Home appliances</Dialog.Title>
-          <Dialog.Description className="mt-1 text-center text-sm text-secondary sm:text-left">Select an appliance to open its service page.</Dialog.Description>
-
-          <div className="mt-5 flex items-center gap-3" aria-hidden="true">
-            <span className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-primary">Choose a service</span>
-            <span className="h-px flex-1 bg-zinc-200" />
-          </div>
-
-          {families.length ? (
-            <div className="mt-4 grid grid-cols-3 gap-x-3 gap-y-5">
-              {families.map((family) => (
-                <Link
-                  key={family.name}
-                  href={landingHrefForFamily(family.name)}
-                  onClick={closeDialog}
-                  className="group text-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                >
-                  <span className="grid h-20 place-items-center">
-                    <ServiceIcon label={family.name} className="h-full w-full overflow-visible rounded-none bg-transparent" imageClassName="p-0" />
-                  </span>
-                  <span className="mt-3 block text-sm font-semibold leading-5 text-foreground group-hover:text-primary">{family.label}</span>
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <EmptyState title="No appliances published yet" description="Add appliance services from the admin catalogue." />
-          )}
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog.Root>
   );
 }

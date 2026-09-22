@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { routes } from "@/constants/routes";
 import { useAuth } from "@/features/auth/hooks";
 import { ServiceSearch } from "@/features/catalogue/components/service-search";
+import { ApplianceSelectorDialog, openApplianceSelector } from "@/features/catalogue/components/appliance-selector-dialog";
 import { useServices } from "@/features/catalogue/queries";
 
 import { CartNavLink } from "@/features/cart/cart-controls";
@@ -26,6 +27,7 @@ export function Header() {
   }
 
   return (
+    <>
     <header className="sticky top-0 z-[var(--z-header)] border-b border-[#e8e8e8] bg-white/95 backdrop-blur">
       <div className="page-container flex min-h-[4.25rem] items-center gap-2 py-2.5 md:min-h-[5.5rem] md:py-3 lg:gap-6">
         <div className="hidden md:block"><Brand /></div>
@@ -35,10 +37,10 @@ export function Header() {
           <Link href={routes.services} className="hover:text-foreground">
             Services
           </Link>
-          <Link href={`${routes.search}?q=${encodeURIComponent("Appliance Repair")}`} className="hover:text-foreground">
+          <button type="button" className="hover:text-foreground" onClick={openApplianceSelector}>
             Appliance
-          </Link>
-          <Link href={`${routes.search}?q=${encodeURIComponent("Cleaning")}`} className="hover:text-foreground">
+          </button>
+          <Link href={routes.serviceCategory("cleaning")} className="hover:text-foreground">
             Cleaning
           </Link>
         </nav>
@@ -101,5 +103,7 @@ export function Header() {
         />
       </div>
     </header>
+    <ApplianceSelectorDialog />
+    </>
   );
 }
