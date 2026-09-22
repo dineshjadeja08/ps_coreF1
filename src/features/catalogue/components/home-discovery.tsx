@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { EmptyState } from "@/components/common/empty-state";
 import { ErrorState } from "@/components/common/error-state";
@@ -160,10 +160,10 @@ export function HomeDiscovery() {
             </motion.div>
 
             <p className="mt-3 text-base text-secondary sm:text-lg">Trusted professionals. Hassle-free service.</p>
-            <div className="mt-7 grid grid-cols-2 gap-3">
+            <div className="mt-7 grid grid-cols-3 gap-2.5 sm:gap-3">
               {homeCategories.map((item) => {
-                const content = <><Image src={item.image} alt="" width={64} height={64} className="h-16 w-16 object-contain" /><span className="text-sm font-semibold">{item.name}</span></>;
-                const tileClass = "flex min-h-28 flex-col items-center justify-center gap-2 rounded-xl bg-[#f7f5fa] p-4 text-center transition hover:bg-primary-soft hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
+                const content = <><Image src={item.image} alt="" width={64} height={64} className="h-12 w-12 object-contain sm:h-16 sm:w-16" /><span className="line-clamp-2 text-xs font-semibold leading-4 sm:text-sm">{item.name}</span></>;
+                const tileClass = "flex aspect-square min-w-0 flex-col items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white p-2 text-center shadow-[0_2px_8px_rgba(24,24,27,0.04)] transition hover:border-primary/40 hover:bg-primary-soft hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:p-4";
                 if (item.query === "appliance") {
                   return <button key={item.name} type="button" onClick={() => setApplianceDialogOpen(true)} className={tileClass}>{content}</button>;
                 }
@@ -217,16 +217,16 @@ export function HomeDiscovery() {
       <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-5 flex items-center justify-between gap-4">
           <h2 className="text-xl font-bold sm:text-2xl">Popular service categories</h2>
-          <Link href={routes.services} className="flex shrink-0 items-center gap-2 text-sm font-semibold text-primary">View all <ArrowRight className="h-4 w-4" /></Link>
+          <Link href={routes.services} className="flex min-h-9 shrink-0 items-center gap-1 rounded-full border border-primary/30 px-3 text-xs font-bold text-primary transition hover:bg-primary-soft sm:text-sm">See all <ArrowRight className="h-3.5 w-3.5" /></Link>
         </div>
-        <HorizontalServiceRow label="Popular service categories" cardWidth="w-28 sm:w-40">
+        <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-4 sm:gap-3 lg:grid-cols-6">
           {popularCategories.map((item) => (
-            <Link key={item.name} href={categoryLandingHref(allServices, item.query, item.name)} className="group flex flex-col items-center gap-3 rounded-xl border border-purple-100 bg-[#f8f5fc] p-3 text-center sm:p-5 transition hover:border-primary/40 hover:bg-primary-soft">
-              <Image src={item.image} alt="" width={88} height={88} className="h-14 w-14 object-contain sm:h-20 sm:w-20 transition group-hover:scale-105" />
-              <h3 className="text-sm font-semibold group-hover:text-primary">{item.name}</h3>
+            <Link key={item.name} href={categoryLandingHref(allServices, item.query, item.name)} className="group flex aspect-square min-w-0 flex-col items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white p-2 text-center shadow-[0_2px_8px_rgba(24,24,27,0.04)] transition hover:border-primary/40 hover:bg-primary-soft sm:p-4">
+              <Image src={item.image} alt="" width={88} height={88} className="h-12 w-12 object-contain transition group-hover:scale-105 sm:h-16 sm:w-16" />
+              <h3 className="line-clamp-2 text-xs font-semibold leading-4 group-hover:text-primary sm:text-sm">{item.name}</h3>
             </Link>
           ))}
-        </HorizontalServiceRow>
+        </div>
       </section>
 
       <section className="mx-auto grid max-w-7xl gap-5 px-4 py-6 sm:px-6 lg:grid-cols-[minmax(0,1fr)_330px] lg:px-8">
@@ -236,9 +236,9 @@ export function HomeDiscovery() {
               <p className="text-xs font-bold uppercase tracking-wide text-primary">Frequently booked</p>
               <h2 className="mt-1 text-xl font-bold text-foreground sm:text-2xl">Popular services near you</h2>
             </div>
-            <Button asChild variant="ghost">
+            <Button asChild variant="outline" className="h-9 shrink-0 rounded-full border-primary/30 px-3 text-xs text-primary sm:text-sm">
               <Link href={routes.services}>
-                View all
+                See all
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
@@ -246,11 +246,11 @@ export function HomeDiscovery() {
           {services.isLoading || featured.isLoading ? <ServiceCardSkeletonGrid /> : null}
           {services.isError ? <ErrorState error={services.error} onRetry={() => services.refetch()} /> : null}
           {visibleServices.length ? (
-            <HorizontalServiceRow label="Popular services near you" cardWidth="w-[70vw] max-w-64 sm:w-60">
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
               {visibleServices.map((service) => (
                 <CompactPackageCard key={service.id} service={service} />
               ))}
-            </HorizontalServiceRow>
+            </div>
           ) : null}
         </div>
 
@@ -272,25 +272,6 @@ export function HomeDiscovery() {
       </section>
 
       <CategoryServicesDialog open={applianceDialogOpen} services={applianceServices} onClose={() => setApplianceDialogOpen(false)} />
-    </div>
-  );
-}
-
-function HorizontalServiceRow({ label, cardWidth, children }: { label: string; cardWidth: string; children: ReactNode }) {
-  const row = useRef<HTMLDivElement>(null);
-  function scroll(direction: number) {
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    row.current?.scrollBy({ left: direction * row.current.clientWidth * 0.85, behavior: reducedMotion ? "instant" : "smooth" });
-  }
-  return (
-    <div className="min-w-0">
-      <div className="mb-3 hidden justify-end gap-2 sm:flex">
-        <Button type="button" variant="outline" size="icon" aria-label={`Scroll ${label} left`} onClick={() => scroll(-1)}><ChevronLeft className="h-4 w-4" /></Button>
-        <Button type="button" variant="outline" size="icon" aria-label={`Scroll ${label} right`} onClick={() => scroll(1)}><ChevronRight className="h-4 w-4" /></Button>
-      </div>
-      <div ref={row} role="region" aria-label={label} tabIndex={0} className="mobile-scroll-row flex max-w-full snap-x snap-proximity gap-3 overflow-x-auto overscroll-x-contain px-0.5 pb-4 pt-1 focus-visible:outline-2 focus-visible:outline-primary">
-        {Array.isArray(children) ? children.map((child, index) => <div key={index} className={`${cardWidth} min-w-0 shrink-0 snap-start`}>{child}</div>) : children}
-      </div>
     </div>
   );
 }
@@ -335,7 +316,7 @@ function SpotlightCarousel({ services }: { services: ServiceListItem[] }) {
           <Button type="button" variant="outline" size="icon" className="hidden sm:inline-flex" aria-label="Previous spotlight" onClick={() => { setPaused(true); goTo(start <= 0 ? last : start - 1); }}><ChevronLeft className="h-4 w-4" /></Button>
           <Button type="button" variant="ghost" size="icon" className="min-h-11 min-w-11" aria-label={paused ? "Play spotlights" : "Pause spotlights"} onClick={() => setPaused((value) => !value)}>{paused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}</Button>
           <Button type="button" variant="outline" size="icon" className="hidden sm:inline-flex" aria-label="Next spotlight" onClick={() => { setPaused(true); goTo(start >= last ? 0 : start + 1); }}><ChevronRight className="h-4 w-4" /></Button>
-          <Link href={routes.services} className="ml-1 whitespace-nowrap text-sm font-semibold text-primary">View all</Link>
+          <Link href={routes.services} className="ml-1 inline-flex min-h-9 items-center rounded-full border border-primary/30 px-3 text-xs font-bold text-primary transition hover:bg-primary-soft sm:text-sm">See all</Link>
         </div>
       </div>
       <div ref={row} role="group" aria-label="Swipe to browse service spotlights" className="mobile-scroll-row flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain px-0.5 pb-2" onTouchStart={() => setPaused(true)} onScroll={() => {
@@ -375,11 +356,13 @@ function CompactPackageCard({ service }: { service: ServiceListItem }) {
   const showOffer = hasOfferPrice(service) && basePrice;
 
   return (
-    <article className="overflow-hidden rounded-lg border border-border bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[var(--shadow-card)]">
-      <Link href={routes.serviceDetail(service.slug)} aria-label={`View ${service.name}`}>
+    <article className="relative overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-[0_3px_12px_rgba(24,24,27,0.06)] transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[var(--shadow-card)]">
+      {showOffer ? <span className="absolute left-2 top-2 z-10 rounded-full bg-emerald-600 px-2 py-1 text-[10px] font-extrabold text-white">SPECIAL OFFER</span> : null}
+      <Link href={routes.serviceDetail(service.slug)} aria-label={`View ${service.name}`} className="block">
         <ServiceImage src={service.cover_image} alt={service.name} fit="contain" className="aspect-[3/2] rounded-none" />
       </Link>
-      <div className="p-3">
+      <div className="border-t border-zinc-100 bg-[#faf8fc] px-3 py-2 text-[10px] font-extrabold uppercase tracking-wide text-primary">{service.category.name}</div>
+      <div className="p-3 pt-2">
         <h3 className="line-clamp-2 min-h-10 text-sm font-bold leading-5 text-foreground">
           <Link href={routes.serviceDetail(service.slug)}>{service.name}</Link>
         </h3>
@@ -392,7 +375,7 @@ function CompactPackageCard({ service }: { service: ServiceListItem }) {
           <span className="text-base font-bold text-foreground">{currentPrice ?? "View price"}</span>
           {showOffer ? <span className="text-xs text-muted-foreground line-through">{basePrice}</span> : null}
         </div>
-        <AddToCartButton service={service} className="mt-3 w-full whitespace-nowrap" />
+        <AddToCartButton service={service} className="mt-3 w-full whitespace-nowrap rounded-full px-2 text-xs sm:text-sm" />
       </div>
     </article>
   );
@@ -442,18 +425,24 @@ function CategoryServicesDialog({
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/70" />
         <Dialog.Content
-          className="fixed left-1/2 top-1/2 z-50 max-h-[85dvh] w-[calc(100vw-2rem)] max-w-[540px] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-lg bg-white p-5 shadow-[0_22px_80px_rgba(0,0,0,0.28)] focus:outline-none sm:p-6"
+          className="fixed inset-x-0 bottom-0 z-50 max-h-[88dvh] overflow-y-auto rounded-t-3xl bg-white px-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-18px_70px_rgba(0,0,0,0.24)] focus:outline-none sm:left-1/2 sm:top-1/2 sm:bottom-auto sm:max-h-[85dvh] sm:w-[calc(100vw-2rem)] sm:max-w-[540px] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl sm:p-6"
         >
+          <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-zinc-300 sm:hidden" aria-hidden="true" />
           <Dialog.Close asChild>
             <Button type="button" variant="ghost" size="icon" className="absolute right-3 top-3 rounded-md bg-white shadow-sm" aria-label="Close appliance popup">
               <X className="h-5 w-5" />
             </Button>
           </Dialog.Close>
-          <Dialog.Title className="pr-12 text-2xl font-bold text-foreground">Home appliances</Dialog.Title>
-          <Dialog.Description className="mt-1 text-sm text-secondary">Select an appliance to open its service page.</Dialog.Description>
+          <Dialog.Title className="px-10 text-center text-xl font-bold text-foreground sm:pr-12 sm:text-left sm:text-2xl">Home appliances</Dialog.Title>
+          <Dialog.Description className="mt-1 text-center text-sm text-secondary sm:text-left">Select an appliance to open its service page.</Dialog.Description>
+
+          <div className="mt-5 flex items-center gap-3" aria-hidden="true">
+            <span className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-primary">Choose a service</span>
+            <span className="h-px flex-1 bg-zinc-200" />
+          </div>
 
           {families.length ? (
-            <div className="mt-6 grid grid-cols-3 gap-3">
+            <div className="mt-4 grid grid-cols-3 gap-x-3 gap-y-5">
               {families.map((family) => (
                 <Link
                   key={family.name}

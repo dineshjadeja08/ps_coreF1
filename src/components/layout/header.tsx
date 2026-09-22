@@ -27,8 +27,9 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-[var(--z-header)] border-b border-[#e8e8e8] bg-white/95 backdrop-blur">
-      <div className="page-container flex min-h-[5.5rem] items-center gap-2 py-3 lg:gap-6">
-        <Brand />
+      <div className="page-container flex min-h-[4.25rem] items-center gap-2 py-2.5 md:min-h-[5.5rem] md:py-3 lg:gap-6">
+        <div className="hidden md:block"><Brand /></div>
+        <div className="min-w-0 flex-1 md:hidden"><LocationCitySelector compact headerStyle className="max-w-[230px]" /></div>
 
         <nav className="hidden items-center gap-8 text-sm font-medium text-secondary md:flex">
           <Link href={routes.services} className="hover:text-foreground">
@@ -54,7 +55,7 @@ export function Header() {
           />
         </div>
 
-        <div className="ml-auto lg:ml-0"><CartNavLink /></div>
+        <div className="ml-auto md:ml-0 lg:ml-0"><CartNavLink /></div>
 
         <nav className="hidden items-center gap-3 md:flex">
           {isAuthenticated ? (
@@ -72,7 +73,7 @@ export function Header() {
         </nav>
 
         {!isAuthenticated ? (
-          <Button asChild variant="ghost" className="rounded-md px-2 sm:px-3">
+          <Button asChild variant="ghost" className="hidden rounded-md px-2 sm:px-3 md:inline-flex">
             <Link href="/login" aria-label="Login" className="gap-2">
               <CircleUserRound className="h-5 w-5" />
               <span className="hidden text-sm font-semibold sm:inline">Login</span>
@@ -82,7 +83,7 @@ export function Header() {
 
 
         {isAuthenticated ? (
-          <Button asChild variant="ghost" size="icon" className="md:hidden">
+          <Button asChild variant="ghost" size="icon" className="hidden">
             <Link href={routes.profile} aria-label="Open profile">
               <UserRound className="h-5 w-5" />
             </Link>
@@ -90,11 +91,10 @@ export function Header() {
         ) : null}
       </div>
 
-      <div className="flex items-center gap-2 border-t border-border bg-surface px-4 py-3 md:hidden">
-        <LocationCitySelector compact className="max-w-[130px] shrink-0" />
+      <div className="border-t border-zinc-100 bg-white px-4 pb-3 pt-2 md:hidden">
         <ServiceSearch
           services={services.data?.results ?? []}
-          className="mx-auto max-w-7xl"
+          className="mx-auto w-full max-w-7xl"
           compact
           inputId="mobile-header-search"
           placeholder="Search home services"

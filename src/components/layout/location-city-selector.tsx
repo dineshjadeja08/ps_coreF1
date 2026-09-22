@@ -1,7 +1,7 @@
 "use client";
 
 import * as Dialog from "@radix-ui/react-dialog";
-import { Check, LocateFixed, MapPin, X } from "lucide-react";
+import { Check, ChevronDown, LocateFixed, MapPin, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -15,9 +15,10 @@ const selectedPincodeKey = "purple_squad_selected_pincode";
 type LocationCitySelectorProps = {
   compact?: boolean;
   className?: string;
+  headerStyle?: boolean;
 };
 
-export function LocationCitySelector({ compact = false, className }: LocationCitySelectorProps) {
+export function LocationCitySelector({ compact = false, className, headerStyle = false }: LocationCitySelectorProps) {
   const [open, setOpen] = useState(false);
   const [selectedCity, setSelectedCity] = useState<string>(serviceCities[0]);
   const [pincode, setPincode] = useState("");
@@ -69,13 +70,23 @@ export function LocationCitySelector({ compact = false, className }: LocationCit
           className={cn(
             "touch-target inline-flex items-center gap-2 rounded-lg border border-border bg-surface px-3 text-left transition hover:border-primary/30 hover:bg-primary-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
             compact ? "h-10" : "h-12",
+            headerStyle && "h-auto min-h-11 border-0 bg-transparent px-0 hover:bg-transparent",
             className,
           )}
         >
-          <MapPin className="h-4 w-4 shrink-0 text-primary" />
+          <MapPin className={cn("h-4 w-4 shrink-0 text-primary", headerStyle && "h-5 w-5")} />
           <span className="min-w-0">
-            <span className="block truncate text-xs font-semibold text-muted-foreground">Location</span>
-            <span className="block truncate text-sm font-bold text-foreground">{selectedCity}</span>
+            {headerStyle ? (
+              <>
+                <span className="flex items-center gap-1 truncate text-sm font-extrabold text-primary">{selectedCity}<ChevronDown className="h-3.5 w-3.5" /></span>
+                <span className="mt-0.5 block truncate text-[11px] font-medium text-zinc-500">{pincode ? `Service area · ${pincode}` : "Choose your service location"}</span>
+              </>
+            ) : (
+              <>
+                <span className="block truncate text-xs font-semibold text-muted-foreground">Location</span>
+                <span className="block truncate text-sm font-bold text-foreground">{selectedCity}</span>
+              </>
+            )}
           </span>
         </button>
       </Dialog.Trigger>

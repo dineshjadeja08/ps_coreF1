@@ -17,9 +17,9 @@ export function AddToCartButton({ service, className }: { service: ServiceListIt
 }
 export function CartNavLink() {
   const { count } = useCart();
-  return <Link href="/cart" aria-label={`Cart, ${count} ${count === 1 ? "service" : "services"}`} className="relative inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-border text-foreground hover:bg-primary-soft focus-visible:outline-2 focus-visible:outline-primary">
+  return <Link href="/cart" aria-label={`Cart, ${count} ${count === 1 ? "service" : "services"}`} className="relative inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border text-foreground hover:bg-primary-soft focus-visible:outline-2 focus-visible:outline-primary">
     <ShoppingCart className="h-5 w-5" />
-    <span aria-live="polite" aria-atomic="true" className="absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[11px] font-bold text-white">{count}</span>
+    {count > 0 ? <span aria-live="polite" aria-atomic="true" className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-extrabold text-white ring-2 ring-white">{count}</span> : null}
   </Link>;
 }
 export function CartSummary() {

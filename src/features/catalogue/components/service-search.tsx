@@ -79,7 +79,6 @@ export function ServiceSearch({
       <label className="sr-only" htmlFor={inputId}>
         Search services
       </label>
-      <Search className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
       <Input
         id={inputId}
         value={query}
@@ -87,9 +86,12 @@ export function ServiceSearch({
         onFocus={() => setFocused(true)}
         onBlur={() => window.setTimeout(() => setFocused(false), 120)}
         placeholder={query ? placeholder : rotatingPlaceholders[placeholderIndex] ?? placeholder}
-        className={cn("rounded-lg pl-9", compact ? "h-10" : "h-12 text-base")}
+        className={cn("rounded-full border-zinc-200 bg-white pl-4 pr-14 shadow-none", compact ? "h-11" : "h-12 text-base")}
         autoComplete="off"
       />
+      <button type="submit" aria-label="Search services" className="absolute right-1 top-1 grid h-9 w-10 place-items-center rounded-full bg-primary text-white transition hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+        <Search className="h-4 w-4" />
+      </button>
       {focused && suggestions.length > 0 ? (
         <div className="absolute left-0 right-0 top-full z-30 mt-2 overflow-hidden rounded-md border border-border bg-surface shadow-[var(--shadow-card)]">
           {suggestions.map((service) => (
