@@ -88,32 +88,20 @@ export function HomeDiscovery() {
 
   return (
     <div className="min-w-0 bg-white">
-      <section className="overflow-hidden border-b border-border bg-white">
-        <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 sm:px-6 lg:min-h-[600px] lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1fr)] lg:items-stretch lg:px-8 lg:py-9">
-          <div className="flex min-w-0 flex-col justify-center">
+      <section className="overflow-hidden border-b border-border bg-white lg:flex lg:h-[calc(100svh-5.5rem)] lg:max-h-[calc(100svh-5.5rem)] lg:flex-col">
+        <div className="mx-auto grid w-full max-w-7xl gap-6 overflow-hidden px-4 py-6 sm:px-6 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1fr)] lg:items-center lg:gap-[clamp(1rem,2vw,2rem)] lg:px-8 lg:py-[clamp(1rem,2.2vh,2rem)]">
+          <div className="flex min-w-0 flex-col justify-center lg:max-h-full">
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
-              <h1 className="max-w-xl text-[2.15rem] font-bold leading-[1.08] text-foreground sm:text-[3.25rem] lg:text-[3.4rem]">
+              <h1 className="max-w-xl text-[2.15rem] font-bold leading-[1.08] text-foreground sm:text-[3.25rem] lg:text-[clamp(2.25rem,4.8vh,3.4rem)]">
                 Home Appliance Services at <span className="text-primary">Your Doorstep in Chennai</span>
               </h1>
             </motion.div>
 
-            <p className="mt-4 text-lg text-secondary sm:text-xl">Trusted professionals. Hassle-free service.</p>
-            <div className="mt-5 grid grid-cols-3 divide-x divide-zinc-200 rounded-xl border border-zinc-200 bg-zinc-50/70 px-2 py-3">
-              {[
-                ["4.8", "Service quality"],
-                ["4", "Featured categories"],
-                ["100%", "Upfront pricing"],
-              ].map(([value, label]) => (
-                <div key={label} className="min-w-0 px-2 text-center sm:px-3">
-                  <p className="text-sm font-extrabold text-foreground sm:text-base">{value}</p>
-                  <p className="mt-0.5 text-[10px] font-medium leading-4 text-zinc-500 sm:text-xs">{label}</p>
-                </div>
-              ))}
-            </div>
-            <div className="mt-5 grid grid-cols-2 gap-3">
+            <p className="mt-4 text-lg text-secondary sm:text-xl lg:mt-[clamp(.5rem,1.3vh,1rem)] lg:text-[clamp(1rem,2vh,1.25rem)]">Trusted professionals. Hassle-free service.</p>
+            <div className="mt-5 grid grid-cols-2 gap-3 lg:mt-[clamp(.6rem,1.5vh,1.25rem)] lg:gap-[clamp(.5rem,1vh,.75rem)]">
               {homeCategories.map((item) => {
-                const className = "flex min-h-36 min-w-0 flex-col items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white p-4 text-center shadow-[0_2px_8px_rgba(24,24,27,0.04)] transition hover:border-primary/40 hover:bg-primary-soft hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:p-5";
-                const content = <><Image src={item.image} alt="" width={88} height={88} className="h-16 w-16 object-contain sm:h-20 sm:w-20" /><span className="line-clamp-2 text-sm font-bold leading-5">{item.name}</span><span className="line-clamp-1 text-[11px] font-medium text-zinc-500 sm:text-xs">{item.description}</span></>;
+                const className = "flex min-h-36 min-w-0 flex-col items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white p-4 text-center shadow-[0_2px_8px_rgba(24,24,27,0.04)] transition hover:border-primary/40 hover:bg-primary-soft hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:p-5 lg:min-h-[clamp(6.75rem,14vh,9rem)] lg:p-[clamp(.65rem,1.5vh,1.25rem)]";
+                const content = <><Image src={item.image} alt="" width={88} height={88} className="h-16 w-16 object-contain sm:h-20 sm:w-20 lg:h-[clamp(3.25rem,7.5vh,5rem)] lg:w-[clamp(3.25rem,7.5vh,5rem)]" /><span className="line-clamp-2 text-sm font-bold leading-5">{item.name}</span><span className="line-clamp-1 text-[11px] font-medium text-zinc-500 sm:text-xs">{item.description}</span></>;
 
                 return item.opensApplianceSelector ? (
                   <button key={item.name} type="button" className={className} onClick={openApplianceSelector}>{content}</button>
@@ -122,25 +110,25 @@ export function HomeDiscovery() {
                 );
               })}
             </div>
-            <Button asChild className="mt-6"><Link href={routes.services}>Book a Service <ArrowRight className="h-4 w-4" /></Link></Button>
+            <Button asChild className="mt-6 lg:mt-[clamp(.6rem,1.5vh,1.25rem)]"><Link href={routes.services}>Book a Service <ArrowRight className="h-4 w-4" /></Link></Button>
           </div>
 
           <HeroImageMosaic />
         </div>
-        <div className="mx-auto grid max-w-7xl grid-cols-2 gap-px border-t border-border bg-border px-0 sm:grid-cols-4 lg:px-0">
+      </section>
+      <div className="relative z-10 mx-auto grid w-full max-w-7xl grid-cols-2 gap-px border-y border-border bg-border px-0 sm:grid-cols-4 lg:px-0">
           {[
             ["Transparent pricing", "View price before booking"],
             ["Trained experts", "Verified technicians"],
             ["On-time slots", "Pick your preferred time"],
             ["Support included", "Help before and after service"],
           ].map(([title, description]) => (
-            <div key={title} className="bg-white px-4 py-4 sm:px-6 lg:px-8">
+            <div key={title} className="bg-white px-4 py-4 sm:px-6 lg:px-8 lg:py-[clamp(.6rem,1.2vh,1rem)]">
               <p className="text-sm font-bold text-foreground">{title}</p>
               <p className="mt-1 text-xs leading-5 text-secondary">{description}</p>
             </div>
           ))}
-        </div>
-      </section>
+      </div>
 
       <section aria-label="AC service" className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 lg:px-8">
         <div className="relative isolate min-h-56 overflow-hidden rounded-lg bg-[#eee5fc] sm:aspect-[5/1] sm:min-h-0">
@@ -302,9 +290,9 @@ function HeroImageMosaic() {
     { image: "/images/hero/water-tank-cleaning.webp", title: "Water Tank Cleaning", slug: "water-tank-cleaning" },
     { image: "/images/hero/sofa-repair.webp", title: "Sofa Repair", slug: "sofa-repair-inspection-charge" },
   ];
-  return <div className="hidden min-w-0 grid-cols-2 grid-rows-2 gap-3 lg:grid">{cards.map((card) => {
-    const className = "group relative min-h-0 overflow-hidden rounded-md text-left focus-visible:outline-2 focus-visible:outline-primary";
-    const content = <><Image src={card.image} alt={`Purple Squad ${card.title}`} fill priority sizes="(min-width: 1024px) 28vw, 46vw" className="object-cover transition duration-300 group-hover:scale-[1.02]" /><span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent px-3 pb-3 pt-8 text-xs font-bold text-white sm:text-sm">{card.title}</span></>;
+  return <div className="hidden min-w-0 grid-cols-2 content-center gap-3 lg:grid lg:w-full lg:gap-[clamp(.5rem,1vh,.75rem)]">{cards.map((card) => {
+    const className = "group relative aspect-[4/3] min-h-0 overflow-hidden rounded-md text-left focus-visible:outline-2 focus-visible:outline-primary";
+    const content = <><Image src={card.image} alt={`Purple Squad ${card.title}`} fill priority sizes="(min-width: 1024px) 28vw, 46vw" className="object-cover object-center transition duration-300 group-hover:scale-[1.02]" /><span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent px-3 pb-3 pt-8 text-xs font-bold text-white sm:text-sm">{card.title}</span></>;
 
     return card.opensApplianceSelector ? <button key={card.image} type="button" onClick={openApplianceSelector} className={className}>{content}</button> : <Link key={card.image} href={routes.serviceCategory(card.slug)} className={className}>{content}</Link>;
   })}</div>;
