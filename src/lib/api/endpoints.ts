@@ -6,6 +6,7 @@ import type {
   AddressRequest,
   LocationAddress,
   AdminService,
+  AdminPackage,
   AdminServiceCategory,
   AdminServiceImage,
   AdminServiceArea,
@@ -90,6 +91,7 @@ export const apiPaths = {
   adminCategoryDetail: (id: UUID) => `/api/v1/admin/service-categories/${id}/`,
   adminServices: "/api/v1/admin/services/",
   adminServiceDetail: (id: UUID) => `/api/v1/admin/services/${id}/`,
+  adminPackages: "/api/v1/admin/packages/",
   adminServiceImages: (serviceId: UUID) => `/api/v1/admin/services/${serviceId}/images/`,
   adminServiceImageDetail: (serviceId: UUID, imageId: UUID) => `/api/v1/admin/services/${serviceId}/images/${imageId}/`,
   adminServiceAreas: "/api/v1/admin/service-areas/",
@@ -346,6 +348,8 @@ export const adminApi = {
     }),
   listServices: (query?: { page?: number; page_size?: number }) =>
     apiRequest<PaginatedResponse<AdminService>>(apiPaths.adminServices, { auth: true, query }),
+  listPackages: (query?: { page?: number; page_size?: number; is_active?: boolean }) =>
+    apiRequest<PaginatedResponse<AdminPackage>>(apiPaths.adminPackages, { auth: true, query }),
   createService: (body: FormData | Partial<AdminService>) =>
     apiRequest<AdminService>(apiPaths.adminServices, {
       method: "POST",

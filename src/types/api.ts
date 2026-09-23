@@ -135,6 +135,29 @@ export type AdminService = Omit<ServiceDetail, "category" | "effective_price"> &
   updated_at: ISODateTime;
 };
 
+export type AdminPackageItem = {
+  id: UUID;
+  service: UUID;
+  service_detail: ServiceListItem;
+  quantity: number;
+  display_order: number;
+};
+
+export type AdminPackage = {
+  id: UUID;
+  name: string;
+  slug: string;
+  description: string;
+  bundle_price: DecimalString;
+  valid_from: ISODate | null;
+  valid_until: ISODate | null;
+  maximum_usage_limit: number;
+  is_active: boolean;
+  items: AdminPackageItem[];
+  created_at: ISODateTime;
+  updated_at: ISODateTime;
+};
+
 export type AdminServiceArea = {
   id: UUID;
   name: string;
@@ -498,7 +521,7 @@ export type Lead = {
   last_activity_at: ISODateTime;
   converted_booking: UUID | null;
   booking_number?: string;
-  line_items?: Array<{ service_id: UUID; package_name: string; quantity: number; unit_cost: DecimalString }>;
+  line_items?: Array<{ id?: UUID; package_id?: UUID; service_id: UUID; package_name: string; quantity: number; unit_cost: DecimalString; line_total?: DecimalString }>;
   subtotal?: DecimalString;
   tax_amount?: DecimalString;
   training_fee?: DecimalString;

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { AdminLeadDetailScreen } from "@/features/admin/components/admin-live-backlog-screens";
+import { AdminLeadDetailScreen } from "@/features/admin/components/admin-lead-detail-screen";
 
 export const metadata: Metadata = { title: "Admin Lead Detail" };
 
