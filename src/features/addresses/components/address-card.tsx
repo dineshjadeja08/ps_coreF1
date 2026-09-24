@@ -14,10 +14,10 @@ type AddressCardProps = {
 
 export function AddressCard({ address, onEdit, onDelete, onSetDefault, deleting, settingDefault }: AddressCardProps) {
   return (
-    <article className="rounded-md border border-border bg-surface p-4 shadow-sm">
+    <article className="rounded-xl border border-border bg-surface p-4 shadow-sm">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3">
-          <div className="grid h-10 w-10 place-items-center rounded-md bg-primary-soft text-primary">
+          <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary-soft text-primary sm:h-10 sm:w-10">
             <Home className="h-5 w-5" />
           </div>
           <div>
@@ -45,18 +45,18 @@ export function AddressCard({ address, onEdit, onDelete, onSetDefault, deleting,
           </div>
         </div>
       </div>
-      <div className="mt-4 flex flex-wrap gap-2">
-        <Button type="button" variant="outline" size="sm" onClick={() => onEdit(address)}>
+      <div className="mt-4 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+        <Button type="button" variant="outline" size="sm" className="w-full sm:w-auto" onClick={() => onEdit(address)}>
           <Pencil className="h-4 w-4" />
           Edit
         </Button>
         {!address.is_default && onSetDefault ? (
-          <Button type="button" variant="secondary" size="sm" onClick={() => onSetDefault(address.id)} disabled={settingDefault}>
+          <Button type="button" variant="secondary" size="sm" className="w-full sm:w-auto" onClick={() => onSetDefault(address.id)} disabled={settingDefault}>
             <Star className="h-4 w-4" />
             Set default
           </Button>
         ) : null}
-        <Button type="button" variant="ghost" size="sm" onClick={() => onDelete(address.id)} disabled={deleting}>
+        <Button type="button" variant="ghost" size="sm" className="w-full sm:w-auto" onClick={() => onDelete(address.id)} disabled={deleting}>
           <Trash2 className="h-4 w-4" />
           Delete
         </Button>

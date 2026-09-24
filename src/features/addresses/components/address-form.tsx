@@ -123,12 +123,12 @@ export function AddressForm({ initialAddress, submitting, onSubmit, onCancel }: 
   ];
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="rounded-lg border border-border bg-surface p-5 shadow-sm">
+    <form onSubmit={form.handleSubmit(onSubmit)} className="rounded-xl border border-border bg-surface p-4 shadow-sm sm:p-5">
       <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h3 className="text-lg font-bold text-foreground">{initialAddress ? "Edit address" : "Add address"}</h3>
         </div>
-        <Button type="button" variant="outline" onClick={() => void detectAddressFromLocation()} disabled={detecting || submitting}>
+        <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={() => void detectAddressFromLocation()} disabled={detecting || submitting}>
           {detecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <LocateFixed className="h-4 w-4" />}
           {detectFailed ? "Retry location" : "Auto detect address"}
         </Button>
@@ -250,12 +250,12 @@ export function AddressForm({ initialAddress, submitting, onSubmit, onCancel }: 
       </div>
 
       <div className="mt-5 flex flex-col gap-2 sm:flex-row">
-        <Button type="submit" disabled={submitting || serviceability.isFetching || serviceability.data?.is_supported === false}>
+        <Button type="submit" className="w-full sm:w-auto" disabled={submitting || serviceability.isFetching || serviceability.data?.is_supported === false}>
           {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
           {initialAddress ? "Update address" : "Save address"}
         </Button>
         {onCancel ? (
-          <Button type="button" variant="outline" onClick={onCancel}>
+          <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={onCancel}>
             Cancel
           </Button>
         ) : null}

@@ -10,7 +10,7 @@ import { ServiceIcon } from "@/features/catalogue/components/service-icon";
 
 const OPEN_APPLIANCE_SELECTOR_EVENT = "purple-squad:open-appliance-selector";
 
-const applianceServices = [
+export const applianceServices = [
   { name: "AC Repair & Services", slug: "ac-services" },
   { name: "Washing Machine Repair", slug: "washing-machine-repair-service" },
   { name: "Refrigerator Repair & Services", slug: "refrigerator-repair-services" },

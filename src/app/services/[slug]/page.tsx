@@ -4,6 +4,8 @@ import { Suspense } from "react";
 import { JsonLd } from "@/components/seo/json-ld";
 import { ServiceDetailView } from "@/features/catalogue/components/service-detail-view";
 import { ServicesListing } from "@/features/catalogue/components/services-listing";
+import { WaterTankLanding } from "@/features/catalogue/components/landing/water-tank-landing";
+import { isWaterTankService } from "@/features/catalogue/group-services";
 import { ServiceCardSkeletonGrid } from "@/features/catalogue/components/skeletons";
 import { getServiceCategoriesForSeo, getServiceDetailForSeo, getServiceReviewsForSeo, getServicesForSeo } from "@/features/catalogue/server";
 import { breadcrumbJsonLd, canonicalFor, compactDescription, defaultOgImagePath, localBusinessJsonLd, serviceJsonLd, servicesJsonLd } from "@/lib/seo";
@@ -66,6 +68,22 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
   const { slug } = await params;
   const categories = await getServiceCategoriesForSeo();
   const category = categories.find((item) => item.slug === slug);
+
+  if (slug === "water-tank-cleaning") {
+    const sourceCategory = category ?? categories.find((item) => item.slug === "cleaning");
+    const services = await getServicesForSeo({ category: sourceCategory?.slug ?? "cleaning", page_size: 100 });
+    const waterServices = services.results.filter(isWaterTankService);
+    const initialServices = { ...services, count: waterServices.length, results: waterServices, next: null, previous: null };
+    return (
+      <>
+        <JsonLd data={servicesJsonLd(waterServices, "/services/water-tank-cleaning")} />
+        <Suspense fallback={<div className="mx-auto max-w-3xl px-4 py-8"><ServiceCardSkeletonGrid count={3} /></div>}>
+          <WaterTankLanding initialServices={initialServices} sourceCategorySlug={sourceCategory?.slug ?? "cleaning"} />
+        </Suspense>
+      </>
+    );
+  }
+
   if (category) {
     const services = await getServicesForSeo({ category: category.slug, page_size: 60 });
     return (
