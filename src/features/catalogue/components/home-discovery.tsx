@@ -23,8 +23,8 @@ import { AddToCartButton } from "@/features/cart/cart-controls";
 import { openApplianceSelector } from "@/features/catalogue/components/appliance-selector-dialog";
 import { ServiceImage } from "@/features/catalogue/components/service-image";
 import { ServiceCardSkeletonGrid } from "@/features/catalogue/components/skeletons";
-import { useServiceCategories, useServices } from "@/features/catalogue/queries";
-import type { ServiceCategory, ServiceListItem } from "@/features/catalogue/types";
+import { useServices } from "@/features/catalogue/queries";
+import type { ServiceListItem } from "@/features/catalogue/types";
 import { formatPrice, getCurrentPrice, hasOfferPrice } from "@/features/catalogue/utils";
 import { useSelectedLocation } from "@/features/location/selected-location";
 
@@ -69,23 +69,9 @@ const preferredServiceSlugs: Record<string, string> = {
   "water tank": "water-tank-cleaning",
 };
 
-function uploadedDiscoveryImage(
-  slug: string,
-  fallback: string,
-  services: ServiceListItem[],
-  categories: ServiceCategory[],
-) {
-  const service = services.find((item) => item.slug === slug);
-  if (service) {
-    return service.list_image || service.landing_thumbnail || service.cover_image || fallback;
-  }
-  return categories.find((item) => item.slug === slug)?.image_url || fallback;
-}
-
 export function HomeDiscovery() {
   const location = useSelectedLocation();
   const locationFilter = location.pincode ? { postal_code: location.pincode } : { city: location.city };
-  const categories = useServiceCategories();
   const services = useServices({ page_size: 80, ...locationFilter });
   const featured = useServices({ featured: true, page_size: 10, ...locationFilter });
 
@@ -117,9 +103,8 @@ export function HomeDiscovery() {
             <p className="mt-4 text-lg text-secondary sm:text-xl lg:mt-[clamp(.5rem,1.3vh,1rem)] lg:text-[clamp(1rem,2vh,1.25rem)]">Trusted professionals. Hassle-free service.</p>
             <div className="mt-5 grid grid-cols-2 gap-3 lg:mt-[clamp(.6rem,1.5vh,1.25rem)] lg:gap-[clamp(.5rem,1vh,.75rem)]">
               {homeCategories.map((item) => {
-                const image = uploadedDiscoveryImage(item.slug, item.image, servicePool, categories.data ?? []);
                 const className = "flex min-h-36 min-w-0 flex-col items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white p-4 text-center shadow-[0_2px_8px_rgba(24,24,27,0.04)] transition hover:border-primary/40 hover:bg-primary-soft hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:p-5 lg:min-h-[clamp(6.75rem,14vh,9rem)] lg:p-[clamp(.65rem,1.5vh,1.25rem)]";
-                const content = <><Image src={image} alt="" width={88} height={88} className="h-16 w-16 object-contain sm:h-20 sm:w-20 lg:h-[clamp(3.25rem,7.5vh,5rem)] lg:w-[clamp(3.25rem,7.5vh,5rem)]" /><span className="line-clamp-2 text-sm font-bold leading-5">{item.name}</span><span className="line-clamp-1 text-[11px] font-medium text-zinc-500 sm:text-xs">{item.description}</span></>;
+                const content = <><Image src={item.image} alt="" width={88} height={88} className="h-16 w-16 object-contain sm:h-20 sm:w-20 lg:h-[clamp(3.25rem,7.5vh,5rem)] lg:w-[clamp(3.25rem,7.5vh,5rem)]" /><span className="line-clamp-2 text-sm font-bold leading-5">{item.name}</span><span className="line-clamp-1 text-[11px] font-medium text-zinc-500 sm:text-xs">{item.description}</span></>;
 
                 return item.opensApplianceSelector ? (
                   <button key={item.name} type="button" className={className} onClick={openApplianceSelector}>{content}</button>
@@ -179,10 +164,7 @@ export function HomeDiscovery() {
         </div>
         <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-4 sm:gap-3 lg:grid-cols-6">
           {popularCategories.map((item) => {
-            const image = "slug" in item
-              ? uploadedDiscoveryImage(item.slug, item.image, servicePool, categories.data ?? [])
-              : item.image;
-            const content = <><Image src={image} alt="" width={88} height={88} className={`h-12 w-12 object-contain transition sm:h-16 sm:w-16 ${"comingSoon" in item ? "grayscale opacity-55" : "group-hover:scale-105"}`} /><h3 className={`line-clamp-2 text-xs font-semibold leading-4 sm:text-sm ${"comingSoon" in item ? "text-zinc-500" : "group-hover:text-primary"}`}>{item.name}</h3>{"comingSoon" in item ? <span className="rounded-full bg-amber-100 px-2 py-1 text-[9px] font-bold uppercase tracking-wide text-amber-800 sm:text-[10px]">Coming soon</span> : null}</>;
+            const content = <><Image src={item.image} alt="" width={88} height={88} className={`h-12 w-12 object-contain transition sm:h-16 sm:w-16 ${"comingSoon" in item ? "grayscale opacity-55" : "group-hover:scale-105"}`} /><h3 className={`line-clamp-2 text-xs font-semibold leading-4 sm:text-sm ${"comingSoon" in item ? "text-zinc-500" : "group-hover:text-primary"}`}>{item.name}</h3>{"comingSoon" in item ? <span className="rounded-full bg-amber-100 px-2 py-1 text-[9px] font-bold uppercase tracking-wide text-amber-800 sm:text-[10px]">Coming soon</span> : null}</>;
 
             if ("comingSoon" in item) {
               return <div key={item.name} aria-disabled="true" className="relative flex aspect-square min-w-0 cursor-not-allowed flex-col items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 p-2 text-center shadow-[0_2px_8px_rgba(24,24,27,0.04)] sm:p-4">{content}</div>;
