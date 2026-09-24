@@ -1,9 +1,9 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQueries, useQuery } from "@tanstack/react-query";
 
 import { publicCatalogueApi } from "@/features/catalogue/api";
-import type { ServiceDetail } from "@/features/catalogue/types";
+import type { PaginatedResponse, ServiceDetail, ServiceListItem } from "@/features/catalogue/types";
 import { queryKeys } from "@/lib/api/query-keys";
 
 export function useServiceCategories() {
@@ -14,10 +14,14 @@ export function useServiceCategories() {
   });
 }
 
-export function useServices(params?: { category?: string; search?: string; featured?: boolean; postal_code?: string; page_size?: number }) {
+export function useServices(
+  params?: { category?: string; search?: string; featured?: boolean; postal_code?: string; page_size?: number },
+  initialData?: PaginatedResponse<ServiceListItem>,
+) {
   return useQuery({
     queryKey: queryKeys.services(params),
     queryFn: () => publicCatalogueApi.listServices(params),
+    initialData,
     staleTime: 2 * 60_000,
   });
 }
@@ -38,6 +42,22 @@ export function useServiceReviews(serviceId?: string) {
     queryFn: () => publicCatalogueApi.listServiceReviews(serviceId ?? ""),
     enabled: Boolean(serviceId),
   });
+}
+
+export function useServiceReviewsAggregate(serviceIds: string[]) {
+  const uniqueIds = Array.from(new Set(serviceIds.filter(Boolean)));
+  const queries = useQueries({
+    queries: uniqueIds.map((serviceId) => ({
+      queryKey: queryKeys.serviceReviews(serviceId),
+      queryFn: () => publicCatalogueApi.listServiceReviews(serviceId),
+      staleTime: 2 * 60_000,
+    })),
+  });
+  return {
+    reviews: queries.flatMap((query) => query.data?.results ?? []),
+    isLoading: queries.some((query) => query.isLoading),
+    isError: queries.some((query) => query.isError),
+  };
 }
 
 export function useServiceFaqs(serviceId?: string) {

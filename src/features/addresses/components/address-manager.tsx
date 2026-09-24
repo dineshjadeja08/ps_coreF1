@@ -73,7 +73,7 @@ export function AddressManager({ compact = false, startOpen = false }: { compact
               : "Add and manage service addresses for future bookings."}
           </p>
         </div>
-        <Button type="button" onClick={() => setShowForm(true)}>
+        <Button type="button" className="w-full sm:w-auto" onClick={() => setShowForm(true)}>
           <Plus className="h-4 w-4" />
           Add address
         </Button>
@@ -121,12 +121,12 @@ export function AddressManager({ compact = false, startOpen = false }: { compact
       ) : null}
 
       {addresses.data && items.length === 0 && !showForm ? (
-        <div className="rounded-md border border-dashed border-border bg-surface p-8 text-center">
+        <div className="rounded-xl border border-dashed border-border bg-surface p-5 text-center sm:p-8">
           <h3 className="text-lg font-semibold text-foreground">No saved addresses</h3>
           <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-secondary">
             Add a serviceable address now so the next booking phase can move faster.
           </p>
-          <Button type="button" variant="secondary" className="mt-5" onClick={() => setShowForm(true)}>
+          <Button type="button" variant="secondary" className="mt-5 w-full sm:w-auto" onClick={() => setShowForm(true)}>
             <Plus className="h-4 w-4" />
             Add address
           </Button>
