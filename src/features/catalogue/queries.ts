@@ -4,6 +4,7 @@ import { useQueries, useQuery } from "@tanstack/react-query";
 
 import { publicCatalogueApi } from "@/features/catalogue/api";
 import type { PaginatedResponse, ServiceDetail, ServiceListItem } from "@/features/catalogue/types";
+import type { HomepageBanner } from "@/types/api";
 import { queryKeys } from "@/lib/api/query-keys";
 
 export function useServiceCategories() {
@@ -11,6 +12,14 @@ export function useServiceCategories() {
     queryKey: queryKeys.serviceCategories,
     queryFn: publicCatalogueApi.listCategories,
     staleTime: 5 * 60_000,
+  });
+}
+
+export function useHomepageBanners(placement: HomepageBanner["placement"] = "MAIN") {
+  return useQuery({
+    queryKey: ["homepage-banners", placement],
+    queryFn: () => publicCatalogueApi.listHomepageBanners(placement),
+    staleTime: 60_000,
   });
 }
 

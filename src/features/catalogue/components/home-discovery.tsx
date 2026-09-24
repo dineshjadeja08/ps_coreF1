@@ -23,7 +23,7 @@ import { AddToCartButton } from "@/features/cart/cart-controls";
 import { openApplianceSelector } from "@/features/catalogue/components/appliance-selector-dialog";
 import { ServiceImage } from "@/features/catalogue/components/service-image";
 import { ServiceCardSkeletonGrid } from "@/features/catalogue/components/skeletons";
-import { useServices } from "@/features/catalogue/queries";
+import { useHomepageBanners, useServices } from "@/features/catalogue/queries";
 import type { ServiceListItem } from "@/features/catalogue/types";
 import { formatPrice, getCurrentPrice, hasOfferPrice } from "@/features/catalogue/utils";
 import { useSelectedLocation } from "@/features/location/selected-location";
@@ -133,27 +133,7 @@ export function HomeDiscovery() {
           ))}
       </div>
 
-      <section aria-label="AC service" className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 lg:px-8">
-        <div className="relative isolate min-h-56 overflow-hidden rounded-lg bg-[#eee5fc] sm:aspect-[5/1] sm:min-h-0">
-          <Image
-            src="/images/hero/ac-service.webp"
-            alt="Purple Squad AC service professional"
-            fill
-            sizes="(min-width: 1280px) 1280px, 100vw"
-            className="object-cover object-[72%_42%]"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#eee5fc] via-[#eee5fc]/95 to-[#eee5fc]/5 sm:via-[#eee5fc]/80 sm:to-transparent" />
-          <div className="relative z-10 flex h-full max-w-[72%] flex-col justify-center p-5 sm:max-w-[48%] sm:p-7">
-            <p className="text-sm font-semibold uppercase tracking-wide text-primary">Limited-time offer</p>
-            <h2 className="mt-1 text-2xl font-bold sm:text-3xl">Stay Cool, All Year</h2>
-            <p className="mt-2 text-sm text-secondary">Professional AC service at your doorstep.</p>
-            <div className="mt-3 flex flex-wrap items-center gap-3">
-              <span className="rounded-md bg-white/90 px-3 py-2 text-sm font-semibold text-foreground shadow-sm">AC Service from <strong className="text-lg text-primary">₹399</strong></span>
-              <Button asChild size="sm"><Link href={routes.serviceCategory("ac-services")}>Book now <ArrowRight className="h-4 w-4" /></Link></Button>
-            </div>
-          </div>
-        </div>
-      </section>
+      <HomepageOfferBanner />
 
       <SpotlightCarousel />
 
@@ -223,6 +203,48 @@ export function HomeDiscovery() {
     </div>
   );
 }
+
+function HomepageOfferBanner() {
+  const banners = useHomepageBanners("MAIN");
+  const banner = banners.data?.[0];
+  const desktopImage = banner?.desktop_image_url || banner?.desktop_image || "/images/hero/ac-service.webp";
+  const mobileImage = banner?.mobile_image_url || banner?.mobile_image || desktopImage;
+  const href = banner?.button_link || routes.serviceCategory("ac-services");
+
+  return (
+    <section aria-label={banner?.image_alt_text || "AC service"} className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 lg:px-8">
+      <div className="relative isolate min-h-56 overflow-hidden rounded-lg bg-[#eee5fc] sm:aspect-[5/1] sm:min-h-0">
+        <Image
+          src={mobileImage}
+          alt={banner?.image_alt_text || "Purple Squad AC service professional"}
+          fill
+          unoptimized={mobileImage.startsWith("http")}
+          sizes="100vw"
+          className="object-cover object-center sm:hidden"
+        />
+        <Image
+          src={desktopImage}
+          alt={banner?.image_alt_text || "Purple Squad AC service professional"}
+          fill
+          unoptimized={desktopImage.startsWith("http")}
+          sizes="(min-width: 1280px) 1280px, 100vw"
+          className="hidden object-cover object-center sm:block"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#eee5fc] via-[#eee5fc]/95 to-[#eee5fc]/5 sm:via-[#eee5fc]/80 sm:to-transparent" />
+        <div className="relative z-10 flex h-full max-w-[72%] flex-col justify-center p-5 sm:max-w-[48%] sm:p-7">
+          <p className="text-sm font-semibold uppercase tracking-wide text-primary">Limited-time offer</p>
+          <h2 className="mt-1 text-2xl font-bold sm:text-3xl">{banner?.title || "Stay Cool, All Year"}</h2>
+          <p className="mt-2 text-sm text-secondary">{banner?.description || "Professional AC service at your doorstep."}</p>
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <span className="rounded-md bg-white/90 px-3 py-2 text-sm font-semibold text-foreground shadow-sm">AC Service from <strong className="text-lg text-primary">₹299</strong></span>
+            <Button asChild size="sm"><Link href={href}>{banner?.button_text || "Book now"} <ArrowRight className="h-4 w-4" /></Link></Button>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function SpotlightCarousel() {
   const row = useRef<HTMLDivElement>(null);
   const [start, setStart] = useState(0);

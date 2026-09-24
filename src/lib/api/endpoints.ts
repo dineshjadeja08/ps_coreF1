@@ -78,6 +78,7 @@ export const apiPaths = {
   serviceDetail: (slug: string) => `/api/v1/services/${slug}/`,
   serviceReviews: (serviceId: UUID) => `/api/v1/services/${serviceId}/reviews/`,
   faqs: "/api/v1/faqs/",
+  homepageBanners: "/api/v1/homepage-banners/",
   addresses: "/api/v1/addresses/",
   addressDetail: (id: UUID) => `/api/v1/addresses/${id}/`,
   slots: "/api/v1/slots/",
@@ -163,6 +164,8 @@ export const catalogueApi = {
   listServiceReviews: (serviceId: UUID) =>
     apiRequest<PaginatedResponse<Review>>(apiPaths.serviceReviews(serviceId), { query: { page_size: 3 } }),
   listServiceFaqs: (serviceId: UUID) => apiRequest<FAQ[]>(apiPaths.faqs, { query: { service_id: serviceId } }),
+  listHomepageBanners: (placement: HomepageBanner["placement"] = "MAIN") =>
+    apiRequest<HomepageBanner[]>(apiPaths.homepageBanners, { query: { placement }, cache: "no-store" }),
   checkServiceArea: (postalCode: string) =>
     apiRequest<ServiceAreaCheckResponse>(apiPaths.serviceAreaCheck, { query: { postal_code: postalCode } }),
   listServiceAreas: (city?: string) =>
