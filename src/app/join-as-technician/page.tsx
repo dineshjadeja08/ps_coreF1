@@ -17,7 +17,7 @@ export default function JoinAsTechnicianPage() {
       details={[
         {
           title: "Office address",
-          lines: ["Purple Squad Support", "Chennai, Bangalore, and Coimbatore operations"],
+          lines: ["Purple Squad Support", "Chennai and Coimbatore operations"],
         },
         {
           title: "Business hours",

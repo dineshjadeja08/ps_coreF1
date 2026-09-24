@@ -27,6 +27,7 @@ import type {
   Review,
   ReviewCreateRequest,
   ServiceAreaCheckResponse,
+  ServiceArea,
   ServiceCategory,
   ServiceDetail,
   ServiceListItem,
@@ -69,6 +70,7 @@ export const apiPaths = {
   logout: "/api/v1/auth/logout/",
   me: "/api/v1/auth/me/",
   serviceAreaCheck: "/api/v1/service-areas/check/",
+  serviceAreas: "/api/v1/service-areas/",
   locationReverseGeocode: "/api/v1/location/reverse-geocode/",
   locationAutocomplete: "/api/v1/location/autocomplete/",
   serviceCategories: "/api/v1/service-categories/",
@@ -155,7 +157,7 @@ export const apiPaths = {
 
 export const catalogueApi = {
   listCategories: () => apiRequest<ServiceCategory[]>(apiPaths.serviceCategories, { cache: "no-store" }),
-  listServices: (query?: { category?: string; search?: string; featured?: boolean; postal_code?: string; page?: number; page_size?: number }) =>
+  listServices: (query?: { category?: string; search?: string; featured?: boolean; city?: string; postal_code?: string; page?: number; page_size?: number }) =>
     apiRequest<PaginatedResponse<ServiceListItem>>(apiPaths.services, { query }),
   getService: (slug: string) => apiRequest<ServiceDetail>(apiPaths.serviceDetail(slug)),
   listServiceReviews: (serviceId: UUID) =>
@@ -163,17 +165,17 @@ export const catalogueApi = {
   listServiceFaqs: (serviceId: UUID) => apiRequest<FAQ[]>(apiPaths.faqs, { query: { service_id: serviceId } }),
   checkServiceArea: (postalCode: string) =>
     apiRequest<ServiceAreaCheckResponse>(apiPaths.serviceAreaCheck, { query: { postal_code: postalCode } }),
+  listServiceAreas: (city?: string) =>
+    apiRequest<ServiceArea[]>(apiPaths.serviceAreas, { query: { city } }),
 };
 
 export const addressApi = {
   reverseGeocode: (latitude: string, longitude: string) =>
     apiRequest<LocationAddress>(apiPaths.locationReverseGeocode, {
-      auth: true,
       query: { lat: latitude, lng: longitude },
     }),
   autocomplete: (input: string) =>
     apiRequest<AddressAutocompleteResponse>(apiPaths.locationAutocomplete, {
-      auth: true,
       query: { input },
     }),
   list: () => apiRequest<PaginatedResponse<Address>>(apiPaths.addresses, { auth: true }),

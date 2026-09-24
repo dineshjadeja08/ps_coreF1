@@ -44,6 +44,15 @@ export type ServiceAreaCheckResponse = {
   service_area: Record<string, unknown> | null;
 };
 
+export type ServiceArea = {
+  id: UUID;
+  name: string;
+  city: string;
+  state: string;
+  country: string;
+  postal_code: string;
+};
+
 export type LocationAddress = {
   formatted_address: string;
   house_number: string;

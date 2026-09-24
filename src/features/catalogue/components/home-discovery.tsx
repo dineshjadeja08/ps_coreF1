@@ -26,6 +26,7 @@ import { ServiceCardSkeletonGrid } from "@/features/catalogue/components/skeleto
 import { useServices } from "@/features/catalogue/queries";
 import type { ServiceListItem } from "@/features/catalogue/types";
 import { formatPrice, getCurrentPrice, hasOfferPrice } from "@/features/catalogue/utils";
+import { useSelectedLocation } from "@/features/location/selected-location";
 
 const homeCategories = [
   { name: "Home Appliances", slug: "home-appliances-repair", description: "Repair and appliance care", image: "/images/categories/home-appliances-repair.png", opensApplianceSelector: true },
@@ -69,8 +70,10 @@ const preferredServiceSlugs: Record<string, string> = {
 };
 
 export function HomeDiscovery() {
-  const services = useServices({ page_size: 80 });
-  const featured = useServices({ featured: true, page_size: 10 });
+  const location = useSelectedLocation();
+  const locationFilter = location.pincode ? { postal_code: location.pincode } : { city: location.city };
+  const services = useServices({ page_size: 80, ...locationFilter });
+  const featured = useServices({ featured: true, page_size: 10, ...locationFilter });
 
   const allServices = useMemo(() => services.data?.results ?? [], [services.data?.results]);
   const servicePool = Array.from(new Map(
@@ -93,7 +96,7 @@ export function HomeDiscovery() {
           <div className="flex min-w-0 flex-col justify-center lg:max-h-full">
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
               <h1 className="max-w-xl text-[2.15rem] font-bold leading-[1.08] text-foreground sm:text-[3.25rem] lg:text-[clamp(2.25rem,4.8vh,3.4rem)]">
-                Home Appliance Services at <span className="text-primary">Your Doorstep in Chennai</span>
+                Home Appliance Services at <span className="text-primary">Your Doorstep in {location.city}</span>
               </h1>
             </motion.div>
 
@@ -178,6 +181,7 @@ export function HomeDiscovery() {
             <div>
               <p className="text-xs font-bold uppercase tracking-wide text-primary">Frequently booked</p>
               <h2 className="mt-1 text-xl font-bold text-foreground sm:text-2xl">Popular services near you</h2>
+              <p className="mt-1 text-xs font-medium text-secondary">Showing services available in {location.label || location.city}</p>
             </div>
             <Button asChild variant="outline" className="h-9 shrink-0 rounded-full border-primary/30 px-3 text-xs text-primary sm:text-sm">
               <Link href={routes.services}>

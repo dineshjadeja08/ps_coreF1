@@ -21,6 +21,7 @@ import { CategorySkeletonGrid, ServiceCardSkeletonGrid } from "@/features/catalo
 import { useServiceCategories, useServices } from "@/features/catalogue/queries";
 import type { ServiceCategory, ServiceListItem } from "@/features/catalogue/types";
 import { formatDuration, formatPrice, getCategoryName, getCurrentPrice, hasOfferPrice } from "@/features/catalogue/utils";
+import { setSelectedLocation, useSelectedLocation } from "@/features/location/selected-location";
 import { cn } from "@/lib/utils";
 
 const popularSearches = ["AC Service", "Bathroom Cleaning", "Washing Machine", "Refrigerator", "Water Purifier", "CCTV"];
@@ -37,15 +38,17 @@ export function ServicesListing({ mode = "browse", categorySlug }: ServicesListi
   const query = searchParams.get("q") ?? "";
   const [searchText, setSearchText] = useState(query);
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
-  const [city, setCity] = useState<string>(serviceCities[0]);
+  const location = useSelectedLocation();
+  const locationFilter = location.pincode ? { postal_code: location.pincode } : { city: location.city };
 
   const categories = useServiceCategories();
   const services = useServices({
     category: category ?? undefined,
     search: query || undefined,
     page_size: 40,
+    ...locationFilter,
   });
-  const allServices = useServices({ page_size: 80 });
+  const allServices = useServices({ page_size: 80, ...locationFilter });
 
   const categoryTitle = getCategoryName(categories.data ?? [], category);
   const selectedCategory = useMemo(
@@ -91,8 +94,8 @@ export function ServicesListing({ mode = "browse", categorySlug }: ServicesListi
                 </label>
                 <select
                   id="services-city"
-                  value={city}
-                  onChange={(event) => setCity(event.target.value)}
+                  value={location.city}
+                  onChange={(event) => setSelectedLocation({ city: event.target.value })}
                   className="mt-1 w-full bg-transparent text-sm font-bold text-foreground outline-none"
                 >
                   {serviceCities.map((item) => (

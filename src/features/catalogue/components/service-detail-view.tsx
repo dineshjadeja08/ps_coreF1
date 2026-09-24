@@ -17,6 +17,7 @@ import { useServiceDetail, useServiceFaqs, useServiceReviews, useServices } from
 import type { ServiceDetail, ServiceListItem } from "@/features/catalogue/types";
 import type { FAQ } from "@/types/api";
 import { formatDuration, formatPrice, getCurrentPrice, hasOfferPrice } from "@/features/catalogue/utils";
+import { useSelectedLocation } from "@/features/location/selected-location";
 
 function packageFamilyKey(service: Pick<ServiceListItem, "name" | "short_description" | "category">) {
   const text = `${service.name} ${service.short_description} ${service.category.name}`.toLowerCase();
@@ -59,13 +60,24 @@ function listImage(service: ServiceListItem) {
   return service.list_image || service.landing_thumbnail || service.cover_image;
 }
 
-export function ServiceDetailView({ initialService }: { initialService?: ServiceDetail | null }) {
+export function ServiceDetailView({
+  initialService,
+  serviceSlug,
+  landingTitle,
+}: {
+  initialService?: ServiceDetail | null;
+  serviceSlug?: string;
+  landingTitle?: string;
+}) {
   const params = useParams<{ slug: string }>();
-  const slug = params.slug;
+  const slug = serviceSlug ?? params.slug;
+  const location = useSelectedLocation();
+  const locationFilter = location.pincode ? { postal_code: location.pincode } : { city: location.city };
   const service = useServiceDetail(slug, initialService ?? undefined);
   const related = useServices({
     category: service.data?.category.slug,
     page_size: 80,
+    ...locationFilter,
   });
   const reviews = useServiceReviews(service.data?.id);
   const [selectedPackage, setSelectedPackage] = useState<ServiceListItem | null>(null);
@@ -97,6 +109,7 @@ export function ServiceDetailView({ initialService }: { initialService?: Service
   const currentFamily = packageFamilyKey(detail);
   const familyPackages = allRelated.filter((item) => packageFamilyKey(item) === currentFamily);
   const packageServices = familyPackages.length > 1 ? familyPackages : [detail];
+  const pageTitle = landingTitle ?? detail.name;
 
   return (
     <div className="overflow-x-clip bg-[#f7f7f7]">
@@ -111,20 +124,20 @@ export function ServiceDetailView({ initialService }: { initialService?: Service
               Services
             </Link>
             <ChevronRight className="h-4 w-4" />
-            <span className="min-w-0 truncate text-foreground">{detail.name}</span>
+            <span className="min-w-0 truncate text-foreground">{pageTitle}</span>
           </nav>
 
           <div className="grid gap-7 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
             <div className="min-w-0 rounded-lg border border-border bg-white p-3 shadow-sm sm:p-4">
               <ServiceImage
                 src={landingImage(detail)}
-                alt={`${detail.name} service by Purple Squad in Chennai`}
+                alt={`${pageTitle} by Purple Squad in ${location.city}`}
                 priority
                 className="aspect-[16/10] h-auto w-full rounded-lg bg-white sm:aspect-[16/7]"
                 imageClassName="object-contain sm:object-cover"
               />
               <div className="mt-5">
-                <h1 className="text-2xl font-bold leading-tight text-foreground sm:text-3xl">{detail.name} in Chennai</h1>
+                <h1 className="text-2xl font-bold leading-tight text-foreground sm:text-3xl">{pageTitle} in {location.city}</h1>
                 <p className="mt-2 flex items-center gap-2 text-sm font-semibold text-secondary">
                   <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
                   4.8 service quality

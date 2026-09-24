@@ -9,7 +9,7 @@ export default function PartnerSupportPage() {
       quote="Good service work needs clear communication, fair process, and support that respects the professional."
       details={[
         { title: "Support hours", lines: ["Monday - Sunday: 9 AM - 7 PM"] },
-        { title: "Partner areas", lines: ["Chennai", "Bangalore", "Coimbatore"] },
+        { title: "Partner areas", lines: ["Chennai", "Coimbatore"] },
       ]}
     />
   );

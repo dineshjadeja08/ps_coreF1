@@ -8,7 +8,7 @@ const values = ["Clear pricing before booking", "Verified service professionals"
 
 export const metadata: Metadata = {
   title: "About Purple Squad",
-  description: "Learn about Purple Squad and our trusted home services across Chennai, Bangalore, and Coimbatore.",
+  description: "Learn about Purple Squad and our trusted home services across Chennai and Coimbatore.",
   alternates: {
     canonical: canonicalFor("/about"),
   },
@@ -27,7 +27,7 @@ export default function AboutPage() {
         intro="Purple Squad is a home-services platform for appliance repair, cleaning, installation, and maintenance. We help customers book trusted service professionals with clear packages, service support, and a simple digital booking flow."
         quote="Reliable home service should feel simple, transparent, and cared for from the first click to final completion."
         details={[
-          { title: "Currently serving", lines: ["Chennai", "Bangalore", "Coimbatore"] },
+          { title: "Currently serving", lines: ["Chennai", "Coimbatore"] },
           { title: "Support", lines: ["support@purplesquad.in", "76760 76361"] },
         ]}
       >

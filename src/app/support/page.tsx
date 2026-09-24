@@ -11,7 +11,7 @@ export default function SupportPage() {
       quote="Purple Squad delivers more than home services - we deliver peace of mind, with care you can trust and quality you can feel."
       details={[
         { title: "Business hours", lines: ["Monday - Sunday: 9 AM - 7 PM"] },
-        { title: "Service areas", lines: ["Chennai", "Bangalore", "Coimbatore"] },
+        { title: "Service areas", lines: ["Chennai", "Coimbatore"] },
       ]}
     >
       <div className="grid gap-3 text-sm font-semibold text-black sm:grid-cols-2">

@@ -16,7 +16,7 @@ export async function generateMetadata({ searchParams }: SearchPageProps): Promi
   const title = q ? `${q} Services` : "Search Home Services";
   const description = compactDescription(
     q
-      ? `Search Purple Squad for ${q} services in Chennai, Bangalore, and Coimbatore with clear pricing and verified professionals.`
+      ? `Search Purple Squad for ${q} services in Chennai and Coimbatore with clear pricing and verified professionals.`
       : "Search Purple Squad home services and book verified professionals.",
   );
   const params = new URLSearchParams();
@@ -27,7 +27,7 @@ export async function generateMetadata({ searchParams }: SearchPageProps): Promi
   return {
     title,
     description,
-    keywords: q ? [q, `${q} Chennai`, `${q} Bangalore`, `${q} Coimbatore`, "Purple Squad"] : undefined,
+    keywords: q ? [q, `${q} Chennai`, `${q} Coimbatore`, "Purple Squad"] : undefined,
     alternates: {
       canonical: canonicalFor(path),
     },

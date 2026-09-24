@@ -2,7 +2,7 @@ import { siteConfig } from "@/config/site";
 import type { Review, ServiceDetail, ServiceListItem } from "@/features/catalogue/types";
 import { formatPrice, getCurrentPrice } from "@/features/catalogue/utils";
 
-export const serviceAreas = ["Chennai", "Bangalore", "Coimbatore"];
+export const serviceAreas = ["Chennai", "Coimbatore"];
 export const defaultOgImagePath = "/images/hero/purple-squad-home-services-og.webp";
 
 export function absoluteUrl(path = "/") {

@@ -14,17 +14,23 @@ type ServiceDetailPageProps = {
   params: Promise<{ slug: string }>;
 };
 
+const knownCategoryLandings: Record<string, string> = {
+  "ac-services": "AC Services",
+};
+
 export async function generateMetadata({ params }: ServiceDetailPageProps): Promise<Metadata> {
   const { slug } = await params;
   const categories = await getServiceCategoriesForSeo();
   const category = categories.find((item) => item.slug === slug);
+  const fallbackCategoryName = knownCategoryLandings[slug];
 
-  if (category) {
-    const description = compactDescription(category.description, `Book ${category.name} services in Chennai with Purple Squad.`);
+  if (category || fallbackCategoryName) {
+    const categoryName = category?.name ?? fallbackCategoryName;
+    const description = compactDescription(category?.description ?? "", `Book ${categoryName} services with Purple Squad.`);
     return {
-      title: `${category.name} Services in Chennai`,
+      title: `${categoryName} in Chennai and Coimbatore`,
       description,
-      alternates: { canonical: canonicalFor(`/services/${category.slug}`) },
+      alternates: { canonical: canonicalFor(`/services/${slug}`) },
     };
   }
 
@@ -68,6 +74,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
   const { slug } = await params;
   const categories = await getServiceCategoriesForSeo();
   const category = categories.find((item) => item.slug === slug);
+  const categoryLandingSlug = category?.slug ?? (knownCategoryLandings[slug] ? slug : null);
 
   if (slug === "water-tank-cleaning") {
     const sourceCategory = category ?? categories.find((item) => item.slug === "cleaning");
@@ -84,13 +91,32 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
     );
   }
 
-  if (category) {
-    const services = await getServicesForSeo({ category: category.slug, page_size: 60 });
+  if (categoryLandingSlug === "ac-services") {
+    const services = await getServicesForSeo({ category: categoryLandingSlug, page_size: 60 });
+    const firstService = services.results[0];
+    const initialService = firstService ? await getServiceDetailForSeo(firstService.slug) : null;
+
     return (
       <>
-        <JsonLd data={servicesJsonLd(services.results, `/services/${category.slug}`)} />
+        <JsonLd data={servicesJsonLd(services.results, "/services/ac-services")} />
         <Suspense fallback={<div className="mx-auto max-w-7xl px-4 py-10"><ServiceCardSkeletonGrid count={8} /></div>}>
-          <ServicesListing categorySlug={category.slug} />
+          <ServiceDetailView
+            initialService={initialService}
+            serviceSlug={firstService?.slug}
+            landingTitle="AC Services"
+          />
+        </Suspense>
+      </>
+    );
+  }
+
+  if (categoryLandingSlug) {
+    const services = await getServicesForSeo({ category: categoryLandingSlug, page_size: 60 });
+    return (
+      <>
+        <JsonLd data={servicesJsonLd(services.results, `/services/${categoryLandingSlug}`)} />
+        <Suspense fallback={<div className="mx-auto max-w-7xl px-4 py-10"><ServiceCardSkeletonGrid count={8} /></div>}>
+          <ServicesListing categorySlug={categoryLandingSlug} />
         </Suspense>
       </>
     );

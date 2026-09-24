@@ -15,6 +15,7 @@ import { groupServicesForLanding } from "@/features/catalogue/group-services";
 import { useServiceReviewsAggregate, useServices } from "@/features/catalogue/queries";
 import type { PaginatedResponse, ServiceListItem } from "@/features/catalogue/types";
 import { getActiveOffers } from "@/config/offers";
+import { useSelectedLocation } from "@/features/location/selected-location";
 
 const ServiceOptionSheet = dynamic(
   () => import("@/features/catalogue/components/landing/service-option-sheet").then((module) => module.ServiceOptionSheet),
@@ -31,7 +32,11 @@ export function WaterTankLanding({ initialServices, sourceCategorySlug }: { init
   const searchParams = useSearchParams();
   const pushedSheet = useRef(false);
   const [reviewsOpen, setReviewsOpen] = useState(false);
-  const services = useServices({ category: sourceCategorySlug, page_size: 100 }, initialServices);
+  const location = useSelectedLocation();
+  const services = useServices(
+    { category: sourceCategorySlug, page_size: 100, ...(location.pincode ? { postal_code: location.pincode } : { city: location.city }) },
+    initialServices,
+  );
   const groups = useMemo(() => groupServicesForLanding(services.data?.results ?? []), [services.data?.results]);
   const selectedSlug = searchParams.get("service");
   const selectedGroup = groups.find((group) => group.slug === selectedSlug) ?? null;
@@ -81,7 +86,7 @@ export function WaterTankLanding({ initialServices, sourceCategorySlug }: { init
         </header>
 
         <section className="px-4 pb-5 pt-2 sm:px-6 lg:pt-8">
-          <h1 className="max-w-xl text-2xl font-extrabold leading-[1.18] tracking-tight text-foreground sm:text-3xl">Water Tank &amp; Sump Cleaning in Chennai</h1>
+          <h1 className="max-w-xl text-2xl font-extrabold leading-[1.18] tracking-tight text-foreground sm:text-3xl">Water Tank &amp; Sump Cleaning in {location.city}</h1>
           {averageRating ? (
             <button type="button" onClick={() => setReviewsOpen(true)} className="mt-3 inline-flex min-h-11 items-center gap-2 border-b border-dashed border-secondary text-sm font-bold text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
               <span className="grid h-6 w-6 place-items-center rounded-full bg-success text-white"><Star className="h-3.5 w-3.5 fill-current" /></span>

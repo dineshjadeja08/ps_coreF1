@@ -1,4 +1,4 @@
-export const serviceCities = ["Chennai", "Bangalore", "Coimbatore"] as const;
+export const serviceCities = ["Chennai", "Coimbatore"] as const;
 
 export const designTokens = {
   containers: {

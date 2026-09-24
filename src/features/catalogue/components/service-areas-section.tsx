@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useServiceAreaCheck } from "@/features/catalogue/queries";
 
-const supportedCities = ["Chennai", "Bangalore", "Coimbatore"];
+const supportedCities = ["Chennai", "Coimbatore"];
 
 export function ServiceAreasSection() {
   const [postalCode, setPostalCode] = useState("");
@@ -26,7 +26,7 @@ export function ServiceAreasSection() {
         <SectionHeading
           eyebrow="Service areas"
           title="Currently serving three launch cities"
-          description="Purple Squad is live in selected pincodes across Chennai, Bangalore and Coimbatore. More locations will be added as operations expand."
+          description="Purple Squad is live in selected pincodes across Chennai and Coimbatore. More locations will be added as operations expand."
         />
         <div className="space-y-4">
           <div className="flex flex-wrap gap-2">

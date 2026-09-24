@@ -82,7 +82,7 @@ export default function PrivacyPolicyPage() {
                 76760 76361
               </a>
             </p>
-            <p>Chennai, Bangalore, and Coimbatore.</p>
+            <p>Chennai and Coimbatore.</p>
           </div>
         </aside>
       </section>

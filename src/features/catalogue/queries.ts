@@ -15,14 +15,23 @@ export function useServiceCategories() {
 }
 
 export function useServices(
-  params?: { category?: string; search?: string; featured?: boolean; postal_code?: string; page_size?: number },
+  params?: { category?: string; search?: string; featured?: boolean; city?: string; postal_code?: string; page_size?: number },
   initialData?: PaginatedResponse<ServiceListItem>,
 ) {
   return useQuery({
     queryKey: queryKeys.services(params),
     queryFn: () => publicCatalogueApi.listServices(params),
     initialData,
+    initialDataUpdatedAt: initialData ? 0 : undefined,
     staleTime: 2 * 60_000,
+  });
+}
+
+export function usePublicServiceAreas(city?: string) {
+  return useQuery({
+    queryKey: ["service-areas", city ?? "all"],
+    queryFn: () => publicCatalogueApi.listServiceAreas(city),
+    staleTime: 5 * 60_000,
   });
 }
 

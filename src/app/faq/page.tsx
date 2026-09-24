@@ -2,7 +2,7 @@ import { FooterLinkPage } from "@/components/common/footer-link-page";
 
 const faqs = [
   ["How do I book a service?", "Choose a category, select a service package, confirm your address, pick a slot, and complete the payment step."],
-  ["Where is Purple Squad available?", "Purple Squad currently focuses on Chennai, Bangalore, and Coimbatore."],
+  ["Where is Purple Squad available?", "Purple Squad currently focuses on Chennai and Coimbatore."],
   ["Can I reschedule a booking?", "Eligible bookings can be rescheduled based on slot availability and policy windows."],
   ["How do I contact support?", "Call 76760 76361 or email support@purplesquad.in."],
   ["How do I join as a technician?", "Open the Register as Professional page and contact support with your city, service skill, and experience."],
