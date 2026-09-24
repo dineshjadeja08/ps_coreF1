@@ -153,10 +153,10 @@ function isLocalBackendImage(src?: string | null) {
 export function ServiceImage({ src, alt, className, imageClassName, priority, fit = "cover" }: ServiceImageProps) {
   const [failed, setFailed] = useState(false);
   const localImage = getLocalServicePhoto(alt);
-  const hasUploadedImage = Boolean(src) && !failed && !localImage;
+  const hasUploadedImage = Boolean(src) && !failed;
   const fallback = getFallbackVisual(alt);
   const hasServiceImage = Boolean(localImage || hasUploadedImage);
-  const imageSrc = localImage ?? (hasUploadedImage ? src ?? "" : fallback.image);
+  const imageSrc = hasUploadedImage ? src ?? "" : localImage ?? fallback.image;
 
   return (
     <div className={cn("relative overflow-hidden rounded-md bg-primary-subtle", className)}>
