@@ -93,7 +93,8 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
 
   if (categoryLandingSlug === "ac-services") {
     const services = await getServicesForSeo({ category: categoryLandingSlug, page_size: 60 });
-    const firstService = services.results[0];
+    const firstService = services.results.find((service) => service.landing_thumbnail || service.cover_image)
+      ?? services.results[0];
     const initialService = firstService ? await getServiceDetailForSeo(firstService.slug) : null;
 
     return (
