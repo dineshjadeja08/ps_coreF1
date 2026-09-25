@@ -8,6 +8,7 @@ import { useRef } from "react";
 import { AddToCartButton } from "@/features/cart/cart-controls";
 import { CartStickyBar } from "@/features/catalogue/components/landing/cart-sticky-bar";
 import { ServiceImage } from "@/features/catalogue/components/service-image";
+import { ReviewCard } from "@/features/catalogue/components/review-card";
 import { splitServiceBullets, stripGroupPrefix, type ServiceLandingGroup } from "@/features/catalogue/group-services";
 import { useServiceDetail, useServiceFaqs, useServiceReviews } from "@/features/catalogue/queries";
 import type { ServiceDetail } from "@/features/catalogue/types";
@@ -23,7 +24,7 @@ export function ServiceOptionSheet({ group, onClose }: { group: ServiceLandingGr
   const averageRating = reviews.data?.results.length
     ? reviews.data.results.reduce((sum, review) => sum + review.rating, 0) / reviews.data.results.length
     : null;
-  const process = splitServiceBullets(detail?.whats_included || detail?.description || representative.whats_included);
+  const process = splitServiceBullets(detail?.description || detail?.short_description || representative.short_description);
 
   return (
     <Dialog.Root open onOpenChange={(open) => { if (!open) onClose(); }}>
@@ -88,8 +89,18 @@ export function ServiceOptionSheet({ group, onClose }: { group: ServiceLandingGr
                     </ol>
                   </section>
                 ) : null}
+                <TextSection title="Included" body={detail?.whats_included || representative.whats_included} />
                 <TextSection title="Not included" body={detail?.whats_excluded} />
-                <TextSection title="Important notes" body={detail?.important_notes} />
+                {detail?.popup_content_image ? (
+                  <section className="py-6">
+                    <ServiceImage
+                      src={detail.popup_content_image}
+                      alt={`${detail.name} service details`}
+                      className="aspect-video w-full rounded-xl border border-border bg-white"
+                      imageClassName="object-cover"
+                    />
+                  </section>
+                ) : null}
                 <section className="py-6">
                   <h2 className="text-base font-extrabold text-foreground">Frequently Asked Questions</h2>
                   {faqQuery.data?.length ? (
@@ -97,6 +108,10 @@ export function ServiceOptionSheet({ group, onClose }: { group: ServiceLandingGr
                       {faqQuery.data.map((faq) => <details key={faq.id} className="p-4"><summary className="cursor-pointer text-sm font-bold text-foreground">{faq.question}</summary><p className="mt-3 whitespace-pre-line text-sm leading-6 text-secondary">{faq.answer}</p></details>)}
                     </div>
                   ) : <p className="mt-2 text-sm text-secondary">No service-specific FAQs have been published yet.</p>}
+                </section>
+                <section className="py-6">
+                  <h2 className="text-base font-extrabold text-foreground">Customer Reviews</h2>
+                  {reviews.data?.results.length ? <div className="mt-4 grid gap-3">{reviews.data.results.map((review) => <ReviewCard key={review.id} review={review} />)}</div> : <p className="mt-2 text-sm text-secondary">No customer reviews have been published yet.</p>}
                 </section>
               </div>
             </div>

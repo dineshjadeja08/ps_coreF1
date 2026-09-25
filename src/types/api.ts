@@ -119,6 +119,7 @@ export type ServiceListItem = {
   cover_image: string;
   landing_thumbnail?: string | null;
   popup_cover_image?: string | null;
+  popup_content_image?: string | null;
   list_image?: string | null;
   is_featured: boolean;
   is_popular: boolean;

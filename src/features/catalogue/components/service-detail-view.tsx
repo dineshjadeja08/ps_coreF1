@@ -12,10 +12,11 @@ import { SectionHeading } from "@/components/common/section-heading";
 import { routes } from "@/constants/routes";
 import { AddToCartButton, CartSummary } from "@/features/cart/cart-controls";
 import { ServiceImage } from "@/features/catalogue/components/service-image";
+import { ReviewCard } from "@/features/catalogue/components/review-card";
 import { ServiceDetailSkeleton } from "@/features/catalogue/components/skeletons";
 import { useServiceDetail, useServiceFaqs, useServiceReviews, useServices } from "@/features/catalogue/queries";
 import type { ServiceDetail, ServiceListItem } from "@/features/catalogue/types";
-import type { FAQ } from "@/types/api";
+import type { FAQ, Review } from "@/types/api";
 import { formatDuration, formatPrice, getCurrentPrice, hasOfferPrice } from "@/features/catalogue/utils";
 import { useSelectedLocation } from "@/features/location/selected-location";
 
@@ -83,6 +84,7 @@ export function ServiceDetailView({
   const [selectedPackage, setSelectedPackage] = useState<ServiceListItem | null>(null);
   const selectedPackageDetail = useServiceDetail(selectedPackage?.slug ?? "");
   const selectedPackageFaqs = useServiceFaqs(selectedPackage?.id);
+  const selectedPackageReviews = useServiceReviews(selectedPackage?.id);
 
   if (service.isLoading) {
     return <ServiceDetailSkeleton />;
@@ -228,6 +230,7 @@ export function ServiceDetailView({
         service={selectedPackageDetail.data ?? selectedPackage}
         loading={selectedPackageDetail.isLoading}
         faqs={selectedPackageFaqs.data ?? []}
+        reviews={selectedPackageReviews.data?.results ?? []}
         onOpenChange={(open) => { if (!open) setSelectedPackage(null); }}
       />
     </div>
@@ -298,12 +301,14 @@ function PackageDetailsDialog({
   service,
   loading,
   faqs,
+  reviews,
   onOpenChange,
 }: {
   open: boolean;
   service: ServiceListItem | ServiceDetail | null;
   loading: boolean;
   faqs: FAQ[];
+  reviews: Review[];
   onOpenChange: (open: boolean) => void;
 }) {
   const detail = service as ServiceDetail | null;
@@ -339,11 +344,24 @@ function PackageDetailsDialog({
             <div className="min-w-0 divide-y divide-border px-4 sm:px-6">
               <ModalSection title="Our Process" body={detail.description || detail.short_description} />
               <ModalSection title="Included" body={detail.whats_included} />
-              <ModalSection title="Warranty & Important notes" body={detail.important_notes} />
               <ModalSection title="Not Included" body={detail.whats_excluded} />
+              {detail.popup_content_image ? (
+                <section className="py-6">
+                  <ServiceImage
+                    src={detail.popup_content_image}
+                    alt={`${detail.name} service details`}
+                    className="aspect-video w-full rounded-lg border border-border bg-white"
+                    imageClassName="object-cover"
+                  />
+                </section>
+              ) : null}
               <section className="py-6">
                 <h3 className="text-lg font-bold text-foreground">Frequently Asked Questions</h3>
                 {faqs.length ? <div className="mt-3 divide-y divide-border rounded-md border border-border">{faqs.map((faq) => <details key={faq.id} className="group p-4"><summary className="cursor-pointer list-none pr-6 text-sm font-semibold text-foreground">{faq.question}</summary><p className="mt-3 whitespace-pre-line text-sm leading-6 text-secondary">{faq.answer}</p></details>)}</div> : <p className="mt-2 text-sm text-secondary">No package-specific questions have been added yet.</p>}
+              </section>
+              <section className="py-6">
+                <h3 className="text-lg font-bold text-foreground">Customer Reviews</h3>
+                {reviews.length ? <div className="mt-3 grid gap-3">{reviews.map((review) => <ReviewCard key={review.id} review={review} />)}</div> : <p className="mt-2 text-sm text-secondary">No customer reviews have been published yet.</p>}
               </section>
             </div>
           ) : null}

@@ -401,6 +401,7 @@ export function AdminServicesScreen({
   const [coverImage, setCoverImage] = useState<File | null>(null);
   const [landingThumbnail, setLandingThumbnail] = useState<File | null>(null);
   const [popupCoverImage, setPopupCoverImage] = useState<File | null>(null);
+  const [popupContentImage, setPopupContentImage] = useState<File | null>(null);
   const [listImage, setListImage] = useState<File | null>(null);
   const [galleryService, setGalleryService] = useState<AdminService | null>(null);
   const [galleryImage, setGalleryImage] = useState<File | null>(null);
@@ -441,6 +442,7 @@ export function AdminServicesScreen({
       if (coverImage) body.set("cover_image", coverImage);
       if (landingThumbnail) body.set("landing_thumbnail", landingThumbnail);
       if (popupCoverImage) body.set("popup_cover_image", popupCoverImage);
+      if (popupContentImage) body.set("popup_content_image", popupContentImage);
       if (listImage) body.set("list_image", listImage);
       return payload.id ? adminApi.updateService(payload.id, body) : adminApi.createService(body);
     },
@@ -449,6 +451,7 @@ export function AdminServicesScreen({
       setCoverImage(null);
       setLandingThumbnail(null);
       setPopupCoverImage(null);
+      setPopupContentImage(null);
       setListImage(null);
       await queryClient.invalidateQueries({ queryKey: ["admin", "services"] });
     },
@@ -543,6 +546,9 @@ export function AdminServicesScreen({
             </Field>
             <Field label="Popup cover (1200 × 750, 8:5)">
               <Input className={fieldClass} type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => setPopupCoverImage(event.target.files?.[0] ?? null)} />
+            </Field>
+            <Field label="Popup content image (1200 × 675, 16:9)">
+              <Input className={fieldClass} type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => setPopupContentImage(event.target.files?.[0] ?? null)} />
             </Field>
             <Field label="Service list image (600 × 600, 1:1)">
               <Input className={fieldClass} type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => setListImage(event.target.files?.[0] ?? null)} />

@@ -62,6 +62,7 @@ type ServiceFormState = {
   cover_image: File | null;
   landing_thumbnail: File | null;
   popup_cover_image: File | null;
+  popup_content_image: File | null;
   list_image: File | null;
 };
 
@@ -96,6 +97,7 @@ const emptyServiceForm: ServiceFormState = {
   cover_image: null,
   landing_thumbnail: null,
   popup_cover_image: null,
+  popup_content_image: null,
   list_image: null,
 };
 
@@ -162,6 +164,9 @@ function buildServiceFormData(form: ServiceFormState) {
   if (form.popup_cover_image) {
     data.set("popup_cover_image", form.popup_cover_image);
   }
+  if (form.popup_content_image) {
+    data.set("popup_content_image", form.popup_content_image);
+  }
   if (form.list_image) {
     data.set("list_image", form.list_image);
   }
@@ -191,6 +196,7 @@ function serviceToForm(service: AdminService): ServiceFormState {
     cover_image: null,
     landing_thumbnail: null,
     popup_cover_image: null,
+    popup_content_image: null,
     list_image: null,
   };
 }
@@ -879,12 +885,15 @@ function ServiceForm({
       <Field label="Cover image">
         <Input type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => onChange({ ...form, cover_image: event.target.files?.[0] ?? null })} />
       </Field>
-      <div className="grid gap-3 md:grid-cols-3">
+      <div className="grid gap-3 md:grid-cols-2">
         <Field label="Landing thumbnail (1600 × 700, 16:7)">
           <Input type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => onChange({ ...form, landing_thumbnail: event.target.files?.[0] ?? null })} />
         </Field>
         <Field label="Popup cover (1200 × 750, 8:5)">
           <Input type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => onChange({ ...form, popup_cover_image: event.target.files?.[0] ?? null })} />
+        </Field>
+        <Field label="Popup content image (1200 × 675, 16:9)">
+          <Input type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => onChange({ ...form, popup_content_image: event.target.files?.[0] ?? null })} />
         </Field>
         <Field label="Service list image (600 × 600, 1:1)">
           <Input type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => onChange({ ...form, list_image: event.target.files?.[0] ?? null })} />
