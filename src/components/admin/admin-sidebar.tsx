@@ -26,6 +26,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { AdminBrand } from "@/components/admin/admin-brand";
+import { canAccessAdminPath } from "@/components/admin/admin-access";
+import { useAuth } from "@/features/auth/hooks";
 
 export const adminNavigationSections = [
   {
@@ -84,6 +86,7 @@ export const adminNavigationSections = [
 
 export function AdminSidebar() {
   const pathname = usePathname();
+  const { user } = useAuth();
 
   return (
     <aside className="fixed inset-y-0 left-0 z-40 hidden h-screen w-72 border-r border-slate-200 bg-white text-slate-950 lg:block">
@@ -92,7 +95,7 @@ export function AdminSidebar() {
           <AdminBrand />
         </div>
         <nav className="flex-1 space-y-5 overflow-y-auto px-3 py-4">
-          {adminNavigationSections.map((section) => (
+          {adminNavigationSections.map((section) => ({ ...section, items: section.items.filter((item) => canAccessAdminPath(user, item.href)) })).filter((section) => section.items.length).map((section) => (
             <div key={section.title}>
               <p className="px-3 text-[11px] font-bold uppercase text-slate-400">{section.title}</p>
               <div className="mt-2 space-y-1">

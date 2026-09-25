@@ -144,31 +144,32 @@ export function AdminStaffScreen() {
   function toggleGroup(id: number) {
     setForm({ ...form, group_ids: form.group_ids.includes(id) ? form.group_ids.filter((value) => value !== id) : [...form.group_ids, id] });
   }
-  const canSave = editorMode === "edit" || Boolean(form.phone_number.trim() && form.password.length >= 8);
+  const hasRequiredProfile = form.role === "SUPER_ADMIN" || form.role === "TECHNICIAN" || form.group_ids.length > 0;
+  const canSave = hasRequiredProfile && (editorMode === "edit" || Boolean(form.phone_number.trim() && form.password.length >= 8));
   return (
     <>
       <AdminPageHeader
         title="Staff and Roles"
-        description="Control admin and technician access from the operations portal. Only super administrators can manage staff accounts."
-        action={<Button type="button" onClick={create}>Add administrator</Button>}
+        description="Give employees only the admin sections needed for their work. Only super administrators can manage staff accounts."
+        action={<Button type="button" onClick={create}>Add employee</Button>}
       />
       {editorMode ? (
         <section className="mb-5 rounded-xl border border-violet-200 bg-white p-5 shadow-sm">
-          <div className="flex items-center justify-between"><div><h2 className="font-bold text-slate-950">{editorMode === "create" ? "Add administrator" : "Edit staff member"}</h2><p className="text-sm text-slate-500">{editorMode === "create" ? "Create secure credentials for a new admin staff member." : selected?.phone_number}</p></div><Button type="button" variant="ghost" size="sm" onClick={closeEditor}>Close</Button></div>
+          <div className="flex items-center justify-between"><div><h2 className="font-bold text-slate-950">{editorMode === "create" ? "Add employee" : "Edit staff member"}</h2><p className="text-sm text-slate-500">{editorMode === "create" ? "Create login credentials, then choose an access profile such as Customer Support." : selected?.phone_number}</p></div><Button type="button" variant="ghost" size="sm" onClick={closeEditor}>Close</Button></div>
           <form className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4" onSubmit={(event) => { event.preventDefault(); if (canSave) save.mutate(); }}>
             {editorMode === "create" ? <Input inputMode="tel" value={form.phone_number} onChange={(event) => setForm({ ...form, phone_number: event.target.value })} placeholder="Phone in +91 format" required /> : null}
             {editorMode === "create" ? <Input type="password" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} placeholder="Temporary password (8+ characters)" minLength={8} required /> : null}
             <Input value={form.first_name} onChange={(event) => setForm({ ...form, first_name: event.target.value })} placeholder="First name" />
             <Input value={form.last_name} onChange={(event) => setForm({ ...form, last_name: event.target.value })} placeholder="Last name" />
             <Input type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} placeholder="Email" />
-            <select className="h-11 rounded-md border border-slate-200 bg-white px-3 text-sm" value={form.role} onChange={(event) => setForm({ ...form, role: event.target.value as AdminStaff["role"] })}>{editorMode === "edit" ? <option value="TECHNICIAN">Technician</option> : null}<option value="ADMIN">Admin</option><option value="SUPER_ADMIN">Super admin</option></select>
+            <select aria-label="Account level" className="h-11 rounded-md border border-slate-200 bg-white px-3 text-sm" value={form.role} onChange={(event) => setForm({ ...form, role: event.target.value as AdminStaff["role"] })}>{editorMode === "edit" ? <option value="TECHNICIAN">Technician</option> : null}<option value="ADMIN">Employee</option><option value="SUPER_ADMIN">Super admin (full access)</option></select>
             {editorMode === "edit" ? <div className="flex flex-wrap gap-4 md:col-span-2 xl:col-span-4">
               <label className="flex items-center gap-2 text-sm font-semibold"><input type="checkbox" checked={form.is_verified} onChange={(event) => setForm({ ...form, is_verified: event.target.checked })} />Verified</label>
               <label className="flex items-center gap-2 text-sm font-semibold"><input type="checkbox" checked={form.is_active} onChange={(event) => setForm({ ...form, is_active: event.target.checked })} />Active</label>
               <label className="flex items-center gap-2 text-sm font-semibold"><input type="checkbox" checked={form.is_staff} onChange={(event) => setForm({ ...form, is_staff: event.target.checked })} />Staff access</label>
             </div> : null}
-            <div className="md:col-span-2 xl:col-span-4"><p className="text-xs font-bold uppercase text-slate-500">Permission groups</p><div className="mt-2 flex flex-wrap gap-2">{groups.data?.map((group) => <label key={group.id} className="flex items-center gap-2 rounded-md border border-slate-200 px-3 py-2 text-sm"><input type="checkbox" checked={form.group_ids.includes(group.id)} onChange={() => toggleGroup(group.id)} />{group.name}</label>)}</div></div>
-            <div className="md:col-span-2 xl:col-span-4"><Button type="submit" disabled={!canSave || save.isPending}><Save className="h-4 w-4" />{save.isPending ? "Saving" : editorMode === "create" ? "Create administrator" : "Save staff"}</Button>{save.isError ? <p className="mt-2 text-sm text-red-600">{save.error.message}</p> : null}</div>
+            <div className="md:col-span-2 xl:col-span-4"><p className="text-xs font-bold uppercase text-slate-500">Access profiles</p><p className="mt-1 text-sm text-slate-500">Select at least one profile for an employee. The chosen profiles control both visible menus and backend permissions.</p><div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-3">{groups.data?.filter((group) => group.name !== "Super Admin").map((group) => <label key={group.id} className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 text-sm ${form.group_ids.includes(group.id) ? "border-violet-500 bg-violet-50" : "border-slate-200"}`}><input className="mt-1" type="checkbox" checked={form.group_ids.includes(group.id)} onChange={() => toggleGroup(group.id)} /><span><span className="block font-bold text-slate-950">{group.name}</span><span className="mt-1 block text-xs leading-5 text-slate-500">{group.description || "Custom permission group"}</span></span></label>)}</div>{!hasRequiredProfile ? <p className="mt-2 text-sm font-semibold text-amber-700">Choose an access profile before saving this employee.</p> : null}</div>
+            <div className="md:col-span-2 xl:col-span-4"><Button type="submit" disabled={!canSave || save.isPending}><Save className="h-4 w-4" />{save.isPending ? "Saving" : editorMode === "create" ? "Create employee" : "Save staff"}</Button>{save.isError ? <p className="mt-2 text-sm text-red-600">{save.error.message}</p> : null}</div>
           </form>
         </section>
       ) : null}

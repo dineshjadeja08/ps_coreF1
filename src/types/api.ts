@@ -442,6 +442,7 @@ export type User = {
   role: Role;
   is_verified: boolean;
   customer_profile: CustomerProfile;
+  groups?: StaffGroup[];
   created_at: ISODateTime;
   updated_at: ISODateTime;
 };
@@ -588,6 +589,7 @@ export type AdminStaff = User & {
 export type StaffGroup = {
   id: number;
   name: string;
+  description?: string;
 };
 
 export type AuditLog = {

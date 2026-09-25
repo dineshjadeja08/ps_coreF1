@@ -6,12 +6,15 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 import { AdminBrand } from "@/components/admin/admin-brand";
+import { canAccessAdminPath } from "@/components/admin/admin-access";
 import { adminNavigationSections } from "@/components/admin/admin-sidebar";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/features/auth/hooks";
 
 export function AdminMobileNav() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const { user } = useAuth();
 
   return (
     <>
@@ -29,7 +32,7 @@ export function AdminMobileNav() {
               </Button>
             </div>
             <div className="space-y-5 pb-6">
-              {adminNavigationSections.map((section) => (
+              {adminNavigationSections.map((section) => ({ ...section, items: section.items.filter((item) => canAccessAdminPath(user, item.href)) })).filter((section) => section.items.length).map((section) => (
                 <section key={section.title}>
                   <p className="px-3 text-[11px] font-bold uppercase tracking-wide text-slate-500">{section.title}</p>
                   <div className="mt-2 space-y-1">
