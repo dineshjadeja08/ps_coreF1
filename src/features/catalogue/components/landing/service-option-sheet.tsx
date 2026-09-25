@@ -25,6 +25,7 @@ export function ServiceOptionSheet({ group, onClose }: { group: ServiceLandingGr
     ? reviews.data.results.reduce((sum, review) => sum + review.rating, 0) / reviews.data.results.length
     : null;
   const process = splitServiceBullets(detail?.description || detail?.short_description || representative.short_description);
+  const contentImage = detail?.popup_content_image || group.options.map((option) => option.popup_content_image).find(Boolean);
 
   return (
     <Dialog.Root open onOpenChange={(open) => { if (!open) onClose(); }}>
@@ -91,11 +92,11 @@ export function ServiceOptionSheet({ group, onClose }: { group: ServiceLandingGr
                 ) : null}
                 <TextSection title="Included" body={detail?.whats_included || representative.whats_included} />
                 <TextSection title="Not included" body={detail?.whats_excluded} />
-                {detail?.popup_content_image ? (
+                {contentImage ? (
                   <section className="py-6">
                     <ServiceImage
-                      src={detail.popup_content_image}
-                      alt={`${detail.name} service details`}
+                      src={contentImage}
+                      alt={`${detail?.name || representative.name} service details`}
                       className="aspect-video w-full rounded-xl border border-border bg-white"
                       imageClassName="object-cover"
                     />

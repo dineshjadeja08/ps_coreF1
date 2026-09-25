@@ -111,6 +111,7 @@ export function ServiceDetailView({
   const currentFamily = packageFamilyKey(detail);
   const familyPackages = allRelated.filter((item) => packageFamilyKey(item) === currentFamily);
   const packageServices = familyPackages.length > 1 ? familyPackages : [detail];
+  const familyPopupContentImage = packageServices.map((item) => item.popup_content_image).find(Boolean) ?? detail.popup_content_image;
   const pageTitle = landingTitle ?? detail.name;
 
   return (
@@ -231,6 +232,7 @@ export function ServiceDetailView({
         loading={selectedPackageDetail.isLoading}
         faqs={selectedPackageFaqs.data ?? []}
         reviews={selectedPackageReviews.data?.results ?? []}
+        fallbackContentImage={familyPopupContentImage}
         onOpenChange={(open) => { if (!open) setSelectedPackage(null); }}
       />
     </div>
@@ -302,6 +304,7 @@ function PackageDetailsDialog({
   loading,
   faqs,
   reviews,
+  fallbackContentImage,
   onOpenChange,
 }: {
   open: boolean;
@@ -309,12 +312,14 @@ function PackageDetailsDialog({
   loading: boolean;
   faqs: FAQ[];
   reviews: Review[];
+  fallbackContentImage?: string | null;
   onOpenChange: (open: boolean) => void;
 }) {
   const detail = service as ServiceDetail | null;
   const price = service ? formatPrice(getCurrentPrice(service)) : null;
   const basePrice = service ? formatPrice(service.base_price) : null;
   const showOffer = Boolean(service && hasOfferPrice(service) && basePrice);
+  const contentImage = detail?.popup_content_image || fallbackContentImage;
 
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
@@ -345,10 +350,10 @@ function PackageDetailsDialog({
               <ModalSection title="Our Process" body={detail.description || detail.short_description} />
               <ModalSection title="Included" body={detail.whats_included} />
               <ModalSection title="Not Included" body={detail.whats_excluded} />
-              {detail.popup_content_image ? (
+              {contentImage ? (
                 <section className="py-6">
                   <ServiceImage
-                    src={detail.popup_content_image}
+                    src={contentImage}
                     alt={`${detail.name} service details`}
                     className="aspect-video w-full rounded-lg border border-border bg-white"
                     imageClassName="object-cover"

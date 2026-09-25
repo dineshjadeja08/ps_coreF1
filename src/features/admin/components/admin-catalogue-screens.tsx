@@ -45,6 +45,7 @@ type ServiceForm = {
   is_featured: boolean;
   is_popular: boolean;
   is_active: boolean;
+  popup_content_image_url: string;
 };
 
 type FaqForm = {
@@ -121,6 +122,7 @@ function serviceToForm(service?: AdminService, firstCategory?: string): ServiceF
     is_featured: service?.is_featured ?? false,
     is_popular: service?.is_popular ?? false,
     is_active: service?.is_active ?? true,
+    popup_content_image_url: service?.popup_content_image ?? "",
   };
 }
 
@@ -548,7 +550,15 @@ export function AdminServicesScreen({
               <Input className={fieldClass} type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => setPopupCoverImage(event.target.files?.[0] ?? null)} />
             </Field>
             <Field label="Popup content image (1200 × 675, 16:9)">
-              <Input className={fieldClass} type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => setPopupContentImage(event.target.files?.[0] ?? null)} />
+              <div className="grid gap-2">
+                {form.popup_content_image_url ? (
+                  <div className="relative aspect-video overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
+                    <Image src={form.popup_content_image_url} alt={`${form.name || "Service"} popup content`} fill unoptimized className="object-cover" />
+                  </div>
+                ) : null}
+                <Input className={fieldClass} type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => setPopupContentImage(event.target.files?.[0] ?? null)} />
+                {popupContentImage ? <p className="text-xs font-semibold text-violet-700">New image selected: {popupContentImage.name}</p> : null}
+              </div>
             </Field>
             <Field label="Service list image (600 × 600, 1:1)">
               <Input className={fieldClass} type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => setListImage(event.target.files?.[0] ?? null)} />
