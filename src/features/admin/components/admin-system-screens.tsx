@@ -2,12 +2,13 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Activity, FileClock, Loader2, Save, Settings, Shield, Star, TrendingUp } from "lucide-react";
-import { useState } from "react";
+import { useDeferredValue, useState } from "react";
 
 import { AdminDataTable } from "@/components/admin/admin-data-table";
 import { AdminErrorState } from "@/components/admin/admin-error-state";
 import { AdminMetricCard } from "@/components/admin/admin-metric-card";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
+import { AdminPagination } from "@/components/admin/admin-pagination";
 import { AdminStatusBadge } from "@/components/admin/admin-status-badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -91,8 +92,17 @@ export function AdminStaffScreen() {
   const [selected, setSelected] = useState<AdminStaff | null>(null);
   const [editorMode, setEditorMode] = useState<"create" | "edit" | null>(null);
   const [form, setForm] = useState<StaffForm>(emptyStaffForm);
-  const staff = useQuery({ queryKey: ["admin", "staff"], queryFn: () => adminApi.listStaff({ page_size: 50 }) });
-  const groups = useQuery({ queryKey: ["admin", "staff-groups"], queryFn: adminApi.listStaffGroups });
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
+  const deferredSearch = useDeferredValue(search.trim());
+  const pageSize = 20;
+  const staff = useQuery({
+    queryKey: ["admin", "staff", { page, search: deferredSearch }],
+    queryFn: () => adminApi.listStaff({ page, page_size: pageSize, search: deferredSearch || undefined }),
+    placeholderData: (previous) => previous,
+    staleTime: 60_000,
+  });
+  const groups = useQuery({ queryKey: ["admin", "staff-groups"], queryFn: adminApi.listStaffGroups, staleTime: 5 * 60_000 });
   const save = useMutation({
     mutationFn: () => {
       if (editorMode === "create") {
@@ -173,14 +183,23 @@ export function AdminStaffScreen() {
           </form>
         </section>
       ) : null}
+      <div className="mb-4 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+        <Input
+          value={search}
+          onChange={(event) => { setSearch(event.target.value); setPage(1); }}
+          placeholder="Search staff by name or phone"
+          aria-label="Search staff"
+        />
+      </div>
       {staff.isLoading ? <Loading /> : staff.isError ? <AdminErrorState message={staff.error.message} onRetry={() => void staff.refetch()} /> : (
-        <AdminDataTable
-          rows={staff.data?.results ?? []}
-          getRowKey={(user) => user.id}
-          emptyIcon={Shield}
-          emptyTitle="No staff"
-          emptyMessage="Staff users will appear here after admin or technician accounts are created."
-          columns={[
+        <>
+          <AdminDataTable
+            rows={staff.data?.results ?? []}
+            getRowKey={(user) => user.id}
+            emptyIcon={Shield}
+            emptyTitle="No staff"
+            emptyMessage="Staff users will appear here after admin or technician accounts are created."
+            columns={[
             { key: "phone", header: "Mobile", render: (user) => <span className="font-semibold text-slate-950">{user.phone_number}</span> },
             { key: "name", header: "Name", render: (user) => [user.first_name, user.last_name].filter(Boolean).join(" ") || "-" },
             { key: "role", header: "Role", render: (user) => user.role.replace("_", " ") },
@@ -193,8 +212,17 @@ export function AdminStaffScreen() {
                 <Button type="button" variant="outline" size="sm" onClick={() => edit(user)}>Edit</Button>
               ),
             },
-          ]}
-        />
+            ]}
+          />
+          <AdminPagination
+            count={staff.data?.count ?? 0}
+            page={page}
+            pageSize={pageSize}
+            hasNext={Boolean(staff.data?.next)}
+            hasPrevious={Boolean(staff.data?.previous)}
+            onPageChange={setPage}
+          />
+        </>
       )}
     </>
   );

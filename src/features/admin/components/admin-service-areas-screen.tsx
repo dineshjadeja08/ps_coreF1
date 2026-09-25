@@ -51,7 +51,7 @@ export function AdminServiceAreasScreen() {
   const queryClient = useQueryClient();
   const [form, setForm] = useState<AreaForm | null>(null);
   const areas = useQuery({ queryKey: ["admin", "service-areas"], queryFn: adminApi.listServiceAreas });
-  const services = useQuery({ queryKey: ["admin", "services", "area-options"], queryFn: () => adminApi.listServices({ page_size: 100 }) });
+  const services = useQuery({ queryKey: ["admin", "service-options", ""], queryFn: () => adminApi.listServices({ page_size: 20 }), staleTime: 2 * 60_000 });
   const save = useMutation({
     mutationFn: (payload: AreaForm) => {
       const body = {

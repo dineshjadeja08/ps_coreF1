@@ -69,6 +69,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let active = true;
 
     async function init() {
+      const cachedUser = getStoredUser();
+      const hasAccessToken = Boolean(getAccessToken());
+
+      // Render the authenticated shell from the locally stored session immediately.
+      // /auth/me remains the source of truth and refreshes/revokes it in the background.
+      if (cachedUser && hasAccessToken && active) {
+        setUser(cachedUser);
+        setIsLoading(false);
+      }
       try {
         await restoreSession();
       } finally {

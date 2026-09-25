@@ -22,6 +22,7 @@ export type ServiceCategory = {
 };
 
 export type AdminServiceCategory = ServiceCategory & {
+  service_count: number;
   is_active: boolean;
   created_at: ISODateTime;
   updated_at: ISODateTime;
@@ -488,8 +489,27 @@ export type AdminDashboardSummary = {
   recentBookings: Booking[];
   pendingPayments: Booking[];
   unassigned: Booking[];
-  failedNotifications: unknown[];
+  failedNotifications: number;
   missing: string[];
+};
+
+export type AdminDashboardSummaryResponse = {
+  daily_gmv: DecimalString;
+  active_bookings_count: number;
+  available_technicians_count: number;
+  open_unassigned_leads_count: number;
+  leads_today: number;
+  follow_ups_due: number;
+  bookings_today: number;
+  confirmed_bookings: number;
+  payment_pending_bookings: number;
+  revenue_today: DecimalString;
+  unassigned_bookings: number;
+  upcoming_services: number;
+  failed_notifications: number;
+  recent_bookings: Booking[];
+  pending_payments: Booking[];
+  unassigned_items: Booking[];
 };
 
 export type Lead = {

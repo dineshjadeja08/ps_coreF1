@@ -4,12 +4,13 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { Bell, CalendarClock, CreditCard, IndianRupee, Loader2, MessageSquareText, Phone, Plus, Search, Users, X } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
-import { useState } from "react";
+import { useDeferredValue, useState } from "react";
 
 import { AdminDataTable } from "@/components/admin/admin-data-table";
 import { AdminErrorState } from "@/components/admin/admin-error-state";
 import { AdminMetricCard } from "@/components/admin/admin-metric-card";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
+import { AdminSearchSelect } from "@/components/admin/admin-search-select";
 import { AdminStatusBadge } from "@/components/admin/admin-status-badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,8 +28,12 @@ export function AdminLeadsScreen() {
   const [filters, setFilters] = useState({ status: "OPEN", funnel_status: "", payment_status: "", source: "", assigned_to: "", service: "", service_search: "", city: "", mobile: "", request_id: "", created_from: "", created_to: "", follow_up_date: "", ordering: "-last_activity_at" });
   const [showCreate, setShowCreate] = useState(false);
   const [createForm, setCreateForm] = useState({ customer_name: "", primary_mobile: "", required_service: "", source: "MANUAL", quoted_amount: "", advance_amount: "", city: "", pincode: "" });
-  const services = useQuery({ queryKey: ["admin", "services", "lead-options"], queryFn: () => adminApi.listServices({ page_size: 100 }) });
-  const staff = useQuery({ queryKey: ["admin", "staff", "lead-options"], queryFn: () => adminApi.listStaff({ page_size: 100 }) });
+  const [serviceOptionSearch, setServiceOptionSearch] = useState("");
+  const [staffOptionSearch, setStaffOptionSearch] = useState("");
+  const deferredServiceOptionSearch = useDeferredValue(serviceOptionSearch.trim());
+  const deferredStaffOptionSearch = useDeferredValue(staffOptionSearch.trim());
+  const services = useQuery({ queryKey: ["admin", "service-options", deferredServiceOptionSearch], queryFn: () => adminApi.listServices({ page_size: 20, search: deferredServiceOptionSearch || undefined }), staleTime: 2 * 60_000 });
+  const staff = useQuery({ queryKey: ["admin", "staff-options", deferredStaffOptionSearch], queryFn: () => adminApi.listStaff({ page_size: 20, search: deferredStaffOptionSearch || undefined }), staleTime: 2 * 60_000 });
   const query = useQuery({
     queryKey: ["admin", "leads", search, filters],
     queryFn: () => adminApi.listLeads({
@@ -96,7 +101,7 @@ export function AdminLeadsScreen() {
           <form className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4" onSubmit={(event) => { event.preventDefault(); create.mutate(); }}>
             <Input value={createForm.customer_name} onChange={(event) => setCreateForm({ ...createForm, customer_name: event.target.value })} placeholder="Customer name" required />
             <Input value={createForm.primary_mobile} onChange={(event) => setCreateForm({ ...createForm, primary_mobile: event.target.value })} placeholder="Mobile number" required />
-            <select className="h-11 rounded-md border border-slate-200 px-3 text-sm" value={createForm.required_service} onChange={(event) => setCreateForm({ ...createForm, required_service: event.target.value })}><option value="">No service selected</option>{services.data?.results.map((service) => <option key={service.id} value={service.id}>{service.name}</option>)}</select>
+            <AdminSearchSelect value={createForm.required_service} options={(services.data?.results ?? []).map((service) => ({ value: service.id, label: service.name }))} placeholder="No service selected" onChange={(value) => setCreateForm({ ...createForm, required_service: value })} onSearch={setServiceOptionSearch} loading={services.isFetching} />
             <select className="h-11 rounded-md border border-slate-200 px-3 text-sm" value={createForm.source} onChange={(event) => setCreateForm({ ...createForm, source: event.target.value })}>{["MANUAL", "PHONE", "WHATSAPP", "WEBSITE", "CALLBACK_REQUEST", "CAMPAIGN", "OTHER"].map((source) => <option key={source}>{source}</option>)}</select>
             <Input inputMode="decimal" value={createForm.quoted_amount} onChange={(event) => setCreateForm({ ...createForm, quoted_amount: event.target.value })} placeholder="Quoted amount" />
             <Input inputMode="decimal" value={createForm.advance_amount} onChange={(event) => setCreateForm({ ...createForm, advance_amount: event.target.value })} placeholder="Advance amount" />
@@ -126,8 +131,8 @@ export function AdminLeadsScreen() {
           </select>
           <select value={filters.payment_status} onChange={(event) => setFilters({ ...filters, payment_status: event.target.value })} className="h-11 rounded-md border border-slate-200 bg-white px-3 text-sm"><option value="">All payment states</option>{["NOT_REQUIRED", "PENDING", "LINK_SENT", "FAILED", "PAID", "REFUNDED"].map((value) => <option key={value}>{value}</option>)}</select>
           <select value={filters.source} onChange={(event) => setFilters({ ...filters, source: event.target.value })} className="h-11 rounded-md border border-slate-200 bg-white px-3 text-sm"><option value="">All sources</option>{["SERVICE_VIEW", "CART", "CHECKOUT", "ADMIN", "PHONE", "WHATSAPP", "WEBSITE", "CALLBACK_REQUEST", "CAMPAIGN", "MANUAL", "OTHER"].map((value) => <option key={value}>{value}</option>)}</select>
-          <select value={filters.assigned_to} onChange={(event) => setFilters({ ...filters, assigned_to: event.target.value })} className="h-11 rounded-md border border-slate-200 bg-white px-3 text-sm"><option value="">All staff</option>{staff.data?.results.map((user) => <option key={user.id} value={user.id}>{user.phone_number}</option>)}</select>
-          <select value={filters.service} onChange={(event) => setFilters({ ...filters, service: event.target.value })} className="h-11 rounded-md border border-slate-200 bg-white px-3 text-sm"><option value="">All services</option>{services.data?.results.map((service) => <option key={service.id} value={service.id}>{service.name}</option>)}</select>
+          <AdminSearchSelect value={filters.assigned_to} options={(staff.data?.results ?? []).map((user) => ({ value: user.id, label: [user.first_name, user.last_name].filter(Boolean).join(" ") || user.phone_number }))} placeholder="All staff" onChange={(value) => setFilters({ ...filters, assigned_to: value })} onSearch={setStaffOptionSearch} loading={staff.isFetching} />
+          <AdminSearchSelect value={filters.service} options={(services.data?.results ?? []).map((service) => ({ value: service.id, label: service.name }))} placeholder="All services" onChange={(value) => setFilters({ ...filters, service: value })} onSearch={setServiceOptionSearch} loading={services.isFetching} />
           <Input type="date" value={filters.created_from} onChange={(event) => setFilters({ ...filters, created_from: event.target.value })} aria-label="Created from" />
           <Input type="date" value={filters.created_to} onChange={(event) => setFilters({ ...filters, created_to: event.target.value })} aria-label="Created to" />
           <Input type="date" value={filters.follow_up_date} onChange={(event) => setFilters({ ...filters, follow_up_date: event.target.value })} aria-label="Follow-up date" />

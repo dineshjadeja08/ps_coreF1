@@ -4,10 +4,11 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowRight, BookOpen, ImagePlus, Loader2, Package, Plus, Save, Trash2, Upload } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useDeferredValue, useMemo, useState } from "react";
 
 import { AdminDataTable } from "@/components/admin/admin-data-table";
 import { AdminErrorState } from "@/components/admin/admin-error-state";
+import { AdminPagination } from "@/components/admin/admin-pagination";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminStatusBadge } from "@/components/admin/admin-status-badge";
 import { Button } from "@/components/ui/button";
@@ -199,20 +200,14 @@ export function AdminCategoriesScreen() {
   const queryClient = useQueryClient();
   const [form, setForm] = useState<CategoryForm | null>(null);
   const [categoryImage, setCategoryImage] = useState<File | null>(null);
+  const [expandedCategory, setExpandedCategory] = useState<UUID | null>(null);
   const categories = useQuery({ queryKey: ["admin", "categories"], queryFn: adminApi.listCategories });
   const services = useQuery({
-    queryKey: ["admin", "services", "category-list"],
-    queryFn: () => adminApi.listServices({ page_size: 100 }),
+    queryKey: ["admin", "services", "category-list", expandedCategory],
+    queryFn: () => adminApi.listServices({ page_size: 20, category: expandedCategory ?? undefined }),
+    enabled: Boolean(expandedCategory),
+    staleTime: 2 * 60_000,
   });
-  const servicesByCategory = useMemo(() => {
-    const grouped = new Map<UUID, AdminService[]>();
-    for (const service of services.data?.results ?? []) {
-      const categoryServices = grouped.get(service.category) ?? [];
-      categoryServices.push(service);
-      grouped.set(service.category, categoryServices);
-    }
-    return grouped;
-  }, [services.data?.results]);
   const save = useMutation({
     mutationFn: (payload: CategoryForm) => {
       const body = new FormData();
@@ -297,12 +292,10 @@ export function AdminCategoriesScreen() {
         </Panel>
       ) : null}
       <div className="mt-5">
-        {categories.isLoading || services.isLoading ? (
+        {categories.isLoading ? (
           <Loading />
         ) : categories.isError ? (
           <AdminErrorState message={categories.error.message} onRetry={() => void categories.refetch()} />
-        ) : services.isError ? (
-          <AdminErrorState message={services.error.message} onRetry={() => void services.refetch()} />
         ) : !categories.data?.results.length ? (
           <div className="rounded-lg border border-dashed border-slate-300 bg-white p-10 text-center">
             <BookOpen className="mx-auto h-8 w-8 text-slate-400" />
@@ -312,7 +305,8 @@ export function AdminCategoriesScreen() {
         ) : (
           <div className="grid gap-4">
             {categories.data.results.map((category) => {
-              const categoryServices = servicesByCategory.get(category.id) ?? [];
+              const isExpanded = expandedCategory === category.id;
+              const categoryServices = isExpanded ? services.data?.results ?? [] : [];
               return (
                 <section key={category.id} className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
                   <div className="flex flex-col gap-4 border-b border-slate-200 bg-slate-50/80 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
@@ -330,12 +324,15 @@ export function AdminCategoriesScreen() {
                           <AdminStatusBadge status={category.is_active ? "ACTIVE" : "INACTIVE"} />
                         </div>
                         <p className="mt-1 text-sm text-slate-500">
-                          {categoryServices.length} {categoryServices.length === 1 ? "service" : "services"} · Order {category.display_order ?? 0} · /{category.slug}
+                          {category.service_count} {category.service_count === 1 ? "service" : "services"} · Order {category.display_order ?? 0} · /{category.slug}
                         </p>
                       </div>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <Button type="button" variant="outline" size="sm" onClick={() => setForm(categoryToForm(category))}>Edit category</Button>
+                      <Button type="button" variant="outline" size="sm" onClick={() => setExpandedCategory(isExpanded ? null : category.id)}>
+                        {isExpanded ? "Hide services" : "View services"}
+                      </Button>
                       <Button asChild type="button" size="sm">
                         <Link href={`/admin/catalogue/services?category=${encodeURIComponent(category.id)}&new=1`}>
                           <Plus className="h-4 w-4" />
@@ -348,7 +345,9 @@ export function AdminCategoriesScreen() {
                     </div>
                   </div>
 
-                  {categoryServices.length ? (
+                  {isExpanded && services.isLoading ? <div className="p-5 text-sm text-slate-500">Loading services…</div> : null}
+                  {isExpanded && services.isError ? <div className="p-5"><AdminErrorState message={services.error.message} onRetry={() => void services.refetch()} /></div> : null}
+                  {isExpanded && categoryServices.length ? (
                     <div className="divide-y divide-slate-100">
                       {categoryServices.map((service) => (
                         <div key={service.id} className="grid gap-3 px-4 py-4 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center sm:px-5">
@@ -369,14 +368,14 @@ export function AdminCategoriesScreen() {
                         </div>
                       ))}
                     </div>
-                  ) : (
+                  ) : isExpanded && !services.isLoading && !services.isError ? (
                     <div className="flex flex-col gap-3 p-5 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
                       <span>No services have been added under this category.</span>
                       <Button asChild variant="outline" size="sm">
                         <Link href={`/admin/catalogue/services?category=${encodeURIComponent(category.id)}&new=1`}>Add the first service</Link>
                       </Button>
                     </div>
-                  )}
+                  ) : null}
                 </section>
               );
             })}
@@ -398,7 +397,16 @@ export function AdminServicesScreen({
 } = {}) {
   const queryClient = useQueryClient();
   const categories = useQuery({ queryKey: ["admin", "categories"], queryFn: adminApi.listCategories });
-  const services = useQuery({ queryKey: ["admin", "services"], queryFn: () => adminApi.listServices({ page_size: 100 }) });
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
+  const deferredSearch = useDeferredValue(search.trim());
+  const pageSize = 20;
+  const services = useQuery({
+    queryKey: ["admin", "services", { page, search: deferredSearch }],
+    queryFn: () => adminApi.listServices({ page, page_size: pageSize, search: deferredSearch || undefined }),
+    placeholderData: (previous) => previous,
+    staleTime: 60_000,
+  });
   const [formState, setForm] = useState<ServiceForm | null | undefined>(undefined);
   const [coverImage, setCoverImage] = useState<File | null>(null);
   const [landingThumbnail, setLandingThumbnail] = useState<File | null>(null);
@@ -407,17 +415,29 @@ export function AdminServicesScreen({
   const [listImage, setListImage] = useState<File | null>(null);
   const [galleryService, setGalleryService] = useState<AdminService | null>(null);
   const [galleryImage, setGalleryImage] = useState<File | null>(null);
+  const galleryImages = useQuery({
+    queryKey: ["admin", "service-images", galleryService?.id],
+    queryFn: () => adminApi.listServiceImages(galleryService!.id),
+    enabled: Boolean(galleryService),
+    staleTime: 60_000,
+  });
   const firstCategory = categories.data?.results?.[0]?.id;
   const categoryOptions = useMemo(() => categories.data?.results ?? [], [categories.data?.results]);
+  const deepLinkedService = useQuery({
+    queryKey: ["admin", "service", initialServiceId],
+    queryFn: () => adminApi.getService(initialServiceId as UUID),
+    enabled: Boolean(initialServiceId) && !services.data?.results.some((service) => service.id === initialServiceId),
+    staleTime: 60_000,
+  });
   const deepLinkedForm = useMemo(() => {
-    const serviceToEdit = services.data?.results.find((service) => service.id === initialServiceId);
+    const serviceToEdit = services.data?.results.find((service) => service.id === initialServiceId) ?? deepLinkedService.data;
     if (serviceToEdit) return serviceToForm(serviceToEdit, firstCategory);
     if (!openNew || !firstCategory) return null;
     const categoryId = categoryOptions.some((category) => category.id === initialCategoryId)
       ? initialCategoryId ?? firstCategory
       : firstCategory;
     return serviceToForm(undefined, categoryId);
-  }, [categoryOptions, firstCategory, initialCategoryId, initialServiceId, openNew, services.data?.results]);
+  }, [categoryOptions, deepLinkedService.data, firstCategory, initialCategoryId, initialServiceId, openNew, services.data?.results]);
   const form = formState === undefined ? deepLinkedForm : formState;
 
   const save = useMutation({
@@ -468,22 +488,19 @@ export function AdminServicesScreen({
     },
     onSuccess: async () => {
       setGalleryImage(null);
-      await queryClient.invalidateQueries({ queryKey: ["admin", "services"] });
+      await queryClient.invalidateQueries({ queryKey: ["admin", "service-images", galleryService?.id] });
     },
   });
   const removeImage = useMutation({
     mutationFn: ({ serviceId, imageId }: { serviceId: UUID; imageId: UUID }) => adminApi.removeServiceImage(serviceId, imageId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin", "services"] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin", "service-images", galleryService?.id] }),
   });
   const updateImage = useMutation({
     mutationFn: ({ serviceId, imageId, body }: { serviceId: UUID; imageId: UUID; body: { alt_text?: string; display_order?: number; is_active?: boolean } }) => adminApi.updateServiceImage(serviceId, imageId, body),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin", "services"] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin", "service-images", galleryService?.id] }),
   });
 
-  const selectedGalleryService = useMemo(
-    () => services.data?.results.find((service) => service.id === galleryService?.id) ?? galleryService,
-    [galleryService, services.data?.results],
-  );
+  const selectedGalleryService = galleryService;
 
   function submit(event: FormEvent) {
     event.preventDefault();
@@ -607,7 +624,7 @@ export function AdminServicesScreen({
               </Button>
             </div>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {selectedGalleryService.images.map((image) => (
+              {galleryImages.data?.results.map((image) => (
                 <div key={image.id} className="overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
                   <div className="relative aspect-[4/3]">
                     <Image src={image.image} alt={image.alt_text || selectedGalleryService.name} fill unoptimized className="object-cover" />
@@ -623,20 +640,30 @@ export function AdminServicesScreen({
                   </div>
                 </div>
               ))}
-              {!selectedGalleryService.images.length ? <div className="rounded-lg border border-dashed border-slate-300 p-8 text-sm text-slate-500">No gallery images yet.</div> : null}
+              {galleryImages.isLoading ? <div className="rounded-lg border border-dashed border-slate-300 p-8 text-sm text-slate-500">Loading gallery…</div> : null}
+              {!galleryImages.isLoading && !galleryImages.data?.results.length ? <div className="rounded-lg border border-dashed border-slate-300 p-8 text-sm text-slate-500">No gallery images yet.</div> : null}
             </div>
           </div>
         </Panel>
       ) : null}
       <div className="mt-5">
+        <div className="mb-4 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+          <Input
+            value={search}
+            onChange={(event) => { setSearch(event.target.value); setPage(1); }}
+            placeholder="Search services by name, slug or description"
+            aria-label="Search services"
+          />
+        </div>
         {services.isLoading || categories.isLoading ? <Loading /> : services.isError ? <AdminErrorState message={services.error.message} onRetry={() => void services.refetch()} /> : (
-          <AdminDataTable
-            rows={services.data?.results ?? []}
-            getRowKey={(service) => service.id}
-            emptyIcon={Package}
-            emptyTitle="No services"
-            emptyMessage="Create services to publish them on the customer site."
-            columns={[
+          <>
+            <AdminDataTable
+              rows={services.data?.results ?? []}
+              getRowKey={(service) => service.id}
+              emptyIcon={Package}
+              emptyTitle="No services"
+              emptyMessage="Create services to publish them on the customer site."
+              columns={[
               { key: "name", header: "Service", render: (service) => <span className="font-semibold text-slate-950">{service.name}</span> },
               { key: "category", header: "Category", render: (service) => service.category_detail.name },
               { key: "price", header: "Price", render: (service) => money(service.effective_price) },
@@ -658,8 +685,17 @@ export function AdminServicesScreen({
                   </div>
                 ),
               },
-            ]}
-          />
+              ]}
+            />
+            <AdminPagination
+              count={services.data?.count ?? 0}
+              page={page}
+              pageSize={pageSize}
+              hasNext={Boolean(services.data?.next)}
+              hasPrevious={Boolean(services.data?.previous)}
+              onPageChange={setPage}
+            />
+          </>
         )}
       </div>
     </>
@@ -693,7 +729,7 @@ export function AdminPackagesScreen() {
 export function AdminFaqsScreen() {
   const queryClient = useQueryClient();
   const categories = useQuery({ queryKey: ["admin", "categories"], queryFn: adminApi.listCategories });
-  const services = useQuery({ queryKey: ["admin", "services"], queryFn: () => adminApi.listServices({ page_size: 100 }) });
+  const services = useQuery({ queryKey: ["admin", "service-options", ""], queryFn: () => adminApi.listServices({ page_size: 20 }), staleTime: 2 * 60_000 });
   const [search, setSearch] = useState("");
   const faqs = useQuery({ queryKey: ["admin", "faqs", search], queryFn: () => adminApi.listFaqs({ page_size: 50, search: search || undefined }) });
   const [form, setForm] = useState<FaqForm | null>(null);

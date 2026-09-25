@@ -93,6 +93,7 @@ export const apiPaths = {
   adminCategories: "/api/v1/admin/service-categories/",
   adminCategoryDetail: (id: UUID) => `/api/v1/admin/service-categories/${id}/`,
   adminServices: "/api/v1/admin/services/",
+  adminDashboardSummary: "/api/v1/admin/dashboard/summary/",
   adminServiceDetail: (id: UUID) => `/api/v1/admin/services/${id}/`,
   adminPackages: "/api/v1/admin/packages/",
   adminServiceImages: (serviceId: UUID) => `/api/v1/admin/services/${serviceId}/images/`,
@@ -351,8 +352,12 @@ export const adminApi = {
       method: "DELETE",
       auth: true,
     }),
-  listServices: (query?: { page?: number; page_size?: number }) =>
+  getDashboardSummary: () => apiRequest<import("@/types/api").AdminDashboardSummaryResponse>(apiPaths.adminDashboardSummary, { auth: true }),
+  listServices: (query?: { page?: number; page_size?: number; search?: string; category?: UUID }) =>
     apiRequest<PaginatedResponse<AdminService>>(apiPaths.adminServices, { auth: true, query }),
+  getService: (id: UUID) => apiRequest<AdminService>(apiPaths.adminServiceDetail(id), { auth: true }),
+  listServiceImages: (serviceId: UUID) =>
+    apiRequest<PaginatedResponse<AdminServiceImage>>(apiPaths.adminServiceImages(serviceId), { auth: true }),
   listPackages: (query?: { page?: number; page_size?: number; is_active?: boolean }) =>
     apiRequest<PaginatedResponse<AdminPackage>>(apiPaths.adminPackages, { auth: true, query }),
   createService: (body: FormData | Partial<AdminService>) =>

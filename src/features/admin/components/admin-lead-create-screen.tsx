@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { LocateFixed, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useDeferredValue, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
@@ -24,7 +24,13 @@ export function AdminLeadCreateScreen() {
   const [detecting, setDetecting] = useState(false);
   const [locationError, setLocationError] = useState("");
   const [showPincode, setShowPincode] = useState(false);
-  const services = useQuery({ queryKey: ["admin", "services", "lead-create"], queryFn: () => adminApi.listServices({ page_size: 100 }) });
+  const [serviceSearch, setServiceSearch] = useState("");
+  const deferredServiceSearch = useDeferredValue(serviceSearch.trim());
+  const services = useQuery({
+    queryKey: ["admin", "service-options", deferredServiceSearch],
+    queryFn: () => adminApi.listServices({ page_size: 20, search: deferredServiceSearch || undefined }),
+    staleTime: 2 * 60_000,
+  });
   const form = useForm<LeadCreateValues>({ resolver: zodResolver(leadCreateSchema), defaultValues: emptyForm, mode: "onChange" });
   const addressValue = useWatch({ control: form.control, name: "address" });
   const pincodeValue = useWatch({ control: form.control, name: "pincode" });
@@ -69,7 +75,7 @@ export function AdminLeadCreateScreen() {
             </LeadField>
             <LeadField label="Select Service" htmlFor="lead-service" required className="sm:col-span-2">
               <Controller control={form.control} name="required_service" render={({ field, fieldState }) => (
-                <LeadServiceCombobox services={services.data?.results ?? []} value={field.value} onChange={field.onChange} error={fieldState.error?.message} loading={services.isLoading} />
+                <LeadServiceCombobox services={services.data?.results ?? []} value={field.value} onChange={field.onChange} onSearch={setServiceSearch} error={fieldState.error?.message} loading={services.isLoading} />
               )} />
             </LeadField>
           </div>

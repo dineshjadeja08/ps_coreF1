@@ -12,9 +12,10 @@ type Props = {
   onChange: (value: string) => void;
   error?: string;
   loading?: boolean;
+  onSearch?: (value: string) => void;
 };
 
-export function LeadServiceCombobox({ services, value, onChange, error, loading }: Props) {
+export function LeadServiceCombobox({ services, value, onChange, error, loading, onSearch }: Props) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
@@ -57,7 +58,7 @@ export function LeadServiceCombobox({ services, value, onChange, error, loading 
         <div className="absolute inset-x-0 top-full z-30 mt-2 overflow-hidden rounded-lg border border-border bg-white shadow-xl">
           <div className="relative border-b border-border p-2">
             <Search className="pointer-events-none absolute left-5 top-1/2 h-4 w-4 -translate-y-1/2 text-secondary" />
-            <Input autoFocus value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search services" className="h-10 pl-9" />
+            <Input autoFocus value={search} onChange={(event) => { setSearch(event.target.value); onSearch?.(event.target.value); }} placeholder="Search services" className="h-10 pl-9" />
           </div>
           <div id="lead-service-listbox" role="listbox" className="max-h-72 overflow-y-auto p-2">
             {groups.map(([category, items]) => (
@@ -74,6 +75,7 @@ export function LeadServiceCombobox({ services, value, onChange, error, loading 
                       onChange(service.id);
                       setOpen(false);
                       setSearch("");
+                      onSearch?.("");
                     }}
                     className="flex min-h-11 w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm hover:bg-primary-subtle focus:bg-primary-subtle focus:outline-none"
                   >

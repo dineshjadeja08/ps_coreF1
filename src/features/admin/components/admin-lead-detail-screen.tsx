@@ -21,9 +21,9 @@ const emptyManualPayment = (): ManualPaymentDraft => ({ amount: "", method: "MAN
 export function AdminLeadDetailScreen({ leadId }: { leadId: string }) {
   const queryClient = useQueryClient();
   const lead = useQuery({ queryKey: ["admin", "lead", leadId], queryFn: () => adminApi.getLead(leadId) });
-  const activities = useQuery({ queryKey: ["admin", "lead", leadId, "activities"], queryFn: () => adminApi.listLeadActivities(leadId) });
-  const services = useQuery({ queryKey: ["admin", "services", "lead-detail"], queryFn: () => adminApi.listServices({ page_size: 100 }) });
-  const packages = useQuery({ queryKey: ["admin", "packages", "lead-detail"], queryFn: () => adminApi.listPackages({ page_size: 100, is_active: true }) });
+  const activities = useQuery({ queryKey: ["admin", "lead", leadId, "activities"], queryFn: () => adminApi.listLeadActivities(leadId), enabled: Boolean(lead.data) });
+  const services = useQuery({ queryKey: ["admin", "service-options", ""], queryFn: () => adminApi.listServices({ page_size: 20 }), staleTime: 2 * 60_000, enabled: Boolean(lead.data) });
+  const packages = useQuery({ queryKey: ["admin", "packages", "lead-detail"], queryFn: () => adminApi.listPackages({ page_size: 20, is_active: true }), enabled: Boolean(lead.data) });
   const [editing, setEditing] = useState(false);
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [note, setNote] = useState("");

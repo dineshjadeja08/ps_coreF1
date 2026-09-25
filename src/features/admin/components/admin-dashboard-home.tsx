@@ -25,6 +25,8 @@ export function AdminDashboardHome() {
   const query = useQuery({
     queryKey: ["admin", "dashboard"],
     queryFn: getAdminDashboardSummary,
+    staleTime: 30_000,
+    gcTime: 5 * 60_000,
   });
 
   if (query.isLoading) {
