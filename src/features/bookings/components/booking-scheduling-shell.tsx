@@ -178,7 +178,7 @@ export function BookingSchedulingShell() {
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <Button type="button" variant="outline" size="sm" onClick={() => setShowAddressForm((value) => !value)}>
-                  {showAddressForm ? "Hide form" : "Auto detect address"}
+                  {showAddressForm ? "Hide form" : "Add new address"}
                 </Button>
                 {serviceability.data?.is_supported ? (
                   <span className="rounded-sm bg-green-50 px-3 py-1 text-xs font-bold text-green-700">Serviceable</span>

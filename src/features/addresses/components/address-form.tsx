@@ -1,17 +1,15 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CheckCircle2, LocateFixed, Loader2, MapPin, Search, XCircle } from "lucide-react";
-import { useEffect, useState } from "react";
+import { CheckCircle2, Loader2, XCircle } from "lucide-react";
+import { useEffect } from "react";
 import { useForm, useWatch } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { addressSchema, emptyAddressValues, type AddressFormValues } from "@/features/addresses/schema";
 import type { Address } from "@/features/addresses/types";
-import { detectCurrentAddress, resolveAddressSuggestion, searchAddressSuggestions } from "@/features/addresses/location";
 import { useAddressServiceability } from "@/features/addresses/queries";
-import type { AddressSuggestion } from "@/types/api";
 
 type AddressFormProps = {
   initialAddress?: Address | null;
@@ -41,13 +39,6 @@ function toFormValues(address?: Address | null): AddressFormValues {
 }
 
 export function AddressForm({ initialAddress, submitting, onSubmit, onCancel }: AddressFormProps) {
-  const [detecting, setDetecting] = useState(false);
-  const [detectMessage, setDetectMessage] = useState("");
-  const [detectFailed, setDetectFailed] = useState(false);
-  const [addressQuery, setAddressQuery] = useState("");
-  const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
-  const [searching, setSearching] = useState(false);
-  const [searchError, setSearchError] = useState("");
   const form = useForm<AddressFormValues>({
     resolver: zodResolver(addressSchema),
     defaultValues: toFormValues(initialAddress),
@@ -58,57 +49,6 @@ export function AddressForm({ initialAddress, submitting, onSubmit, onCancel }: 
   useEffect(() => {
     form.reset(toFormValues(initialAddress));
   }, [form, initialAddress]);
-
-  useEffect(() => {
-    const query = addressQuery.trim();
-    if (query.length < 3) return;
-
-    let active = true;
-    const timeout = window.setTimeout(async () => {
-      setSearching(true);
-      setSearchError("");
-      try {
-        const results = await searchAddressSuggestions(query);
-        if (active) setSuggestions(results);
-      } catch {
-        if (active) {
-          setSuggestions([]);
-          setSearchError("Address search is unavailable. You can still enter the address manually.");
-        }
-      } finally {
-        if (active) setSearching(false);
-      }
-    }, 350);
-
-    return () => {
-      active = false;
-      window.clearTimeout(timeout);
-    };
-  }, [addressQuery]);
-
-  function applyDetectedAddress(values: Partial<AddressFormValues>) {
-    for (const [name, value] of Object.entries(values)) {
-      if (value !== "" && value !== null && value !== undefined) {
-        form.setValue(name as keyof AddressFormValues, value, { shouldDirty: true, shouldValidate: true });
-      }
-    }
-  }
-
-  async function detectAddressFromLocation() {
-    setDetecting(true);
-    setDetectMessage("");
-    setDetectFailed(false);
-    try {
-      const detected = await detectCurrentAddress();
-      applyDetectedAddress(detected);
-      setDetectMessage("Location detected. Check the address before saving.");
-    } catch (error) {
-      setDetectFailed(true);
-      setDetectMessage(error instanceof Error ? error.message : "Location detection failed.");
-    } finally {
-      setDetecting(false);
-    }
-  }
 
   const fields: Array<{ name: keyof AddressFormValues; label: string; placeholder: string; required?: boolean }> = [
     { name: "recipient_name", label: "Recipient name", placeholder: "Name", required: true },
@@ -124,68 +64,9 @@ export function AddressForm({ initialAddress, submitting, onSubmit, onCancel }: 
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="rounded-xl border border-border bg-surface p-4 shadow-sm sm:p-5">
-      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h3 className="text-lg font-bold text-foreground">{initialAddress ? "Edit address" : "Add address"}</h3>
-        </div>
-        <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={() => void detectAddressFromLocation()} disabled={detecting || submitting}>
-          {detecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <LocateFixed className="h-4 w-4" />}
-          {detectFailed ? "Retry location" : "Auto detect address"}
-        </Button>
-      </div>
-      {detectMessage ? <p className={`mb-4 rounded-md p-3 text-sm ${detectFailed ? "bg-destructive/10 text-destructive" : "bg-primary-soft text-primary"}`}>{detectMessage}</p> : null}
-      <div className="relative mb-4">
-        <label htmlFor="address-search" className="text-sm font-semibold text-foreground">Search address</label>
-        <div className="relative mt-2">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            id="address-search"
-            value={addressQuery}
-            onChange={(event) => {
-              const nextQuery = event.target.value;
-              setAddressQuery(nextQuery);
-              if (nextQuery.trim().length < 3) {
-                setSuggestions([]);
-                setSearching(false);
-                setSearchError("");
-              }
-            }}
-            placeholder="Start typing your street, area or landmark"
-            className="pl-9 pr-10"
-            autoComplete="off"
-          />
-          {searching ? <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-primary" /> : null}
-        </div>
-        {suggestions.length ? (
-          <div className="absolute inset-x-0 top-full z-20 mt-2 overflow-hidden rounded-lg border border-border bg-white shadow-[var(--shadow-card)]" role="listbox" aria-label="Address suggestions">
-            {suggestions.map((suggestion) => (
-              <button
-                key={suggestion.id}
-                type="button"
-                role="option"
-                aria-selected="false"
-                onClick={async () => {
-                  setSearching(true);
-                  const resolved = await resolveAddressSuggestion(suggestion);
-                  applyDetectedAddress(resolved);
-                  setAddressQuery("");
-                  setSuggestions([]);
-                  setSearching(false);
-                  setDetectFailed(false);
-                  setDetectMessage("Address selected. Check the details before saving.");
-                }}
-                className="flex w-full gap-3 border-b border-border px-3 py-3 text-left last:border-0 hover:bg-primary-soft focus-visible:bg-primary-soft focus-visible:outline-none"
-              >
-                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                <span className="min-w-0">
-                  <span className="block truncate text-sm font-semibold text-foreground">{suggestion.main_text}</span>
-                  <span className="mt-0.5 block truncate text-xs text-secondary">{suggestion.secondary_text || suggestion.description}</span>
-                </span>
-              </button>
-            ))}
-          </div>
-        ) : null}
-        {searchError ? <p className="mt-2 text-sm text-destructive">{searchError}</p> : null}
+      <div className="mb-4">
+        <h3 className="text-lg font-bold text-foreground">{initialAddress ? "Edit address" : "Add address"}</h3>
+        <p className="mt-1 text-sm text-secondary">Enter the service address manually.</p>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <div>

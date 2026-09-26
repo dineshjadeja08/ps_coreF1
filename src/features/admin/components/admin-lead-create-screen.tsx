@@ -2,17 +2,15 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { LocateFixed, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useDeferredValue, useState } from "react";
-import { Controller, useForm, useWatch } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { detectCurrentAddress } from "@/features/addresses/location";
-import { LeadAddressCombobox } from "@/features/admin/components/leads/lead-address-combobox";
 import { LeadServiceCombobox } from "@/features/admin/components/leads/lead-service-combobox";
-import { extractPincode, leadCreateSchema, normalizeIndianMobile, type LeadCreateValues } from "@/features/admin/components/leads/lead-utils";
+import { leadCreateSchema, normalizeIndianMobile, type LeadCreateValues } from "@/features/admin/components/leads/lead-utils";
 import { adminApi } from "@/lib/api/endpoints";
 
 const emptyForm: LeadCreateValues = {
@@ -21,9 +19,6 @@ const emptyForm: LeadCreateValues = {
 
 export function AdminLeadCreateScreen() {
   const router = useRouter();
-  const [detecting, setDetecting] = useState(false);
-  const [locationError, setLocationError] = useState("");
-  const [showPincode, setShowPincode] = useState(false);
   const [serviceSearch, setServiceSearch] = useState("");
   const deferredServiceSearch = useDeferredValue(serviceSearch.trim());
   const services = useQuery({
@@ -32,8 +27,6 @@ export function AdminLeadCreateScreen() {
     staleTime: 2 * 60_000,
   });
   const form = useForm<LeadCreateValues>({ resolver: zodResolver(leadCreateSchema), defaultValues: emptyForm, mode: "onChange" });
-  const addressValue = useWatch({ control: form.control, name: "address" });
-  const pincodeValue = useWatch({ control: form.control, name: "pincode" });
   const create = useMutation({
     mutationFn: (values: LeadCreateValues) => adminApi.createLead({
       customer_name: values.customer_name.trim(), primary_mobile: normalizeIndianMobile(values.primary_mobile),
@@ -42,24 +35,6 @@ export function AdminLeadCreateScreen() {
     }),
     onSuccess: (lead) => router.push(`/admin/leads/${lead.id}`),
   });
-
-  async function detectAddress() {
-    setDetecting(true);
-    setLocationError("");
-    try {
-      const value = await detectCurrentAddress();
-      form.setValue("address", value.address_line_1 || value.locality || "", { shouldDirty: true, shouldValidate: true });
-      form.setValue("city", value.city || "", { shouldDirty: true, shouldValidate: true });
-      form.setValue("pincode", value.postal_code || "", { shouldDirty: true, shouldValidate: true });
-      form.setValue("latitude", value.latitude, { shouldDirty: true });
-      form.setValue("longitude", value.longitude, { shouldDirty: true });
-      setShowPincode(!value.postal_code);
-    } catch (error) {
-      setLocationError(error instanceof Error ? error.message : "Location could not be detected.");
-    } finally {
-      setDetecting(false);
-    }
-  }
 
   return (
     <div className="flex min-h-[calc(100vh-8rem)] flex-col">
@@ -82,36 +57,16 @@ export function AdminLeadCreateScreen() {
         </section>
 
         <section className="rounded-xl border border-border bg-white p-5 shadow-sm sm:p-7">
-          <div className="flex items-center justify-between gap-4">
-            <h2 className="text-xl font-medium text-foreground">Create Address</h2>
-            <button type="button" onClick={() => void detectAddress()} disabled={detecting} className="inline-flex min-h-11 items-center gap-2 rounded-md px-2 text-sm font-bold text-primary hover:bg-primary-subtle focus-visible:outline-2 focus-visible:outline-primary disabled:opacity-50">
-              {detecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <LocateFixed className="h-4 w-4" />}Auto detect
-            </button>
-          </div>
+          <h2 className="text-xl font-medium text-foreground">Create Address</h2>
           <div className="mt-7 space-y-6">
             <LeadField label="City" htmlFor="lead-city" required error={form.formState.errors.city?.message}>
               <Input id="lead-city" className="h-[50px]" {...form.register("city")} aria-invalid={Boolean(form.formState.errors.city)} />
             </LeadField>
-            <LeadField label="Search Address" htmlFor="lead-address" required>
-              <Controller control={form.control} name="address" render={({ field, fieldState }) => (
-                <LeadAddressCombobox value={field.value} onChange={(value) => {
-                  field.onChange(value);
-                  form.setValue("pincode", extractPincode(value), { shouldValidate: true });
-                }} onResolve={(value) => {
-                  form.setValue("address", value.address, { shouldDirty: true, shouldValidate: true });
-                  form.setValue("city", value.city, { shouldDirty: true, shouldValidate: true });
-                  form.setValue("pincode", value.pincode, { shouldDirty: true, shouldValidate: true });
-                  form.setValue("latitude", value.latitude, { shouldDirty: true });
-                  form.setValue("longitude", value.longitude, { shouldDirty: true });
-                  setShowPincode(!value.pincode);
-                }} error={fieldState.error?.message} />
-              )} />
+            <LeadField label="Address" htmlFor="lead-address" required error={form.formState.errors.address?.message}>
+              <Input id="lead-address" className="h-[50px]" placeholder="House number, street and locality" {...form.register("address")} aria-invalid={Boolean(form.formState.errors.address)} />
             </LeadField>
-            {showPincode || (addressValue.trim().length >= 3 && !pincodeValue) ? (
-              <LeadField label="Pincode" htmlFor="lead-pincode" error={form.formState.errors.pincode?.message}><Input id="lead-pincode" className="h-[50px] max-w-xs" inputMode="numeric" {...form.register("pincode")} /></LeadField>
-            ) : null}
+            <LeadField label="Pincode" htmlFor="lead-pincode" error={form.formState.errors.pincode?.message}><Input id="lead-pincode" className="h-[50px] max-w-xs" inputMode="numeric" {...form.register("pincode")} /></LeadField>
           </div>
-          {locationError ? <p className="mt-4 text-sm font-medium text-red-600">{locationError}</p> : null}
         </section>
         {create.isError ? <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm font-medium text-red-700">{create.error.message}</p> : null}
       </form>
