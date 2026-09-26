@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowRight, BookOpen, ImagePlus, Loader2, Package, Plus, Save, Trash2, Upload } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { FormEvent, useDeferredValue, useMemo, useState } from "react";
+import { FormEvent, useDeferredValue, useEffect, useMemo, useState } from "react";
 
 import { AdminDataTable } from "@/components/admin/admin-data-table";
 import { AdminErrorState } from "@/components/admin/admin-error-state";
@@ -46,7 +46,11 @@ type ServiceForm = {
   is_featured: boolean;
   is_popular: boolean;
   is_active: boolean;
+  cover_image_url: string;
+  landing_thumbnail_url: string;
+  popup_cover_image_url: string;
   popup_content_image_url: string;
+  list_image_url: string;
 };
 
 type FaqForm = {
@@ -123,7 +127,11 @@ function serviceToForm(service?: AdminService, firstCategory?: string): ServiceF
     is_featured: service?.is_featured ?? false,
     is_popular: service?.is_popular ?? false,
     is_active: service?.is_active ?? true,
+    cover_image_url: service?.cover_image ?? "",
+    landing_thumbnail_url: service?.landing_thumbnail ?? "",
+    popup_cover_image_url: service?.popup_cover_image ?? "",
     popup_content_image_url: service?.popup_content_image ?? "",
+    list_image_url: service?.list_image ?? "",
   };
 }
 
@@ -170,6 +178,52 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <span className={labelClass}>{label}</span>
       {children}
     </label>
+  );
+}
+
+function ServiceImageUpload({
+  label,
+  help,
+  currentUrl,
+  file,
+  onChange,
+  previewClassName = "aspect-video",
+}: {
+  label: string;
+  help: string;
+  currentUrl?: string;
+  file: File | null;
+  onChange: (file: File | null) => void;
+  previewClassName?: string;
+}) {
+  const previewUrl = useMemo(() => (file ? URL.createObjectURL(file) : currentUrl ?? ""), [currentUrl, file]);
+
+  useEffect(() => {
+    if (file && previewUrl) return () => URL.revokeObjectURL(previewUrl);
+  }, [file, previewUrl]);
+
+  return (
+    <Field label={label}>
+      <div className="grid gap-2">
+        {previewUrl ? (
+          <div className={`relative overflow-hidden rounded-lg border border-slate-200 bg-slate-50 ${previewClassName}`}>
+            <Image src={previewUrl} alt={`${label} preview`} fill unoptimized className="object-cover" />
+          </div>
+        ) : (
+          <div className={`grid place-items-center rounded-lg border border-dashed border-slate-300 bg-slate-50 text-xs font-semibold text-slate-500 ${previewClassName}`}>
+            No image uploaded
+          </div>
+        )}
+        <Input
+          className={fieldClass}
+          type="file"
+          accept="image/png,image/jpeg,image/webp"
+          onChange={(event) => onChange(event.target.files?.[0] ?? null)}
+        />
+        <p className="text-xs leading-5 text-slate-500">{help}</p>
+        {file ? <p className="text-xs font-semibold text-violet-700">Replacement selected: {file.name}</p> : null}
+      </div>
+    </Field>
   );
 }
 
@@ -415,6 +469,14 @@ export function AdminServicesScreen({
   const [listImage, setListImage] = useState<File | null>(null);
   const [galleryService, setGalleryService] = useState<AdminService | null>(null);
   const [galleryImage, setGalleryImage] = useState<File | null>(null);
+
+  function clearPendingServiceImages() {
+    setCoverImage(null);
+    setLandingThumbnail(null);
+    setPopupCoverImage(null);
+    setPopupContentImage(null);
+    setListImage(null);
+  }
   const galleryImages = useQuery({
     queryKey: ["admin", "service-images", galleryService?.id],
     queryFn: () => adminApi.listServiceImages(galleryService!.id),
@@ -470,11 +532,7 @@ export function AdminServicesScreen({
     },
     onSuccess: async () => {
       setForm(null);
-      setCoverImage(null);
-      setLandingThumbnail(null);
-      setPopupCoverImage(null);
-      setPopupContentImage(null);
-      setListImage(null);
+      clearPendingServiceImages();
       await queryClient.invalidateQueries({ queryKey: ["admin", "services"] });
     },
   });
@@ -513,14 +571,14 @@ export function AdminServicesScreen({
         title="Services"
         description="Manage service descriptions, prices, offers, visibility, cover images, and gallery images."
         action={
-          <Button type="button" onClick={() => setForm(serviceToForm(undefined, firstCategory))} disabled={!firstCategory}>
+          <Button type="button" onClick={() => { clearPendingServiceImages(); setForm(serviceToForm(undefined, firstCategory)); }} disabled={!firstCategory}>
             <Plus className="h-4 w-4" />
             New service
           </Button>
         }
       />
       {form ? (
-        <Panel title={form.id ? "Edit service" : "New service"} onClose={() => setForm(null)}>
+        <Panel title={form.id ? "Edit service" : "New service"} onClose={() => { clearPendingServiceImages(); setForm(null); }}>
           <form className="grid gap-4 lg:grid-cols-3" onSubmit={submit}>
             <Field label="Service name">
               <Input className={fieldClass} value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value, slug: form.slug || slugify(event.target.value) })} required />
@@ -557,29 +615,42 @@ export function AdminServicesScreen({
             <Field label="Display order">
               <Input className={fieldClass} type="number" min="0" value={form.display_order} onChange={(event) => setForm({ ...form, display_order: event.target.value })} />
             </Field>
-            <Field label="Cover image">
-              <Input className={fieldClass} type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => setCoverImage(event.target.files?.[0] ?? null)} />
-            </Field>
-            <Field label="Landing thumbnail (1600 × 700, 16:7)">
-              <Input className={fieldClass} type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => setLandingThumbnail(event.target.files?.[0] ?? null)} />
-            </Field>
-            <Field label="Popup cover (1200 × 750, 8:5)">
-              <Input className={fieldClass} type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => setPopupCoverImage(event.target.files?.[0] ?? null)} />
-            </Field>
-            <Field label="Popup content image (1200 × 675, 16:9)">
-              <div className="grid gap-2">
-                {form.popup_content_image_url ? (
-                  <div className="relative aspect-video overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
-                    <Image src={form.popup_content_image_url} alt={`${form.name || "Service"} popup content`} fill unoptimized className="object-cover" />
-                  </div>
-                ) : null}
-                <Input className={fieldClass} type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => setPopupContentImage(event.target.files?.[0] ?? null)} />
-                {popupContentImage ? <p className="text-xs font-semibold text-violet-700">New image selected: {popupContentImage.name}</p> : null}
-              </div>
-            </Field>
-            <Field label="Service list image (600 × 600, 1:1)">
-              <Input className={fieldClass} type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => setListImage(event.target.files?.[0] ?? null)} />
-            </Field>
+            <ServiceImageUpload
+              label="General cover image"
+              help="Used as a fallback wherever a dedicated image below has not been uploaded."
+              currentUrl={form.cover_image_url}
+              file={coverImage}
+              onChange={setCoverImage}
+            />
+            <ServiceImageUpload
+              label="Landing banner (1600 × 700, 16:7)"
+              help="The wide image at the top of this service landing page."
+              currentUrl={form.landing_thumbnail_url}
+              file={landingThumbnail}
+              onChange={setLandingThumbnail}
+            />
+            <ServiceImageUpload
+              label="Read-more popup cover (1200 × 750, 8:5)"
+              help="The cover shown at the top of the service details popup."
+              currentUrl={form.popup_cover_image_url}
+              file={popupCoverImage}
+              onChange={setPopupCoverImage}
+            />
+            <ServiceImageUpload
+              label="Popup content image (1200 × 675, 16:9)"
+              help="Shown below Included and Not Included inside the popup."
+              currentUrl={form.popup_content_image_url}
+              file={popupContentImage}
+              onChange={setPopupContentImage}
+            />
+            <ServiceImageUpload
+              label="Image beside Add button (600 × 600, 1:1)"
+              help="This is the small square thumbnail in the Available services list shown in your screenshot."
+              currentUrl={form.list_image_url}
+              file={listImage}
+              onChange={setListImage}
+              previewClassName="aspect-square max-w-48"
+            />
             <div className="flex flex-wrap items-center gap-4 pt-6 text-sm font-semibold text-slate-700 lg:col-span-2">
               {(["is_active", "is_featured", "is_popular"] as const).map((key) => (
                 <label key={key} className="flex items-center gap-2">
@@ -674,7 +745,7 @@ export function AdminServicesScreen({
                 header: "Actions",
                 render: (service) => (
                   <div className="flex gap-2">
-                    <Button type="button" variant="outline" size="sm" onClick={() => { setCoverImage(null); setForm(serviceToForm(service, firstCategory)); }}>Edit</Button>
+                    <Button type="button" variant="outline" size="sm" onClick={() => { clearPendingServiceImages(); setForm(serviceToForm(service, firstCategory)); }}>Edit</Button>
                     <Button type="button" variant="outline" size="sm" onClick={() => setGalleryService(service)}>
                       <ImagePlus className="h-4 w-4" />
                       Images

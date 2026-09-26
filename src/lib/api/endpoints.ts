@@ -161,8 +161,8 @@ export const apiPaths = {
 export const catalogueApi = {
   listCategories: () => apiRequest<ServiceCategory[]>(apiPaths.serviceCategories, { cache: "no-store" }),
   listServices: (query?: { category?: string; search?: string; featured?: boolean; city?: string; postal_code?: string; page?: number; page_size?: number }) =>
-    apiRequest<PaginatedResponse<ServiceListItem>>(apiPaths.services, { query }),
-  getService: (slug: string) => apiRequest<ServiceDetail>(apiPaths.serviceDetail(slug)),
+    apiRequest<PaginatedResponse<ServiceListItem>>(apiPaths.services, { query, cache: "no-store" }),
+  getService: (slug: string) => apiRequest<ServiceDetail>(apiPaths.serviceDetail(slug), { cache: "no-store" }),
   listServiceReviews: (serviceId: UUID) =>
     apiRequest<PaginatedResponse<Review>>(apiPaths.serviceReviews(serviceId), { query: { page_size: 3 } }),
   listServiceFaqs: (serviceId: UUID) => apiRequest<FAQ[]>(apiPaths.faqs, { query: { service_id: serviceId } }),
