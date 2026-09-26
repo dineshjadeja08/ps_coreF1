@@ -20,12 +20,10 @@ type AuthContextValue = {
   user: AuthUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  loginWithOtp: (phoneNumber: string, otp: string) => Promise<AuthUser>;
+  loginWithNameAndPhone: (name: string, phoneNumber: string) => Promise<AuthUser>;
   loginWithPassword: (phoneNumber: string, password: string) => Promise<AuthUser>;
   startAdminMfa: (phoneNumber: string, password: string, channel: OtpDeliveryChannel) => Promise<AdminMfaRequiredResponse>;
   completeAdminMfa: (challengeId: string, otp: string) => Promise<AuthUser>;
-  signupWithPassword: (body: { phone_number: string; password: string; first_name?: string; last_name?: string; email?: string }) => Promise<AuthUser>;
-  loginWithDevPhone: (phoneNumber: string) => Promise<AuthUser>;
   restoreSession: () => Promise<AuthUser | null>;
   updateCurrentUser: (body: UserProfileUpdateRequest) => Promise<AuthUser>;
   logout: () => Promise<void>;
@@ -94,16 +92,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [restoreSession]);
 
-  const loginWithDevPhone = useCallback(async (phoneNumber: string) => {
-    const response = await backendAuthApi.devPhoneLogin(phoneNumber);
-    setAuthTokens(response.tokens);
-    setStoredUser(response.user);
-    setUser(response.user);
-    return response.user;
-  }, []);
-
-  const loginWithOtp = useCallback(async (phoneNumber: string, otp: string) => {
-    const response = await backendAuthApi.verifyOtp(phoneNumber, otp);
+  const loginWithNameAndPhone = useCallback(async (name: string, phoneNumber: string) => {
+    const response = await backendAuthApi.customerAccess({ name, phone_number: phoneNumber });
     setAuthTokens(response.tokens);
     setStoredUser(response.user);
     setUser(response.user);
@@ -137,17 +127,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return response.user;
   }, []);
 
-  const signupWithPassword = useCallback(
-    async (body: { phone_number: string; password: string; first_name?: string; last_name?: string; email?: string }) => {
-      const response = await backendAuthApi.passwordSignup(body);
-      setAuthTokens(response.tokens);
-      setStoredUser(response.user);
-      setUser(response.user);
-      return response.user;
-    },
-    [],
-  );
-
   const updateCurrentUser = useCallback(async (body: UserProfileUpdateRequest) => {
     const updatedUser = await backendAuthApi.updateMe(body);
     setStoredUser(updatedUser);
@@ -180,18 +159,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user,
       isAuthenticated: Boolean(user),
       isLoading,
-      loginWithOtp,
+      loginWithNameAndPhone,
       loginWithPassword,
       startAdminMfa,
       completeAdminMfa,
-      signupWithPassword,
-      loginWithDevPhone,
       restoreSession,
       updateCurrentUser,
       logout,
       consumeReturnPath,
     }),
-    [completeAdminMfa, consumeReturnPath, isLoading, loginWithDevPhone, loginWithOtp, loginWithPassword, logout, restoreSession, signupWithPassword, startAdminMfa, updateCurrentUser, user],
+    [completeAdminMfa, consumeReturnPath, isLoading, loginWithNameAndPhone, loginWithPassword, logout, restoreSession, startAdminMfa, updateCurrentUser, user],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

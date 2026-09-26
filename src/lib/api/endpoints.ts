@@ -60,6 +60,7 @@ export type AdminSearchResponse = { query: string; results: AdminSearchResult[] 
 
 export const apiPaths = {
   health: "/api/v1/health/",
+  customerAccess: "/api/v1/auth/customer-access/",
   otpSend: "/api/v1/auth/otp/send/",
   otpVerify: "/api/v1/auth/otp/verify/",
   passwordSignup: "/api/v1/auth/password/signup/",
@@ -256,6 +257,11 @@ export const paymentApi = {
 };
 
 export const authApi = {
+  customerAccess: (body: { name: string; phone_number: string }) =>
+    apiRequest<AuthLoginResponse>(apiPaths.customerAccess, {
+      method: "POST",
+      body,
+    }),
   passwordSignup: (body: PasswordSignupRequest) =>
     apiRequest<AuthLoginResponse>(apiPaths.passwordSignup, {
       method: "POST",

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { mapOtpAuthError } from "@/features/auth/errors";
 import { ApiError } from "@/lib/api/errors";
-import { maskPhone, normalizeIndianPhone, otpSchema, passwordLoginSchema, passwordSignupSchema, phoneLoginSchema } from "@/features/auth/schema";
+import { customerAccessSchema, maskPhone, normalizeIndianPhone, otpSchema, passwordLoginSchema, passwordSignupSchema, phoneLoginSchema } from "@/features/auth/schema";
 
 describe("auth schema and errors", () => {
   it("validates Indian phone numbers and normalizes them for backend OTP", () => {
@@ -11,6 +11,11 @@ describe("auth schema and errors", () => {
     expect(normalizeIndianPhone("98765 43210")).toBe("+919876543210");
     expect(normalizeIndianPhone("+91 98765 43210")).toBe("+919876543210");
     expect(normalizeIndianPhone("12345")).toBeNull();
+  });
+
+  it("requires a name and valid phone for customer access", () => {
+    expect(customerAccessSchema.safeParse({ name: "Viknesh", phone: "9876543210" }).success).toBe(true);
+    expect(customerAccessSchema.safeParse({ name: "", phone: "9876543210" }).success).toBe(false);
   });
 
   it("validates six digit OTP values", () => {

@@ -5,7 +5,7 @@ import { LoginForm } from "@/features/auth/components/login-form";
 
 export const metadata: Metadata = {
   title: "Login",
-  description: "Login to Purple Squad with phone OTP.",
+  description: "Continue to Purple Squad using your name and mobile number.",
 };
 
 export default function LoginPage() {

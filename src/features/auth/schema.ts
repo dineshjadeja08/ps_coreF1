@@ -9,6 +9,15 @@ export const phoneLoginSchema = z.object({
     .regex(/^[6-9]\d{9}$/, "Enter a valid Indian mobile number."),
 });
 
+export const customerAccessSchema = z.object({
+  name: z.string().trim().min(2, "Enter your name.").max(150, "Name is too long."),
+  phone: z
+    .string()
+    .trim()
+    .min(10, "Enter a valid 10 digit mobile number.")
+    .regex(/^[6-9]\d{9}$/, "Enter a valid Indian mobile number."),
+});
+
 export const otpSchema = z.object({
   otp: z
     .string()
@@ -27,6 +36,7 @@ export const passwordSignupSchema = passwordLoginSchema.extend({
 });
 
 export type PhoneLoginFormValues = z.infer<typeof phoneLoginSchema>;
+export type CustomerAccessFormValues = z.infer<typeof customerAccessSchema>;
 export type OtpFormValues = z.infer<typeof otpSchema>;
 export type PasswordLoginFormValues = z.infer<typeof passwordLoginSchema>;
 export type PasswordSignupFormValues = z.infer<typeof passwordSignupSchema>;

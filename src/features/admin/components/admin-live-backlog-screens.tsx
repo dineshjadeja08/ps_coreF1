@@ -35,7 +35,7 @@ export function AdminLeadsScreen() {
   const services = useQuery({ queryKey: ["admin", "service-options", deferredServiceOptionSearch], queryFn: () => adminApi.listServices({ page_size: 20, search: deferredServiceOptionSearch || undefined }), staleTime: 2 * 60_000 });
   const staff = useQuery({ queryKey: ["admin", "staff-options", deferredStaffOptionSearch], queryFn: () => adminApi.listStaff({ page_size: 20, search: deferredStaffOptionSearch || undefined }), staleTime: 2 * 60_000 });
   const query = useQuery({
-    queryKey: ["admin", "leads", search, filters],
+    queryKey: ["admin", "leads", page, search, filters],
     queryFn: () => adminApi.listLeads({
       page_size: 25,
       page,
@@ -55,8 +55,10 @@ export function AdminLeadsScreen() {
       follow_up_date: filters.follow_up_date || undefined,
       ordering: filters.ordering,
     }),
+    refetchInterval: 10_000,
+    refetchOnWindowFocus: true,
   });
-  const summary = useQuery({ queryKey: ["admin", "leads", "summary"], queryFn: adminApi.getLeadSummary });
+  const summary = useQuery({ queryKey: ["admin", "leads", "summary"], queryFn: adminApi.getLeadSummary, refetchInterval: 10_000, refetchOnWindowFocus: true });
   const create = useMutation({
     mutationFn: () => adminApi.createLead({
       customer_name: createForm.customer_name,
