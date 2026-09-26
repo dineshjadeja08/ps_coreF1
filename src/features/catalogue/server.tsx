@@ -37,6 +37,19 @@ async function fetchJson<T>(path: string, query?: Record<string, string | number
   return (await response.json()) as T;
 }
 
+async function fetchFreshJson<T>(path: string, query?: Record<string, string | number | boolean | undefined>) {
+  const response = await fetch(buildApiUrl(path, query), {
+    headers: { Accept: "application/json" },
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error(`Catalogue request failed: ${response.status}`);
+  }
+
+  return (await response.json()) as T;
+}
+
 export async function getServiceCategoriesForSeo() {
   try {
     return await fetchJson<ServiceCategory[]>(apiPaths.serviceCategories);
@@ -47,7 +60,7 @@ export async function getServiceCategoriesForSeo() {
 
 export async function getServicesForSeo(query: ServiceQuery = {}) {
   try {
-    return await fetchJson<PaginatedResponse<ServiceListItem>>(apiPaths.services, {
+    return await fetchFreshJson<PaginatedResponse<ServiceListItem>>(apiPaths.services, {
       page_size: query.page_size ?? 40,
       category: query.category,
       search: query.search,
@@ -60,7 +73,7 @@ export async function getServicesForSeo(query: ServiceQuery = {}) {
 
 export async function getServiceDetailForSeo(slug: string) {
   try {
-    return await fetchJson<ServiceDetail>(apiPaths.serviceDetail(slug));
+    return await fetchFreshJson<ServiceDetail>(apiPaths.serviceDetail(slug));
   } catch {
     return null;
   }
