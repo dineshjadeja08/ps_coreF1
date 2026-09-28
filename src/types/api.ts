@@ -235,11 +235,10 @@ export type AdminSettings = {
   allowed_hosts: string[];
   cors_allowed_origins: string[];
   csrf_trusted_origins: string[];
-  otp_provider: string;
   notification_provider: string;
   razorpay_configured: boolean;
-  msg91_configured: boolean;
   firebase_configured: boolean;
+  google_maps_configured: boolean;
   cloudinary_media_enabled: boolean;
   cloudinary_media_configured: boolean;
   booking_require_balance_before_completion: boolean;
@@ -681,36 +680,12 @@ export type AuthLoginResponse = {
   created: boolean;
 };
 
-export type AdminMfaRequiredResponse = {
-  mfa_required: true;
-  challenge_id: UUID;
-  channel: OtpDeliveryChannel;
-  expires_in: number;
-};
-
-export type PasswordLoginResponse = AuthLoginResponse | AdminMfaRequiredResponse;
-
-export type PasswordSignupRequest = {
-  phone_number: string;
-  password: string;
-  first_name?: string;
-  last_name?: string;
-  email?: string;
-};
+export type PasswordLoginResponse = AuthLoginResponse;
 
 export type PasswordLoginRequest = {
   phone_number: string;
   password: string;
-  channel?: OtpDeliveryChannel;
 };
-
-export type OtpSendResponse = {
-  phone_number: string;
-  request_id: string;
-  channel: OtpDeliveryChannel;
-};
-
-export type OtpDeliveryChannel = "SMS" | "WHATSAPP";
 
 export type TokenRefreshResponse = {
   access: string;

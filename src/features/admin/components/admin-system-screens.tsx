@@ -266,8 +266,8 @@ export function AdminSettingsScreen() {
         <div className="space-y-5">
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <Flag label="Razorpay" active={Boolean(query.data?.razorpay_configured)} />
-            <Flag label="MSG91" active={Boolean(query.data?.msg91_configured)} />
             <Flag label="Firebase Admin" active={Boolean(query.data?.firebase_configured)} />
+            <Flag label="Google Maps" active={Boolean(query.data?.google_maps_configured)} />
             <Flag label="Cloudinary media" active={Boolean(query.data?.cloudinary_media_enabled && query.data?.cloudinary_media_configured)} />
             <Flag label="Balance before completion" active={Boolean(query.data?.booking_require_balance_before_completion)} />
           </div>
@@ -276,7 +276,7 @@ export function AdminSettingsScreen() {
               <Settings className="h-5 w-5 text-violet-700" />
               <h2 className="mt-3 text-sm font-bold text-slate-950">Runtime</h2>
               <p className="mt-2 text-sm text-slate-600">DEBUG: {String(query.data?.debug)}</p>
-              <p className="text-sm text-slate-600">OTP: {query.data?.otp_provider}</p>
+              <p className="text-sm text-slate-600">Authentication: Firebase Phone Auth</p>
               <p className="text-sm text-slate-600">Notifications: {query.data?.notification_provider}</p>
               <p className="text-sm text-slate-600">Cloudinary media: {query.data?.cloudinary_media_enabled ? "Enabled" : "Disabled"}</p>
             </section>

@@ -17,10 +17,8 @@ import type {
   Booking,
   AuthLoginResponse,
   PasswordLoginResponse,
-  OtpSendResponse,
   PaginatedResponse,
   PasswordLoginRequest,
-  PasswordSignupRequest,
   PaymentOrder,
   PaymentVerifyRequest,
   PaymentVerifyResponse,
@@ -60,12 +58,8 @@ export type AdminSearchResponse = { query: string; results: AdminSearchResult[] 
 
 export const apiPaths = {
   health: "/api/v1/health/",
-  customerAccess: "/api/v1/auth/customer-access/",
-  otpSend: "/api/v1/auth/otp/send/",
-  otpVerify: "/api/v1/auth/otp/verify/",
-  passwordSignup: "/api/v1/auth/password/signup/",
+  firebaseLogin: "/api/v1/auth/firebase-login/",
   passwordLogin: "/api/v1/auth/password/login/",
-  adminMfaVerify: "/api/v1/auth/admin-mfa/verify/",
   devPhoneAuth: "/api/v1/auth/dev-phone/",
   refreshAuth: "/api/v1/auth/refresh/",
   logout: "/api/v1/auth/logout/",
@@ -74,6 +68,8 @@ export const apiPaths = {
   serviceAreas: "/api/v1/service-areas/",
   locationReverseGeocode: "/api/v1/location/reverse-geocode/",
   locationAutocomplete: "/api/v1/location/autocomplete/",
+  locationGeocode: "/api/v1/location/geocode/",
+  deviceRegister: "/api/v1/devices/register/",
   serviceCategories: "/api/v1/service-categories/",
   services: "/api/v1/services/",
   serviceDetail: (slug: string) => `/api/v1/services/${slug}/`,
@@ -183,6 +179,8 @@ export const addressApi = {
     apiRequest<AddressAutocompleteResponse>(apiPaths.locationAutocomplete, {
       query: { input },
     }),
+  geocode: (placeId: string) =>
+    apiRequest<LocationAddress>(apiPaths.locationGeocode, { query: { place_id: placeId } }),
   list: () => apiRequest<PaginatedResponse<Address>>(apiPaths.addresses, { auth: true }),
   create: (body: AddressRequest) =>
     apiRequest<Address>(apiPaths.addresses, {
@@ -257,40 +255,26 @@ export const paymentApi = {
 };
 
 export const authApi = {
-  customerAccess: (body: { name: string; phone_number: string }) =>
-    apiRequest<AuthLoginResponse>(apiPaths.customerAccess, {
+  firebaseLogin: (idToken: string) =>
+    apiRequest<AuthLoginResponse>(apiPaths.firebaseLogin, {
       method: "POST",
-      body,
-    }),
-  passwordSignup: (body: PasswordSignupRequest) =>
-    apiRequest<AuthLoginResponse>(apiPaths.passwordSignup, {
-      method: "POST",
-      body,
+      body: { id_token: idToken },
     }),
   passwordLogin: (body: PasswordLoginRequest) =>
     apiRequest<PasswordLoginResponse>(apiPaths.passwordLogin, {
       method: "POST",
       body,
     }),
-  verifyAdminMfa: (challengeId: UUID, otp: string) =>
-    apiRequest<AuthLoginResponse>(apiPaths.adminMfaVerify, {
-      method: "POST",
-      body: { challenge_id: challengeId, otp },
-    }),
   devPhoneLogin: (phoneNumber: string) =>
     apiRequest<AuthLoginResponse>(apiPaths.devPhoneAuth, {
       method: "POST",
       body: { phone_number: phoneNumber },
     }),
-  sendOtp: (phoneNumber: string, channel: "SMS" | "WHATSAPP", captchaToken = "") =>
-    apiRequest<OtpSendResponse>(apiPaths.otpSend, {
+  registerDevice: (token: string, platform: "WEB" | "ANDROID" | "IOS" = "WEB") =>
+    apiRequest<{ token: string; platform: string }>(apiPaths.deviceRegister, {
       method: "POST",
-      body: { phone_number: phoneNumber, channel, captcha_token: captchaToken },
-    }),
-  verifyOtp: (phoneNumber: string, otp: string) =>
-    apiRequest<AuthLoginResponse>(apiPaths.otpVerify, {
-      method: "POST",
-      body: { phone_number: phoneNumber, otp },
+      body: { token, platform },
+      auth: true,
     }),
   me: () => apiRequest<User>(apiPaths.me, { auth: true }),
   updateMe: (body: UserProfileUpdateRequest) =>
@@ -481,7 +465,7 @@ export const adminApi = {
       body,
       auth: true,
     }),
-  sendLeadPaymentLink: (id: UUID, body: { channel: "SMS" | "WHATSAPP"; payment_scope?: "FULL" | "ADVANCE" }) =>
+  sendLeadPaymentLink: (id: UUID, body: { channel: "PUSH"; payment_scope?: "FULL" | "ADVANCE" }) =>
     apiRequest<Lead & { payment_link_created?: boolean }>(apiPaths.adminLeadSendPaymentLink(id), {
       method: "POST",
       body,
@@ -489,7 +473,7 @@ export const adminApi = {
     }),
   scheduleLead: (id: UUID, body: { preferred_date: string; preferred_slot: string }) =>
     apiRequest<Lead>(apiPaths.adminLeadSchedule(id), { method: "POST", body, auth: true }),
-  sendLeadReminder: (id: UUID, body: { channel: "SMS" | "WHATSAPP" }) =>
+  sendLeadReminder: (id: UUID, body: { channel: "PUSH" }) =>
     apiRequest<Lead>(apiPaths.adminLeadReminder(id), { method: "POST", body, auth: true }),
   recordLeadContact: (id: UUID, body: { note: string; next_follow_up_at?: string }) =>
     apiRequest<Lead>(apiPaths.adminLeadRecordContact(id), {

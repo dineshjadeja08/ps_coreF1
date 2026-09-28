@@ -5,6 +5,7 @@ import { ReactNode, useState } from "react";
 
 import { CartProvider } from "@/features/cart/use-cart";
 import { AuthProvider } from "@/features/auth/provider";
+import { PushNotifications } from "@/features/notifications/push-notifications";
 
 export function Providers({ children }: { children: ReactNode }) {
   const [queryClient] = useState(
@@ -22,7 +23,7 @@ export function Providers({ children }: { children: ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider><CartProvider>{children}</CartProvider></AuthProvider>
+      <AuthProvider><PushNotifications /><CartProvider>{children}</CartProvider></AuthProvider>
     </QueryClientProvider>
   );
 }

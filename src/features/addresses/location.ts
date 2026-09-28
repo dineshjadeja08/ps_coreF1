@@ -44,6 +44,12 @@ export async function searchAddressSuggestions(query: string) {
 }
 
 export async function resolveAddressSuggestion(suggestion: AddressSuggestion) {
+  try {
+    const resolved = await addressesApi.geocode(suggestion.id);
+    return toAddressFormValues(resolved);
+  } catch {
+    // Fall back to the prediction fields so the address remains editable.
+  }
   if (suggestion.latitude != null && suggestion.longitude != null) {
     try {
       const resolved = await addressesApi.reverseGeocode(String(suggestion.latitude), String(suggestion.longitude));

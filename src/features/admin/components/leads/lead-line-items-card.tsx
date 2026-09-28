@@ -19,7 +19,7 @@ type Props = {
   isScheduled: boolean;
   paymentLinkUrl: string;
   advanceAmount: string | number | null;
-  paymentChannel: "SMS" | "WHATSAPP";
+  paymentChannel: "PUSH";
   conversionNotes: string;
   paymentPending: boolean;
   conversionPending: boolean;
@@ -27,7 +27,7 @@ type Props = {
   draftOnly: boolean;
   error?: string;
   onSchedule: () => void;
-  onPaymentChannelChange: (value: "SMS" | "WHATSAPP") => void;
+  onPaymentChannelChange: (value: "PUSH") => void;
   onConversionNotesChange: (value: string) => void;
   onSendPaymentLink: (scope: "FULL" | "ADVANCE") => void;
   onConvert: () => void;
@@ -63,7 +63,7 @@ export function LeadLineItemsCard(props: Props) {
           </dl>
           <div className="mt-6 flex items-center justify-between border-y border-border py-4 text-sm"><div><p className="font-bold text-foreground">Schedule Job:</p><p className="mt-1 text-xs text-secondary">{props.scheduledLabel}</p></div><button type="button" className="min-h-11 px-2 font-bold text-primary hover:underline" onClick={props.onSchedule}>Update</button></div>
           <div className="mt-5 grid gap-3">
-            <label className="text-xs font-bold text-secondary">Payment notification channel<select className="mt-1.5 h-11 w-full rounded-md border border-border bg-white px-3 text-sm text-foreground" value={props.paymentChannel} onChange={(event) => props.onPaymentChannelChange(event.target.value as "SMS" | "WHATSAPP")}><option value="WHATSAPP">WhatsApp</option><option value="SMS">SMS</option></select></label>
+            <label className="text-xs font-bold text-secondary">Payment notification channel<select className="mt-1.5 h-11 w-full rounded-md border border-border bg-white px-3 text-sm text-foreground" value={props.paymentChannel} onChange={() => props.onPaymentChannelChange("PUSH")}><option value="PUSH">Push notification</option></select></label>
             <Input value={props.conversionNotes} onChange={(event) => props.onConversionNotesChange(event.target.value)} placeholder="Conversion notes (optional)" />
             <div className="flex flex-wrap gap-2">
               <Button type="button" variant="outline" className="flex-1 rounded-full" disabled={!props.isScheduled || props.paymentPending || props.draftOnly} onClick={() => props.onSendPaymentLink("FULL")}>{props.paymentPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}Send Payment Link</Button>
