@@ -167,6 +167,7 @@ export function LocationCitySelector({ compact = false, className, headerStyle =
                     <span className="min-w-0"><span className="block truncate text-sm font-semibold text-foreground">{suggestion.main_text}</span><span className="mt-0.5 block truncate text-xs text-secondary">{suggestion.secondary_text || suggestion.description}</span></span>
                   </button>
                 ))}
+                <div className="border-t border-border px-3 py-2 text-right text-[10px] font-semibold text-muted-foreground">Powered by Google</div>
               </div>
             ) : null}
           </div>
