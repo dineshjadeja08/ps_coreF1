@@ -62,7 +62,9 @@ export async function resolveAddressSuggestion(suggestion: AddressSuggestion) {
 }
 
 function toAddressFormValues(payload: LocationAddress, fallbackLatitude?: string, fallbackLongitude?: string): DetectedAddress {
-  const addressLine = [payload.house_number, payload.street].filter(Boolean).join(" ") || payload.formatted_address;
+  const addressLine = payload.street
+    ? [payload.house_number, payload.street].filter(Boolean).join(" ")
+    : payload.formatted_address || payload.house_number;
   return {
     latitude: payload.latitude == null ? (fallbackLatitude ?? "") : String(payload.latitude),
     longitude: payload.longitude == null ? (fallbackLongitude ?? "") : String(payload.longitude),
