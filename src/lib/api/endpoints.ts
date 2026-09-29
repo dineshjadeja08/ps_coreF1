@@ -58,7 +58,7 @@ export type AdminSearchResponse = { query: string; results: AdminSearchResult[] 
 
 export const apiPaths = {
   health: "/api/v1/health/",
-  firebaseLogin: "/api/v1/auth/firebase-login/",
+  firebaseLogin: "/api/v1/auth/firebase/",
   passwordLogin: "/api/v1/auth/password/login/",
   devPhoneAuth: "/api/v1/auth/dev-phone/",
   refreshAuth: "/api/v1/auth/refresh/",
