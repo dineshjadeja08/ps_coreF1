@@ -1,12 +1,13 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CheckCircle2, Loader2, XCircle } from "lucide-react";
-import { useEffect } from "react";
+import { CheckCircle2, LocateFixed, Loader2, XCircle } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { detectCurrentAddress } from "@/features/addresses/location";
 import { addressSchema, emptyAddressValues, type AddressFormValues } from "@/features/addresses/schema";
 import type { Address } from "@/features/addresses/types";
 import { useAddressServiceability } from "@/features/addresses/queries";
@@ -39,6 +40,9 @@ function toFormValues(address?: Address | null): AddressFormValues {
 }
 
 export function AddressForm({ initialAddress, submitting, onSubmit, onCancel }: AddressFormProps) {
+  const [detectingLocation, setDetectingLocation] = useState(false);
+  const [locationMessage, setLocationMessage] = useState("");
+  const [locationError, setLocationError] = useState(false);
   const form = useForm<AddressFormValues>({
     resolver: zodResolver(addressSchema),
     defaultValues: toFormValues(initialAddress),
@@ -49,6 +53,36 @@ export function AddressForm({ initialAddress, submitting, onSubmit, onCancel }: 
   useEffect(() => {
     form.reset(toFormValues(initialAddress));
   }, [form, initialAddress]);
+
+  async function detectAddress() {
+    setDetectingLocation(true);
+    setLocationMessage("");
+    setLocationError(false);
+
+    try {
+      const detected = await detectCurrentAddress();
+      const addressFields = [
+        ["address_line_1", detected.address_line_1],
+        ["locality", detected.locality],
+        ["city", detected.city],
+        ["state", detected.state],
+        ["postal_code", detected.postal_code],
+        ["country", detected.country],
+      ] as const;
+
+      addressFields.forEach(([name, value]) => {
+        if (value) form.setValue(name, value, { shouldDirty: true, shouldValidate: true });
+      });
+      form.setValue("latitude", detected.latitude, { shouldDirty: true });
+      form.setValue("longitude", detected.longitude, { shouldDirty: true });
+      setLocationMessage("Location detected. Check the address details before saving.");
+    } catch (error) {
+      setLocationError(true);
+      setLocationMessage(error instanceof Error ? error.message : "Could not detect your location. Enter the address manually.");
+    } finally {
+      setDetectingLocation(false);
+    }
+  }
 
   const fields: Array<{ name: keyof AddressFormValues; label: string; placeholder: string; required?: boolean }> = [
     { name: "recipient_name", label: "Recipient name", placeholder: "Name", required: true },
@@ -66,7 +100,16 @@ export function AddressForm({ initialAddress, submitting, onSubmit, onCancel }: 
     <form onSubmit={form.handleSubmit(onSubmit)} className="rounded-xl border border-border bg-surface p-4 shadow-sm sm:p-5">
       <div className="mb-4">
         <h3 className="text-lg font-bold text-foreground">{initialAddress ? "Edit address" : "Add address"}</h3>
-        <p className="mt-1 text-sm text-secondary">Enter the service address manually.</p>
+        <p className="mt-1 text-sm text-secondary">Use your current location or enter the service address manually.</p>
+        <Button type="button" variant="outline" className="mt-3 w-full sm:w-auto" onClick={() => void detectAddress()} disabled={detectingLocation || submitting}>
+          {detectingLocation ? <Loader2 className="h-4 w-4 animate-spin" /> : <LocateFixed className="h-4 w-4" />}
+          {detectingLocation ? "Detecting location..." : "Detect my location"}
+        </Button>
+        {locationMessage ? (
+          <p className={`mt-2 text-sm ${locationError ? "text-destructive" : "text-success"}`} role={locationError ? "alert" : "status"}>
+            {locationMessage}
+          </p>
+        ) : null}
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
