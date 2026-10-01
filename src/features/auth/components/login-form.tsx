@@ -14,6 +14,8 @@ import { useAuth } from "@/features/auth/hooks";
 import { maskPhone, normalizeIndianPhone, otpSchema, phoneLoginSchema, type PhoneLoginFormValues } from "@/features/auth/schema";
 import { clearPhoneVerifier, sendPhoneOtp, verifyPhoneOtp } from "@/lib/firebase/phone-auth";
 
+const RESEND_DELAY_SECONDS = 60;
+
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -22,12 +24,21 @@ export function LoginForm() {
   const [verifiedPhone, setVerifiedPhone] = useState("");
   const [otp, setOtp] = useState("");
   const [message, setMessage] = useState("");
+  const [messageKind, setMessageKind] = useState<"error" | "success">("error");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isResending, setIsResending] = useState(false);
+  const [resendSeconds, setResendSeconds] = useState(0);
   const returnTo = useMemo(() => searchParams.get("returnTo") || undefined, [searchParams]);
   const fallback = returnTo?.startsWith("/") ? returnTo : "/";
   const form = useForm<PhoneLoginFormValues>({ resolver: zodResolver(phoneLoginSchema), defaultValues: { phone: "" } });
 
   useEffect(() => () => clearPhoneVerifier(), []);
+
+  useEffect(() => {
+    if (!confirmation || resendSeconds <= 0) return;
+    const timer = window.setTimeout(() => setResendSeconds((seconds) => Math.max(0, seconds - 1)), 1000);
+    return () => window.clearTimeout(timer);
+  }, [confirmation, resendSeconds]);
 
   async function requestOtp(values: PhoneLoginFormValues) {
     const phone = normalizeIndianPhone(values.phone);
@@ -40,10 +51,30 @@ export function LoginForm() {
     try {
       setConfirmation(await sendPhoneOtp(phone, "firebase-recaptcha"));
       setVerifiedPhone(phone);
+      setResendSeconds(RESEND_DELAY_SECONDS);
     } catch (error) {
+      setMessageKind("error");
       setMessage(error instanceof Error ? error.message : "Could not send the OTP. Please try again.");
     } finally {
       setIsSubmitting(false);
+    }
+  }
+
+  async function resendOtp() {
+    if (!verifiedPhone || resendSeconds > 0 || isResending) return;
+    setIsResending(true);
+    setMessage("");
+    try {
+      setConfirmation(await sendPhoneOtp(verifiedPhone, "firebase-recaptcha"));
+      setOtp("");
+      setResendSeconds(RESEND_DELAY_SECONDS);
+      setMessageKind("success");
+      setMessage("A new OTP has been sent to your mobile number.");
+    } catch (error) {
+      setMessageKind("error");
+      setMessage(error instanceof Error ? error.message : "Could not resend the OTP. Please try again.");
+    } finally {
+      setIsResending(false);
     }
   }
 
@@ -60,6 +91,7 @@ export function LoginForm() {
       await loginWithFirebaseToken(idToken);
       router.replace(consumeReturnPath(fallback));
     } catch (error) {
+      setMessageKind("error");
       setMessage(mapBackendAuthError(error));
     } finally {
       setIsSubmitting(false);
@@ -98,15 +130,20 @@ export function LoginForm() {
             <label htmlFor="customer-otp" className="text-sm font-semibold text-foreground">OTP</label>
             <Input id="customer-otp" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={otp} onChange={(event) => setOtp(event.target.value.replace(/\D/g, ""))} className="mt-2 h-11 tracking-[0.35em]" />
           </div>
-          <Button type="button" className="h-11 w-full" disabled={isSubmitting} onClick={() => void confirmOtp()}>
+          <Button type="button" className="h-11 w-full" disabled={isSubmitting || isResending} onClick={() => void confirmOtp()}>
             {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}Verify and continue
           </Button>
-          <Button type="button" variant="outline" className="h-11 w-full" disabled={isSubmitting} onClick={() => { clearPhoneVerifier(); setConfirmation(null); setOtp(""); setMessage(""); }}>
+          <Button type="button" variant="outline" className="h-11 w-full" disabled={isSubmitting || isResending || resendSeconds > 0} onClick={() => void resendOtp()} aria-live="polite">
+            {isResending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+            {isResending ? "Resending OTP..." : resendSeconds > 0 ? `Resend OTP in 00:${String(resendSeconds).padStart(2, "0")}` : "Resend OTP"}
+          </Button>
+          <div id="firebase-recaptcha" className="flex min-h-0 justify-center" />
+          <Button type="button" variant="ghost" className="h-11 w-full" disabled={isSubmitting || isResending} onClick={() => { clearPhoneVerifier(); setConfirmation(null); setOtp(""); setMessage(""); setResendSeconds(0); }}>
             Use another number
           </Button>
         </div>
       )}
-      {message ? <p className="mt-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive" role="alert">{message}</p> : null}
+      {message ? <p className={`mt-4 rounded-lg p-3 text-sm ${messageKind === "success" ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"}`} role={messageKind === "success" ? "status" : "alert"}>{message}</p> : null}
     </div>
   );
 }
