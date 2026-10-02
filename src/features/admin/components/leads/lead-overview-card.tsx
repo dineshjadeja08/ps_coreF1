@@ -18,6 +18,7 @@ type Props = {
   editing: boolean;
   pending: boolean;
   reminderPending: boolean;
+  reminderError?: string;
   closePending: boolean;
   error?: string;
   onCancelEdit: () => void;
@@ -26,7 +27,7 @@ type Props = {
   onClose: () => void;
 };
 
-export function LeadOverviewCard({ lead, services, editing, pending, reminderPending, closePending, error, onCancelEdit, onSave, onReminder, onClose }: Props) {
+export function LeadOverviewCard({ lead, services, editing, pending, reminderPending, reminderError, closePending, error, onCancelEdit, onSave, onReminder, onClose }: Props) {
   const [closeOpen, setCloseOpen] = useState(false);
   const [values, setValues] = useState<LeadEditValues>(() => toEditValues(lead));
   const mobileValid = isValidIndianMobile(values.primary_mobile);
@@ -56,7 +57,13 @@ export function LeadOverviewCard({ lead, services, editing, pending, reminderPen
   return (
     <section className="overflow-hidden rounded-xl border border-border bg-white shadow-sm">
       <dl>{rows.map(([label, value]) => <div key={label} className="grid gap-1 border-b border-border px-5 py-4 sm:grid-cols-[190px_minmax(0,1fr)] sm:gap-5 sm:px-6"><dt className="text-sm font-bold text-foreground">{label}</dt><dd className="max-w-xl whitespace-pre-line break-words text-sm leading-6 text-secondary">{value}</dd></div>)}</dl>
-      <div className="grid gap-1 border-b border-border px-5 py-4 sm:grid-cols-[190px_minmax(0,1fr)] sm:items-center sm:gap-5 sm:px-6"><p className="text-sm font-bold text-foreground">Reminder Notification to Customer:</p><button type="button" disabled={reminderPending} onClick={onReminder} className="min-h-11 w-fit text-sm font-bold text-primary hover:underline disabled:opacity-50">{reminderPending ? "Sending..." : "Trigger Sms"}</button></div>
+      <div className="grid gap-1 border-b border-border px-5 py-4 sm:grid-cols-[190px_minmax(0,1fr)] sm:items-center sm:gap-5 sm:px-6">
+        <p className="text-sm font-bold text-foreground">Customer push reminder:</p>
+        <div>
+          <button type="button" disabled={reminderPending} onClick={onReminder} className="min-h-11 w-fit text-sm font-bold text-primary hover:underline disabled:opacity-50">{reminderPending ? "Sending..." : "Send push notification"}</button>
+          {reminderError ? <p className="mt-1 text-xs text-red-600">{reminderError}</p> : null}
+        </div>
+      </div>
       <div className="grid gap-1 px-5 py-4 sm:grid-cols-[190px_minmax(0,1fr)] sm:items-center sm:gap-5 sm:px-6"><p className="text-sm font-bold text-foreground">Close Ticket:</p><button type="button" disabled={closePending || lead.status === "CLOSED"} onClick={() => setCloseOpen(true)} className="min-h-11 w-fit text-sm font-bold text-primary hover:underline disabled:opacity-50">{lead.status === "CLOSED" ? "Closed" : "Close"}</button></div>
       <Dialog.Root open={closeOpen} onOpenChange={setCloseOpen}><Dialog.Portal><Dialog.Overlay className="fixed inset-0 z-50 bg-black/50" /><Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[min(430px,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-xl bg-white p-6 shadow-2xl"><div className="flex justify-between gap-4"><div><Dialog.Title className="text-xl font-black">Close this ticket?</Dialog.Title><Dialog.Description className="mt-2 text-sm leading-6 text-secondary">The lead will be marked closed. Existing activity and payment records will remain available.</Dialog.Description></div><Dialog.Close className="grid h-11 w-11 shrink-0 place-items-center rounded-full hover:bg-muted"><X className="h-5 w-5" /></Dialog.Close></div><div className="mt-6 flex justify-end gap-3"><Dialog.Close asChild><Button type="button" variant="ghost">Cancel</Button></Dialog.Close><Button type="button" className="rounded-full" disabled={closePending} onClick={() => { onClose(); setCloseOpen(false); }}>Close ticket</Button></div></Dialog.Content></Dialog.Portal></Dialog.Root>
     </section>
