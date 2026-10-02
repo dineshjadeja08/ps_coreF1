@@ -58,9 +58,9 @@ export function LeadOverviewCard({ lead, services, editing, pending, reminderPen
     <section className="overflow-hidden rounded-xl border border-border bg-white shadow-sm">
       <dl>{rows.map(([label, value]) => <div key={label} className="grid gap-1 border-b border-border px-5 py-4 sm:grid-cols-[190px_minmax(0,1fr)] sm:gap-5 sm:px-6"><dt className="text-sm font-bold text-foreground">{label}</dt><dd className="max-w-xl whitespace-pre-line break-words text-sm leading-6 text-secondary">{value}</dd></div>)}</dl>
       <div className="grid gap-1 border-b border-border px-5 py-4 sm:grid-cols-[190px_minmax(0,1fr)] sm:items-center sm:gap-5 sm:px-6">
-        <p className="text-sm font-bold text-foreground">Customer push reminder:</p>
+        <p className="text-sm font-bold text-foreground">Customer SMS reminder:</p>
         <div>
-          <button type="button" disabled={reminderPending} onClick={onReminder} className="min-h-11 w-fit text-sm font-bold text-primary hover:underline disabled:opacity-50">{reminderPending ? "Sending..." : "Send push notification"}</button>
+          <button type="button" disabled={reminderPending} onClick={onReminder} className="min-h-11 w-fit text-sm font-bold text-primary hover:underline disabled:opacity-50">{reminderPending ? "Sending..." : "Send SMS"}</button>
           {reminderError ? <p className="mt-1 text-xs text-red-600">{reminderError}</p> : null}
         </div>
       </div>

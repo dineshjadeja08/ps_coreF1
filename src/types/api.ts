@@ -238,6 +238,7 @@ export type AdminSettings = {
   notification_provider: string;
   razorpay_configured: boolean;
   firebase_configured: boolean;
+  msg91_configured: boolean;
   google_maps_configured: boolean;
   cloudinary_media_enabled: boolean;
   cloudinary_media_configured: boolean;

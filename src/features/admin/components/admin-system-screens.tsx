@@ -267,6 +267,7 @@ export function AdminSettingsScreen() {
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <Flag label="Razorpay" active={Boolean(query.data?.razorpay_configured)} />
             <Flag label="Firebase Admin" active={Boolean(query.data?.firebase_configured)} />
+            <Flag label="MSG91 SMS" active={Boolean(query.data?.msg91_configured)} />
             <Flag label="Google Maps" active={Boolean(query.data?.google_maps_configured)} />
             <Flag label="Cloudinary media" active={Boolean(query.data?.cloudinary_media_enabled && query.data?.cloudinary_media_configured)} />
             <Flag label="Balance before completion" active={Boolean(query.data?.booking_require_balance_before_completion)} />

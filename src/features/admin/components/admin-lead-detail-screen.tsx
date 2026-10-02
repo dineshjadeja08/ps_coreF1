@@ -28,7 +28,7 @@ export function AdminLeadDetailScreen({ leadId }: { leadId: string }) {
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [note, setNote] = useState("");
   const [followUp, setFollowUp] = useState("");
-  const [paymentChannel, setPaymentChannel] = useState<"PUSH">("PUSH");
+  const [paymentChannel, setPaymentChannel] = useState<"SMS">("SMS");
   const [conversionNotes, setConversionNotes] = useState("");
   const [manualPayment, setManualPayment] = useState(emptyManualPayment);
   const [quantities, setQuantities] = useState<Record<UUID, number> | null>(null);
@@ -43,7 +43,7 @@ export function AdminLeadDetailScreen({ leadId }: { leadId: string }) {
   const paymentLink = useMutation({ mutationFn: (scope: "FULL" | "ADVANCE") => adminApi.sendLeadPaymentLink(leadId, { channel: paymentChannel, payment_scope: scope }), onSuccess: refresh });
   const convert = useMutation({ mutationFn: () => adminApi.convertLead(leadId, { notes: conversionNotes }), onSuccess: refresh });
   const schedule = useMutation({ mutationFn: ({ date, time }: { date: string; time: string }) => adminApi.scheduleLead(leadId, { preferred_date: date, preferred_slot: time }), onSuccess: () => { setScheduleOpen(false); refresh(); } });
-  const reminder = useMutation({ mutationFn: () => adminApi.sendLeadReminder(leadId, { channel: "PUSH" }), onSuccess: refresh });
+  const reminder = useMutation({ mutationFn: () => adminApi.sendLeadReminder(leadId, { channel: "SMS" }), onSuccess: refresh });
   const close = useMutation({ mutationFn: () => adminApi.updateLead(leadId, { status: "CLOSED" }), onSuccess: refresh });
   const recordPayment = useMutation({ mutationFn: () => adminApi.recordLeadManualPayment(leadId, manualPayment), onSuccess: () => { setManualPayment(emptyManualPayment()); refresh(); } });
 

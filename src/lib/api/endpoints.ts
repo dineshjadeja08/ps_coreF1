@@ -465,7 +465,7 @@ export const adminApi = {
       body,
       auth: true,
     }),
-  sendLeadPaymentLink: (id: UUID, body: { channel: "PUSH"; payment_scope?: "FULL" | "ADVANCE" }) =>
+  sendLeadPaymentLink: (id: UUID, body: { channel: "SMS"; payment_scope?: "FULL" | "ADVANCE" }) =>
     apiRequest<Lead & { payment_link_created?: boolean }>(apiPaths.adminLeadSendPaymentLink(id), {
       method: "POST",
       body,
@@ -473,7 +473,7 @@ export const adminApi = {
     }),
   scheduleLead: (id: UUID, body: { preferred_date: string; preferred_slot: string }) =>
     apiRequest<Lead>(apiPaths.adminLeadSchedule(id), { method: "POST", body, auth: true }),
-  sendLeadReminder: (id: UUID, body: { channel: "PUSH" }) =>
+  sendLeadReminder: (id: UUID, body: { channel: "SMS" }) =>
     apiRequest<Lead>(apiPaths.adminLeadReminder(id), { method: "POST", body, auth: true }),
   recordLeadContact: (id: UUID, body: { note: string; next_follow_up_at?: string }) =>
     apiRequest<Lead>(apiPaths.adminLeadRecordContact(id), {
