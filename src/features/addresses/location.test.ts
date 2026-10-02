@@ -49,7 +49,7 @@ describe("address suggestion resolution", () => {
 
     expect(addressesApi.reverseGeocode).toHaveBeenCalledWith("13.085017", "80.210134");
     expect(result.postal_code).toBe("600040");
-    expect(result.address_line_1).toBe("2nd Avenue");
+    expect(result.address_line_1).toBe("Anna Nagar");
   });
 
   it("rounds Google coordinates to the backend's six-decimal limit", async () => {

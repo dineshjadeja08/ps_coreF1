@@ -30,10 +30,11 @@ export function BookingAddressPicker({ isFirstAddress, editing = false, submitti
   const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
   const [searching, setSearching] = useState(false);
   const [message, setMessage] = useState("");
+  const [resolvedAddress, setResolvedAddress] = useState<ResolvedAddress | null>(null);
 
   useEffect(() => {
     const search = query.trim();
-    if (search.length < 3) return;
+    if (resolvedAddress || search.length < 3) return;
 
     let ignore = false;
     const timer = window.setTimeout(async () => {
@@ -55,12 +56,12 @@ export function BookingAddressPicker({ isFirstAddress, editing = false, submitti
       ignore = true;
       window.clearTimeout(timer);
     };
-  }, [query]);
+  }, [query, resolvedAddress]);
 
   async function saveResolvedAddress(address: ResolvedAddress) {
     const postalCode = address.postal_code?.trim();
     if (!postalCode || !address.city?.trim() || !address.state?.trim()) {
-      throw new Error("We could not identify the complete address. Search for a more specific location.");
+      throw new Error("Please pick a more specific location (street or landmark).");
     }
 
     const serviceability = await addressesApi.checkServiceability(postalCode);
@@ -96,9 +97,9 @@ export function BookingAddressPicker({ isFirstAddress, editing = false, submitti
     setDetecting(true);
     setMessage("");
     try {
-      await saveResolvedAddress(await detectCurrentAddress());
+      setResolvedAddress(await detectCurrentAddress());
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Could not detect and save this address.");
+      setMessage(error instanceof Error ? error.message : "Could not detect this address.");
     } finally {
       setDetecting(false);
     }
@@ -109,12 +110,30 @@ export function BookingAddressPicker({ isFirstAddress, editing = false, submitti
     setSuggestions([]);
     setMessage("");
     try {
-      await saveResolvedAddress(await resolveAddressSuggestion(suggestion));
+      setQuery(suggestion.description);
+      setResolvedAddress(await resolveAddressSuggestion(suggestion));
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Could not save this address. Please search again.");
+      setMessage(error instanceof Error ? error.message : "Could not resolve this address. Please search again.");
     } finally {
       setSelecting(false);
     }
+  }
+
+  async function saveSelection() {
+    if (!resolvedAddress) return;
+    setMessage("");
+    try {
+      await saveResolvedAddress(resolvedAddress);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Could not save this address. Please try again.");
+    }
+  }
+
+  function changeSelection() {
+    setResolvedAddress(null);
+    setQuery("");
+    setSuggestions([]);
+    setMessage("");
   }
 
   const busy = detecting || selecting || submitting;
@@ -125,7 +144,7 @@ export function BookingAddressPicker({ isFirstAddress, editing = false, submitti
         <div>
           <h3 className="text-lg font-bold text-foreground">{editing ? "Change service address" : "Choose service address"}</h3>
           <p className="mt-1 text-sm text-secondary">
-            Detect your location or search for an address. It will be {editing ? "updated" : "saved"} automatically.
+            Detect your location or search for an address, then confirm the resolved location.
           </p>
         </div>
         <Button type="button" variant="ghost" size="icon" aria-label="Close address picker" onClick={onCancel} disabled={busy}>
@@ -133,50 +152,75 @@ export function BookingAddressPicker({ isFirstAddress, editing = false, submitti
         </Button>
       </div>
 
-      <Button type="button" variant="outline" className="mt-4 h-12 w-full justify-start" onClick={() => void detectAddress()} disabled={busy}>
-        {detecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <LocateFixed className="h-4 w-4" />}
-        {detecting ? "Detecting and saving..." : "Detect my location"}
-      </Button>
-
-      <div className="relative mt-3">
-        <Search className="pointer-events-none absolute left-3 top-3.5 h-5 w-5 text-muted-foreground" />
-        <Input
-          value={query}
-          onChange={(event) => {
-            const value = event.target.value;
-            setQuery(value);
-            setMessage("");
-            if (value.trim().length < 3) {
-              setSuggestions([]);
-              setSearching(false);
-            }
-          }}
-          className="h-12 pl-10 pr-10"
-          placeholder="Search for area, street or landmark"
-          autoComplete="off"
-          disabled={busy}
-        />
-        {searching || selecting ? <Loader2 className="absolute right-3 top-3.5 h-5 w-5 animate-spin text-primary" /> : null}
-        {suggestions.length ? (
-          <div className="absolute inset-x-0 top-full z-10 mt-1 max-h-64 overflow-y-auto rounded-lg border border-border bg-surface p-1 shadow-lg">
-            {suggestions.map((suggestion) => (
-              <button
-                key={suggestion.id}
-                type="button"
-                className="flex w-full items-start gap-3 rounded-md px-3 py-3 text-left hover:bg-primary-subtle"
-                onClick={() => void selectSuggestion(suggestion)}
-              >
-                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                <span className="min-w-0">
-                  <span className="block truncate text-sm font-semibold text-foreground">{suggestion.main_text}</span>
-                  <span className="mt-0.5 block truncate text-xs text-secondary">{suggestion.secondary_text || suggestion.description}</span>
-                </span>
-              </button>
-            ))}
-            <div className="border-t border-border px-3 py-2 text-right text-[10px] font-semibold text-muted-foreground">Powered by Google</div>
+      {resolvedAddress ? (
+        <div className="mt-4 rounded-lg border border-border bg-background p-4">
+          <div className="flex items-start gap-3">
+            <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+            <div className="min-w-0 flex-1">
+              <p className="font-semibold text-foreground">Resolved address</p>
+              <p className="mt-1 text-sm leading-6 text-secondary">
+                {[resolvedAddress.address_line_1, resolvedAddress.locality, resolvedAddress.city, resolvedAddress.state, resolvedAddress.postal_code]
+                  .filter(Boolean)
+                  .join(", ")}
+              </p>
+            </div>
           </div>
-        ) : null}
-      </div>
+          <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+            <Button type="button" onClick={() => void saveSelection()} disabled={busy}>
+              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+              {editing ? "Update address" : "Save address"}
+            </Button>
+            <Button type="button" variant="outline" onClick={changeSelection} disabled={busy}>Change</Button>
+          </div>
+        </div>
+      ) : (
+        <>
+          <Button type="button" variant="outline" className="mt-4 h-12 w-full justify-start" onClick={() => void detectAddress()} disabled={busy}>
+            {detecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <LocateFixed className="h-4 w-4" />}
+            {detecting ? "Detecting location..." : "Detect my location"}
+          </Button>
+
+          <div className="relative mt-3">
+            <Search className="pointer-events-none absolute left-3 top-3.5 h-5 w-5 text-muted-foreground" />
+            <Input
+              value={query}
+              onChange={(event) => {
+                const value = event.target.value;
+                setQuery(value);
+                setMessage("");
+                if (value.trim().length < 3) {
+                  setSuggestions([]);
+                  setSearching(false);
+                }
+              }}
+              className="h-12 pl-10 pr-10"
+              placeholder="Search for area, street or landmark"
+              autoComplete="off"
+              disabled={busy}
+            />
+            {searching || selecting ? <Loader2 className="absolute right-3 top-3.5 h-5 w-5 animate-spin text-primary" /> : null}
+            {suggestions.length ? (
+              <div className="absolute inset-x-0 top-full z-10 mt-1 max-h-64 overflow-y-auto rounded-lg border border-border bg-surface p-1 shadow-lg">
+                {suggestions.map((suggestion) => (
+                  <button
+                    key={suggestion.id}
+                    type="button"
+                    className="flex w-full items-start gap-3 rounded-md px-3 py-3 text-left hover:bg-primary-subtle"
+                    onClick={() => void selectSuggestion(suggestion)}
+                  >
+                    <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-semibold text-foreground">{suggestion.main_text}</span>
+                      <span className="mt-0.5 block truncate text-xs text-secondary">{suggestion.secondary_text || suggestion.description}</span>
+                    </span>
+                  </button>
+                ))}
+                <div className="border-t border-border px-3 py-2 text-right text-[10px] font-semibold text-muted-foreground">Powered by Google</div>
+              </div>
+            ) : null}
+          </div>
+        </>
+      )}
 
       {message ? <p className="mt-3 rounded-md bg-destructive/10 p-3 text-sm text-destructive" role="alert">{message}</p> : null}
     </div>

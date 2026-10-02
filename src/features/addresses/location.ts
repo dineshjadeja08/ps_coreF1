@@ -9,10 +9,14 @@ type DetectedAddress = Partial<AddressFormValues> & {
   longitude: string;
 };
 
+const INCOMPLETE_ADDRESS_MESSAGE = "Please pick a more specific location (street or landmark).";
+
+export const round6 = (n: string | number) => Number(Number(n).toFixed(6));
+
 function locationError(error: GeolocationPositionError) {
-  if (error.code === error.PERMISSION_DENIED) return new Error("Location permission is blocked. Allow location access in your browser, or enter the address manually.");
-  if (error.code === error.TIMEOUT) return new Error("Location detection timed out. Move near a window and try again, or enter the address manually.");
-  return new Error("Your current location could not be detected. Please retry or enter the address manually.");
+  if (error.code === error.PERMISSION_DENIED) return new Error("Location permission is blocked. Allow location access in your browser, or search for your address.");
+  if (error.code === error.TIMEOUT) return new Error("Location detection timed out. Move near a window and try again, or search for your address.");
+  return new Error("Your current location could not be detected. Please retry or search for your address.");
 }
 
 export function detectCurrentAddress(): Promise<DetectedAddress> {
@@ -23,14 +27,14 @@ export function detectCurrentAddress(): Promise<DetectedAddress> {
   return new Promise((resolve, reject) => {
     navigator.geolocation.getCurrentPosition(
       async (position) => {
-        const latitude = position.coords.latitude.toFixed(6);
-        const longitude = position.coords.longitude.toFixed(6);
+        const latitude = String(round6(position.coords.latitude));
+        const longitude = String(round6(position.coords.longitude));
 
         try {
           const payload = await addressesApi.reverseGeocode(latitude, longitude);
-          resolve(toAddressFormValues(payload, latitude, longitude));
+          resolve(resolveAddress(payload, latitude, longitude));
         } catch (error) {
-          reject(error instanceof Error ? error : new Error("Address lookup failed. Please retry or enter the address manually."));
+          reject(error instanceof Error ? error : new Error("Address lookup failed. Please retry or search for your address."));
         }
       },
       (error) => reject(locationError(error)),
@@ -46,7 +50,7 @@ export async function searchAddressSuggestions(query: string) {
 export async function resolveAddressSuggestion(suggestion: AddressSuggestion) {
   try {
     const resolved = await addressesApi.geocode(suggestion.id);
-    const address = toAddressFormValues(resolved);
+    const address = toAddressFormValues(resolved, undefined, undefined, suggestion.main_text);
 
     // Area-level Google results (for example "Anna Nagar") may not include a
     // postal code. Reverse-geocoding their centre point provides the complete
@@ -54,35 +58,41 @@ export async function resolveAddressSuggestion(suggestion: AddressSuggestion) {
     if ((!address.postal_code || !address.city || !address.state) && address.latitude && address.longitude) {
       try {
         const reverseGeocoded = toAddressFormValues(
-          await addressesApi.reverseGeocode(address.latitude, address.longitude),
+          await addressesApi.reverseGeocode(String(round6(address.latitude)), String(round6(address.longitude))),
           address.latitude,
           address.longitude,
         );
-        return mergeAddressDetails(address, reverseGeocoded);
+        return requireCompleteAddress(mergeAddressDetails(address, reverseGeocoded));
       } catch {
         // Keep the original place details so the caller can show a useful error.
       }
     }
 
-    return address;
+    return requireCompleteAddress(address);
   } catch {
     // Fall back to the prediction fields so the address remains editable.
   }
   if (suggestion.latitude != null && suggestion.longitude != null) {
     try {
-      const resolved = await addressesApi.reverseGeocode(String(suggestion.latitude), String(suggestion.longitude));
-      return toAddressFormValues(resolved);
+      const latitude = String(round6(suggestion.latitude));
+      const longitude = String(round6(suggestion.longitude));
+      const resolved = await addressesApi.reverseGeocode(latitude, longitude);
+      return resolveAddress(resolved, latitude, longitude, suggestion.main_text);
     } catch {
       // Autocomplete data is still a useful editable fallback if reverse lookup is unavailable.
     }
   }
-  return toAddressFormValues(suggestion);
+  return requireCompleteAddress(toAddressFormValues(suggestion, undefined, undefined, suggestion.main_text));
 }
 
-function toAddressFormValues(payload: LocationAddress, fallbackLatitude?: string, fallbackLongitude?: string): DetectedAddress {
+export function resolveAddress(payload: LocationAddress, fallbackLatitude?: string, fallbackLongitude?: string, fallbackName = "") {
+  return requireCompleteAddress(toAddressFormValues(payload, fallbackLatitude, fallbackLongitude, fallbackName));
+}
+
+function toAddressFormValues(payload: LocationAddress, fallbackLatitude?: string, fallbackLongitude?: string, fallbackName = ""): DetectedAddress {
   const addressLine = payload.street
     ? [payload.house_number, payload.street].filter(Boolean).join(" ")
-    : payload.formatted_address || payload.house_number;
+    : payload.house_number || fallbackName || payload.formatted_address;
   return {
     latitude: normalizeCoordinate(payload.latitude == null ? fallbackLatitude : payload.latitude),
     longitude: normalizeCoordinate(payload.longitude == null ? fallbackLongitude : payload.longitude),
@@ -97,20 +107,26 @@ function toAddressFormValues(payload: LocationAddress, fallbackLatitude?: string
 
 function normalizeCoordinate(value: string | number | null | undefined) {
   if (value == null || value === "") return "";
-  const coordinate = Number(value);
-  return Number.isFinite(coordinate) ? coordinate.toFixed(6) : "";
+  return Number.isFinite(Number(value)) ? String(round6(value)) : "";
 }
 
 function mergeAddressDetails(original: DetectedAddress, enriched: DetectedAddress): DetectedAddress {
   return {
     ...original,
-    address_line_1: enriched.address_line_1 || original.address_line_1,
-    locality: enriched.locality || original.locality,
-    city: enriched.city || original.city,
-    state: enriched.state || original.state,
-    postal_code: enriched.postal_code || original.postal_code,
-    country: enriched.country || original.country,
-    latitude: enriched.latitude || original.latitude,
-    longitude: enriched.longitude || original.longitude,
+    address_line_1: original.address_line_1 || enriched.address_line_1,
+    locality: original.locality || enriched.locality,
+    city: original.city || enriched.city,
+    state: original.state || enriched.state,
+    postal_code: original.postal_code || enriched.postal_code,
+    country: original.country || enriched.country,
+    latitude: original.latitude || enriched.latitude,
+    longitude: original.longitude || enriched.longitude,
   };
+}
+
+function requireCompleteAddress(address: DetectedAddress) {
+  if (!address.city?.trim() || !address.state?.trim() || !address.postal_code?.trim()) {
+    throw new Error(INCOMPLETE_ADDRESS_MESSAGE);
+  }
+  return address;
 }
