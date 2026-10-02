@@ -24,7 +24,7 @@ export async function sendPhoneOtp(phoneNumber: string, containerId: string) {
 
   clearPhoneVerifier();
   verifier = new RecaptchaVerifier(auth, containerId, {
-    size: env.firebase.authTestMode ? "invisible" : "normal",
+    size: "invisible",
   });
 
   try {
