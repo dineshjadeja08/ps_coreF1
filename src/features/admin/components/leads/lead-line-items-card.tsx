@@ -19,7 +19,6 @@ type Props = {
   isScheduled: boolean;
   paymentLinkUrl: string;
   advanceAmount: string | number | null;
-  paymentChannel: "SMS";
   conversionNotes: string;
   paymentPending: boolean;
   conversionPending: boolean;
@@ -27,7 +26,6 @@ type Props = {
   draftOnly: boolean;
   error?: string;
   onSchedule: () => void;
-  onPaymentChannelChange: (value: "SMS") => void;
   onConversionNotesChange: (value: string) => void;
   onSendPaymentLink: (scope: "FULL" | "ADVANCE") => void;
   onConvert: () => void;
@@ -63,14 +61,13 @@ export function LeadLineItemsCard(props: Props) {
           </dl>
           <div className="mt-6 flex items-center justify-between border-y border-border py-4 text-sm"><div><p className="font-bold text-foreground">Schedule Job:</p><p className="mt-1 text-xs text-secondary">{props.scheduledLabel}</p></div><button type="button" className="min-h-11 px-2 font-bold text-primary hover:underline" onClick={props.onSchedule}>Update</button></div>
           <div className="mt-5 grid gap-3">
-            <label className="text-xs font-bold text-secondary">Payment notification channel<select className="mt-1.5 h-11 w-full rounded-md border border-border bg-white px-3 text-sm text-foreground" value={props.paymentChannel} onChange={() => props.onPaymentChannelChange("SMS")}><option value="SMS">SMS</option></select></label>
             <Input value={props.conversionNotes} onChange={(event) => props.onConversionNotesChange(event.target.value)} placeholder="Conversion notes (optional)" />
             <div className="flex flex-wrap gap-2">
-              <Button type="button" variant="outline" className="flex-1 rounded-full" disabled={!props.isScheduled || props.paymentPending || props.draftOnly} onClick={() => props.onSendPaymentLink("FULL")}>{props.paymentPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}Send Payment Link</Button>
+              <Button type="button" variant="outline" className="flex-1 rounded-full" disabled={!props.isScheduled || props.paymentPending || props.draftOnly} onClick={() => props.onSendPaymentLink("FULL")}>{props.paymentPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}Create Payment Link</Button>
               <button type="button" className="grid h-11 w-11 shrink-0 place-items-center rounded-md border border-border hover:bg-primary-subtle disabled:opacity-50" disabled={!props.paymentLinkUrl} onClick={() => void copyLink()} aria-label="Copy payment link">{copied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}</button>
               <Button type="button" className="flex-1 rounded-full" disabled={!props.isScheduled || props.conversionPending || props.converted || props.draftOnly} onClick={props.onConvert}>{props.conversionPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}Create work order</Button>
             </div>
-            <Button type="button" variant="outline" className="w-full rounded-full" disabled={!props.isScheduled || props.paymentPending || Number(props.advanceAmount ?? 0) <= 0 || props.draftOnly} onClick={() => props.onSendPaymentLink("ADVANCE")}>Partial Payment Link</Button>
+            <Button type="button" variant="outline" className="w-full rounded-full" disabled={!props.isScheduled || props.paymentPending || Number(props.advanceAmount ?? 0) <= 0 || props.draftOnly} onClick={() => props.onSendPaymentLink("ADVANCE")}>Create Partial Payment Link</Button>
           </div>
           {props.draftOnly ? <p className="mt-3 rounded-md bg-primary-subtle p-3 text-xs font-medium text-primary">Package quantities are a local preview until lead line-item write APIs are available. Payment and work-order actions are disabled for this draft.</p> : null}
           {props.paymentLinkUrl ? <a href={props.paymentLinkUrl} target="_blank" rel="noreferrer" className="mt-3 block break-all text-xs font-semibold text-primary hover:underline">{props.paymentLinkUrl}</a> : null}

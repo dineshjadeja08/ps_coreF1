@@ -28,7 +28,6 @@ export function AdminLeadDetailScreen({ leadId }: { leadId: string }) {
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [note, setNote] = useState("");
   const [followUp, setFollowUp] = useState("");
-  const [paymentChannel, setPaymentChannel] = useState<"SMS">("SMS");
   const [conversionNotes, setConversionNotes] = useState("");
   const [manualPayment, setManualPayment] = useState(emptyManualPayment);
   const [quantities, setQuantities] = useState<Record<UUID, number> | null>(null);
@@ -40,10 +39,9 @@ export function AdminLeadDetailScreen({ leadId }: { leadId: string }) {
   };
   const save = useMutation({ mutationFn: (values: LeadEditValues) => adminApi.updateLead(leadId, values), onSuccess: () => { setEditing(false); refresh(); } });
   const contact = useMutation({ mutationFn: () => adminApi.recordLeadContact(leadId, { note, next_follow_up_at: followUp || undefined }), onSuccess: () => { setNote(""); refresh(); } });
-  const paymentLink = useMutation({ mutationFn: (scope: "FULL" | "ADVANCE") => adminApi.sendLeadPaymentLink(leadId, { channel: paymentChannel, payment_scope: scope }), onSuccess: refresh });
+  const paymentLink = useMutation({ mutationFn: (scope: "FULL" | "ADVANCE") => adminApi.sendLeadPaymentLink(leadId, { channel: "SMS", payment_scope: scope }), onSuccess: refresh });
   const convert = useMutation({ mutationFn: () => adminApi.convertLead(leadId, { notes: conversionNotes }), onSuccess: refresh });
   const schedule = useMutation({ mutationFn: ({ date, time }: { date: string; time: string }) => adminApi.scheduleLead(leadId, { preferred_date: date, preferred_slot: time }), onSuccess: () => { setScheduleOpen(false); refresh(); } });
-  const reminder = useMutation({ mutationFn: () => adminApi.sendLeadReminder(leadId, { channel: "SMS" }), onSuccess: refresh });
   const close = useMutation({ mutationFn: () => adminApi.updateLead(leadId, { status: "CLOSED" }), onSuccess: refresh });
   const recordPayment = useMutation({ mutationFn: () => adminApi.recordLeadManualPayment(leadId, manualPayment), onSuccess: () => { setManualPayment(emptyManualPayment()); refresh(); } });
 
@@ -83,8 +81,8 @@ export function AdminLeadDetailScreen({ leadId }: { leadId: string }) {
       </header>
 
       <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,3fr)_minmax(340px,2fr)] lg:items-start">
-        <LeadOverviewCard key={item.updated_at} lead={item} services={services.data?.results ?? []} editing={editing} pending={save.isPending} reminderPending={reminder.isPending} reminderError={reminder.isError ? reminder.error.message : undefined} closePending={close.isPending} error={save.isError ? save.error.message : undefined} onCancelEdit={() => setEditing(false)} onSave={(values) => save.mutate(values)} onReminder={() => reminder.mutate()} onClose={() => close.mutate()} />
-        <LeadLineItemsCard items={displayItems} subtotal={subtotal} tax={tax} trainingFee={trainingFee} total={subtotal + tax + trainingFee} scheduledLabel={isScheduled ? `${item.preferred_date} at ${item.preferred_slot}` : "Not scheduled"} isScheduled={isScheduled} paymentLinkUrl={item.payment_link_url} advanceAmount={item.advance_amount} paymentChannel={paymentChannel} conversionNotes={conversionNotes} paymentPending={paymentLink.isPending} conversionPending={convert.isPending} converted={item.status === "CONVERTED"} draftOnly={quantities !== null} error={paymentLink.isError ? paymentLink.error.message : convert.isError ? convert.error.message : undefined} onSchedule={() => setScheduleOpen(true)} onPaymentChannelChange={setPaymentChannel} onConversionNotesChange={setConversionNotes} onSendPaymentLink={(scope) => paymentLink.mutate(scope)} onConvert={() => convert.mutate()} />
+        <LeadOverviewCard key={item.updated_at} lead={item} services={services.data?.results ?? []} editing={editing} pending={save.isPending} closePending={close.isPending} error={save.isError ? save.error.message : undefined} onCancelEdit={() => setEditing(false)} onSave={(values) => save.mutate(values)} onClose={() => close.mutate()} />
+        <LeadLineItemsCard items={displayItems} subtotal={subtotal} tax={tax} trainingFee={trainingFee} total={subtotal + tax + trainingFee} scheduledLabel={isScheduled ? `${item.preferred_date} at ${item.preferred_slot}` : "Not scheduled"} isScheduled={isScheduled} paymentLinkUrl={item.payment_link_url} advanceAmount={item.advance_amount} conversionNotes={conversionNotes} paymentPending={paymentLink.isPending} conversionPending={convert.isPending} converted={item.status === "CONVERTED"} draftOnly={quantities !== null} error={paymentLink.isError ? paymentLink.error.message : convert.isError ? convert.error.message : undefined} onSchedule={() => setScheduleOpen(true)} onConversionNotesChange={setConversionNotes} onSendPaymentLink={(scope) => paymentLink.mutate(scope)} onConvert={() => convert.mutate()} />
       </div>
 
       <LeadPackagePicker packages={relevantPackages} quantities={effectiveQuantities} loading={packages.isLoading} onQuantityChange={(packageId, quantity) => setQuantities((current) => updateLeadLineItemDraft(current ?? initialQuantities, packageId, quantity))} />
