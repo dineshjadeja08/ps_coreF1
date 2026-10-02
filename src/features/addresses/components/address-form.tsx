@@ -1,16 +1,17 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CheckCircle2, LocateFixed, Loader2, XCircle } from "lucide-react";
+import { CheckCircle2, LocateFixed, Loader2, MapPin, Search, XCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { detectCurrentAddress } from "@/features/addresses/location";
+import { detectCurrentAddress, resolveAddressSuggestion, searchAddressSuggestions } from "@/features/addresses/location";
 import { addressSchema, emptyAddressValues, type AddressFormValues } from "@/features/addresses/schema";
 import type { Address } from "@/features/addresses/types";
 import { useAddressServiceability } from "@/features/addresses/queries";
+import type { AddressSuggestion } from "@/types/api";
 
 type AddressFormProps = {
   initialAddress?: Address | null;
@@ -41,8 +42,12 @@ function toFormValues(address?: Address | null): AddressFormValues {
 
 export function AddressForm({ initialAddress, submitting, onSubmit, onCancel }: AddressFormProps) {
   const [detectingLocation, setDetectingLocation] = useState(false);
+  const [selectingAddress, setSelectingAddress] = useState(false);
   const [locationMessage, setLocationMessage] = useState("");
   const [locationError, setLocationError] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
+  const [searching, setSearching] = useState(false);
   const form = useForm<AddressFormValues>({
     resolver: zodResolver(addressSchema),
     defaultValues: toFormValues(initialAddress),
@@ -54,6 +59,50 @@ export function AddressForm({ initialAddress, submitting, onSubmit, onCancel }: 
     form.reset(toFormValues(initialAddress));
   }, [form, initialAddress]);
 
+  useEffect(() => {
+    const query = searchQuery.trim();
+    if (query.length < 3) return;
+
+    let ignore = false;
+    const timer = window.setTimeout(async () => {
+      setSearching(true);
+      try {
+        const results = await searchAddressSuggestions(query);
+        if (!ignore) setSuggestions(results);
+      } catch (error) {
+        if (!ignore) {
+          setSuggestions([]);
+          setLocationError(true);
+          setLocationMessage(error instanceof Error ? error.message : "Could not search for this address.");
+        }
+      } finally {
+        if (!ignore) setSearching(false);
+      }
+    }, 350);
+
+    return () => {
+      ignore = true;
+      window.clearTimeout(timer);
+    };
+  }, [searchQuery]);
+
+  function applyAddress(detected: Awaited<ReturnType<typeof detectCurrentAddress>>) {
+    const addressFields = [
+      ["address_line_1", detected.address_line_1],
+      ["locality", detected.locality],
+      ["city", detected.city],
+      ["state", detected.state],
+      ["postal_code", detected.postal_code],
+      ["country", detected.country],
+    ] as const;
+
+    addressFields.forEach(([name, value]) => {
+      if (value) form.setValue(name, value, { shouldDirty: true, shouldValidate: true });
+    });
+    form.setValue("latitude", detected.latitude, { shouldDirty: true });
+    form.setValue("longitude", detected.longitude, { shouldDirty: true });
+  }
+
   async function detectAddress() {
     setDetectingLocation(true);
     setLocationMessage("");
@@ -61,26 +110,30 @@ export function AddressForm({ initialAddress, submitting, onSubmit, onCancel }: 
 
     try {
       const detected = await detectCurrentAddress();
-      const addressFields = [
-        ["address_line_1", detected.address_line_1],
-        ["locality", detected.locality],
-        ["city", detected.city],
-        ["state", detected.state],
-        ["postal_code", detected.postal_code],
-        ["country", detected.country],
-      ] as const;
-
-      addressFields.forEach(([name, value]) => {
-        if (value) form.setValue(name, value, { shouldDirty: true, shouldValidate: true });
-      });
-      form.setValue("latitude", detected.latitude, { shouldDirty: true });
-      form.setValue("longitude", detected.longitude, { shouldDirty: true });
+      applyAddress(detected);
       setLocationMessage("Location detected. Check the address details before saving.");
     } catch (error) {
       setLocationError(true);
       setLocationMessage(error instanceof Error ? error.message : "Could not detect your location. Enter the address manually.");
     } finally {
       setDetectingLocation(false);
+    }
+  }
+
+  async function selectSuggestion(suggestion: AddressSuggestion) {
+    setSelectingAddress(true);
+    setSuggestions([]);
+    setLocationMessage("");
+    setLocationError(false);
+    try {
+      const resolved = await resolveAddressSuggestion(suggestion);
+      applyAddress(resolved);
+      setLocationMessage("Address selected. Check the details before saving.");
+    } catch (error) {
+      setLocationError(true);
+      setLocationMessage(error instanceof Error ? error.message : "Could not use this address. Please search again.");
+    } finally {
+      setSelectingAddress(false);
     }
   }
 
@@ -100,11 +153,40 @@ export function AddressForm({ initialAddress, submitting, onSubmit, onCancel }: 
     <form onSubmit={form.handleSubmit(onSubmit)} className="rounded-xl border border-border bg-surface p-4 shadow-sm sm:p-5">
       <div className="mb-4">
         <h3 className="text-lg font-bold text-foreground">{initialAddress ? "Edit address" : "Add address"}</h3>
-        <p className="mt-1 text-sm text-secondary">Use your current location or enter the service address manually.</p>
-        <Button type="button" variant="outline" className="mt-3 w-full sm:w-auto" onClick={() => void detectAddress()} disabled={detectingLocation || submitting}>
+        <p className="mt-1 text-sm text-secondary">Use your current location or search for your service address.</p>
+        <Button type="button" variant="outline" className="mt-3 h-12 w-full justify-start" onClick={() => void detectAddress()} disabled={detectingLocation || selectingAddress || submitting}>
           {detectingLocation ? <Loader2 className="h-4 w-4 animate-spin" /> : <LocateFixed className="h-4 w-4" />}
           {detectingLocation ? "Detecting location..." : "Detect my location"}
         </Button>
+
+        <div className="relative mt-3">
+          <Search className="pointer-events-none absolute left-3 top-3.5 h-5 w-5 text-muted-foreground" />
+          <Input
+            value={searchQuery}
+            onChange={(event) => {
+              const value = event.target.value;
+              setSearchQuery(value);
+              setLocationMessage("");
+              if (value.trim().length < 3) setSuggestions([]);
+            }}
+            className="h-12 pl-10 pr-10"
+            placeholder="Search for area, street or landmark"
+            autoComplete="off"
+            disabled={detectingLocation || selectingAddress || submitting}
+          />
+          {searching || selectingAddress ? <Loader2 className="absolute right-3 top-3.5 h-5 w-5 animate-spin text-primary" /> : null}
+          {suggestions.length ? (
+            <div className="absolute inset-x-0 top-full z-10 mt-1 max-h-64 overflow-y-auto rounded-lg border border-border bg-surface p-1 shadow-lg">
+              {suggestions.map((suggestion) => (
+                <button key={suggestion.id} type="button" className="flex w-full items-start gap-3 rounded-md px-3 py-3 text-left hover:bg-primary-subtle" onClick={() => void selectSuggestion(suggestion)}>
+                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                  <span className="min-w-0"><span className="block truncate text-sm font-semibold text-foreground">{suggestion.main_text}</span><span className="mt-0.5 block truncate text-xs text-secondary">{suggestion.secondary_text || suggestion.description}</span></span>
+                </button>
+              ))}
+              <div className="border-t border-border px-3 py-2 text-right text-[10px] font-semibold text-muted-foreground">Powered by Google</div>
+            </div>
+          ) : null}
+        </div>
         {locationMessage ? (
           <p className={`mt-2 text-sm ${locationError ? "text-destructive" : "text-success"}`} role={locationError ? "alert" : "status"}>
             {locationMessage}
