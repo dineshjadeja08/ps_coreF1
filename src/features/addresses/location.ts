@@ -23,8 +23,8 @@ export function detectCurrentAddress(): Promise<DetectedAddress> {
   return new Promise((resolve, reject) => {
     navigator.geolocation.getCurrentPosition(
       async (position) => {
-        const latitude = position.coords.latitude.toFixed(7);
-        const longitude = position.coords.longitude.toFixed(7);
+        const latitude = position.coords.latitude.toFixed(6);
+        const longitude = position.coords.longitude.toFixed(6);
 
         try {
           const payload = await addressesApi.reverseGeocode(latitude, longitude);
@@ -46,7 +46,25 @@ export async function searchAddressSuggestions(query: string) {
 export async function resolveAddressSuggestion(suggestion: AddressSuggestion) {
   try {
     const resolved = await addressesApi.geocode(suggestion.id);
-    return toAddressFormValues(resolved);
+    const address = toAddressFormValues(resolved);
+
+    // Area-level Google results (for example "Anna Nagar") may not include a
+    // postal code. Reverse-geocoding their centre point provides the complete
+    // address needed for the service-area check without showing a manual form.
+    if ((!address.postal_code || !address.city || !address.state) && address.latitude && address.longitude) {
+      try {
+        const reverseGeocoded = toAddressFormValues(
+          await addressesApi.reverseGeocode(address.latitude, address.longitude),
+          address.latitude,
+          address.longitude,
+        );
+        return mergeAddressDetails(address, reverseGeocoded);
+      } catch {
+        // Keep the original place details so the caller can show a useful error.
+      }
+    }
+
+    return address;
   } catch {
     // Fall back to the prediction fields so the address remains editable.
   }
@@ -66,13 +84,33 @@ function toAddressFormValues(payload: LocationAddress, fallbackLatitude?: string
     ? [payload.house_number, payload.street].filter(Boolean).join(" ")
     : payload.formatted_address || payload.house_number;
   return {
-    latitude: payload.latitude == null ? (fallbackLatitude ?? "") : String(payload.latitude),
-    longitude: payload.longitude == null ? (fallbackLongitude ?? "") : String(payload.longitude),
+    latitude: normalizeCoordinate(payload.latitude == null ? fallbackLatitude : payload.latitude),
+    longitude: normalizeCoordinate(payload.longitude == null ? fallbackLongitude : payload.longitude),
     address_line_1: addressLine,
     locality: payload.locality,
     city: payload.city,
     state: payload.state,
     postal_code: payload.pincode,
     country: payload.country || "India",
+  };
+}
+
+function normalizeCoordinate(value: string | number | null | undefined) {
+  if (value == null || value === "") return "";
+  const coordinate = Number(value);
+  return Number.isFinite(coordinate) ? coordinate.toFixed(6) : "";
+}
+
+function mergeAddressDetails(original: DetectedAddress, enriched: DetectedAddress): DetectedAddress {
+  return {
+    ...original,
+    address_line_1: enriched.address_line_1 || original.address_line_1,
+    locality: enriched.locality || original.locality,
+    city: enriched.city || original.city,
+    state: enriched.state || original.state,
+    postal_code: enriched.postal_code || original.postal_code,
+    country: enriched.country || original.country,
+    latitude: enriched.latitude || original.latitude,
+    longitude: enriched.longitude || original.longitude,
   };
 }
