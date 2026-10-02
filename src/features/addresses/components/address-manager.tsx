@@ -6,7 +6,6 @@ import { useState } from "react";
 import { ErrorState } from "@/components/common/error-state";
 import { Button } from "@/components/ui/button";
 import { AddressCard } from "@/features/addresses/components/address-card";
-import { AddressForm } from "@/features/addresses/components/address-form";
 import { BookingAddressPicker } from "@/features/addresses/components/booking-address-picker";
 import type { Address } from "@/features/addresses/types";
 import { AddressFormValues } from "@/features/addresses/schema";
@@ -82,20 +81,12 @@ export function AddressManager({ compact = false, startOpen = false }: { compact
 
       {message ? <p className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{message}</p> : null}
 
-      {compact && showForm ? (
+      {showForm || editing ? (
         <BookingAddressPicker
-          isFirstAddress={items.length === 0}
-          submitting={createAddress.isPending}
-          onSave={handleSubmit}
-          onCancel={closeForm}
-        />
-      ) : null}
-
-      {!compact && (showForm || editing) ? (
-        <AddressForm
-          initialAddress={editing}
+          isFirstAddress={editing?.is_default ?? items.length === 0}
+          editing={Boolean(editing)}
           submitting={createAddress.isPending || updateAddress.isPending}
-          onSubmit={handleSubmit}
+          onSave={handleSubmit}
           onCancel={closeForm}
         />
       ) : null}

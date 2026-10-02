@@ -14,6 +14,7 @@ import type { AddressSuggestion } from "@/types/api";
 
 type BookingAddressPickerProps = {
   isFirstAddress: boolean;
+  editing?: boolean;
   submitting: boolean;
   onSave: (values: AddressFormValues) => Promise<void>;
   onCancel: () => void;
@@ -21,7 +22,7 @@ type BookingAddressPickerProps = {
 
 type ResolvedAddress = Awaited<ReturnType<typeof detectCurrentAddress>>;
 
-export function BookingAddressPicker({ isFirstAddress, submitting, onSave, onCancel }: BookingAddressPickerProps) {
+export function BookingAddressPicker({ isFirstAddress, editing = false, submitting, onSave, onCancel }: BookingAddressPickerProps) {
   const { user } = useAuth();
   const [detecting, setDetecting] = useState(false);
   const [selecting, setSelecting] = useState(false);
@@ -122,8 +123,10 @@ export function BookingAddressPicker({ isFirstAddress, submitting, onSave, onCan
     <div className="rounded-xl border border-border bg-surface p-4 shadow-sm sm:p-5">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h3 className="text-lg font-bold text-foreground">Choose service address</h3>
-          <p className="mt-1 text-sm text-secondary">Detect your location or search for an address. It will be saved automatically.</p>
+          <h3 className="text-lg font-bold text-foreground">{editing ? "Change service address" : "Choose service address"}</h3>
+          <p className="mt-1 text-sm text-secondary">
+            Detect your location or search for an address. It will be {editing ? "updated" : "saved"} automatically.
+          </p>
         </div>
         <Button type="button" variant="ghost" size="icon" aria-label="Close address picker" onClick={onCancel} disabled={busy}>
           <X className="h-4 w-4" />
