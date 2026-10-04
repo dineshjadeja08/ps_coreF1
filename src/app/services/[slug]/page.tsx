@@ -43,7 +43,6 @@ export async function generateMetadata({ params }: ServiceDetailPageProps): Prom
     return {
       title: `${service.name} in Chennai`,
       description,
-      keywords: [service.name, service.category.name, `${service.name} Chennai`],
       alternates: {
         canonical: canonicalFor(`/services/${service.slug}`),
       },

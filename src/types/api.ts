@@ -43,6 +43,7 @@ export type ServiceAreaCheckResponse = {
   postal_code: string;
   is_supported: boolean;
   service_area: Record<string, unknown> | null;
+  areas: string[];
 };
 
 export type ServiceArea = {
@@ -52,6 +53,45 @@ export type ServiceArea = {
   state: string;
   country: string;
   postal_code: string;
+  localities: Array<{ id: UUID; name: string; slug: string }>;
+};
+
+export type SeoPageLink = {
+  name: string;
+  path: string;
+  area: string;
+  postal_code: string;
+};
+
+export type SeoLandingPageSummary = {
+  page_slug: string;
+  path: string;
+  service_name: string;
+  city: string;
+  area: string;
+  postal_code: string;
+  updated_at: ISODateTime;
+};
+
+export type SeoLandingPage = SeoLandingPageSummary & {
+  service_slug: string;
+  page_type: "SERVICE_CITY" | "SERVICE_AREA";
+  category_slug: string;
+  area_slug: string;
+  meta_title: string;
+  meta_description: string;
+  h1: string;
+  intro_content: string;
+  pricing_intro: string;
+  coverage_areas: string[];
+  faqs: Array<{ question: string; answer: string }>;
+  is_indexable: boolean;
+  canonical_override: string;
+  services: ServiceListItem[];
+  parent_page: SeoPageLink | null;
+  area_pages: SeoPageLink[];
+  related_pages: SeoPageLink[];
+  nearby_pages: SeoPageLink[];
 };
 
 export type LocationAddress = {

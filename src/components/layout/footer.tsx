@@ -20,6 +20,10 @@ export function Footer() {
     {
       title: "For customers",
       links: [
+        { href: "/ac-service-chennai", label: "AC service in Chennai" },
+        { href: "/washing-machine-repair-chennai", label: "Washing machine repair" },
+        { href: "/refrigerator-repair-chennai", label: "Refrigerator repair" },
+        { href: "/water-purifier-service-chennai", label: "Water purifier service" },
         { href: "/bookings", label: "Bookings" },
         { href: "/services", label: "Categories near you" },
         { href: "/faq", label: "FAQs" },

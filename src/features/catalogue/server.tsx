@@ -1,6 +1,6 @@
 import { env } from "@/config/env";
 import { apiPaths } from "@/lib/api/endpoints";
-import type { PaginatedResponse, Review, ServiceCategory, ServiceDetail, ServiceListItem } from "@/types/api";
+import type { PaginatedResponse, Review, SeoLandingPage, SeoLandingPageSummary, ServiceCategory, ServiceDetail, ServiceListItem } from "@/types/api";
 
 const revalidateSeconds = 300;
 
@@ -84,6 +84,22 @@ export async function getServiceReviewsForSeo(serviceId: string) {
     return await fetchJson<PaginatedResponse<Review>>(apiPaths.serviceReviews(serviceId), { page_size: 20 });
   } catch {
     return { count: 0, next: null, previous: null, results: [] };
+  }
+}
+
+export async function getSeoLandingPagesForSeo() {
+  try {
+    return await fetchJson<SeoLandingPageSummary[]>(apiPaths.seoPages);
+  } catch {
+    return [];
+  }
+}
+
+export async function getSeoLandingPageForSeo(pageSlug: string) {
+  try {
+    return await fetchFreshJson<SeoLandingPage>(apiPaths.seoPageDetail(pageSlug));
+  } catch {
+    return null;
   }
 }
 

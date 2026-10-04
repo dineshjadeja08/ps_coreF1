@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 
 import { siteConfig } from "@/config/site";
-import { getServicesForSeo } from "@/features/catalogue/server";
+import { getSeoLandingPagesForSeo, getServicesForSeo } from "@/features/catalogue/server";
 import { absoluteUrl } from "@/lib/seo";
 
 const siteUrl = siteConfig.url;
@@ -9,7 +9,6 @@ const siteUrl = siteConfig.url;
 const publicRoutes = [
   "",
   "/services",
-  "/book",
   "/about",
   "/support",
   "/join-as-technician",
@@ -23,7 +22,10 @@ const publicRoutes = [
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
-  const services = await getServicesForSeo({ page_size: 100 });
+  const [services, seoPages] = await Promise.all([
+    getServicesForSeo({ page_size: 100 }),
+    getSeoLandingPagesForSeo(),
+  ]);
 
   const staticEntries: MetadataRoute.Sitemap = publicRoutes.map((route) => ({
     url: `${siteUrl}${route}`,
@@ -40,5 +42,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     images: service.cover_image ? [absoluteUrl(service.cover_image)] : undefined,
   }));
 
-  return [...staticEntries, ...serviceEntries];
+  const landingEntries: MetadataRoute.Sitemap = seoPages.map((page) => ({
+    url: `${siteUrl}${page.path}`,
+    lastModified: new Date(page.updated_at),
+    changeFrequency: "weekly",
+    priority: page.area ? 0.8 : 0.9,
+  }));
+
+  return [...staticEntries, ...landingEntries, ...serviceEntries];
 }

@@ -32,7 +32,6 @@ export async function generateMetadata({ searchParams }: ServicesPageProps): Pro
   return {
     title,
     description,
-    keywords: selectedCategory ? [selectedCategory.name, `${selectedCategory.name} Chennai`] : undefined,
     alternates: {
       canonical: canonicalFor(path),
     },

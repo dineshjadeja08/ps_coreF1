@@ -27,7 +27,6 @@ export async function generateMetadata({ searchParams }: SearchPageProps): Promi
   return {
     title,
     description,
-    keywords: q ? [q, `${q} Chennai`, `${q} Coimbatore`, "Purple Squad"] : undefined,
     alternates: {
       canonical: canonicalFor(path),
     },

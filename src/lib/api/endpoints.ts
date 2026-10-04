@@ -51,6 +51,8 @@ import type {
   AdminReview,
   StaffGroup,
   ScheduleClosure,
+  SeoLandingPage,
+  SeoLandingPageSummary,
 } from "@/types/api";
 
 export type AdminSearchResult = { type: "WORK_ORDER" | "LEAD" | "CUSTOMER"; id: string; title: string; subtitle: string; url: string };
@@ -73,6 +75,8 @@ export const apiPaths = {
   serviceCategories: "/api/v1/service-categories/",
   services: "/api/v1/services/",
   serviceDetail: (slug: string) => `/api/v1/services/${slug}/`,
+  seoPages: "/api/v1/seo-pages/",
+  seoPageDetail: (pageSlug: string) => `/api/v1/seo-pages/${pageSlug}/`,
   serviceReviews: (serviceId: UUID) => `/api/v1/services/${serviceId}/reviews/`,
   faqs: "/api/v1/faqs/",
   homepageBanners: "/api/v1/homepage-banners/",
@@ -168,6 +172,8 @@ export const catalogueApi = {
     apiRequest<ServiceAreaCheckResponse>(apiPaths.serviceAreaCheck, { query: { postal_code: postalCode } }),
   listServiceAreas: (city?: string) =>
     apiRequest<ServiceArea[]>(apiPaths.serviceAreas, { query: { city } }),
+  listSeoPages: () => apiRequest<SeoLandingPageSummary[]>(apiPaths.seoPages),
+  getSeoPage: (pageSlug: string) => apiRequest<SeoLandingPage>(apiPaths.seoPageDetail(pageSlug)),
 };
 
 export const addressApi = {

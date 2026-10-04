@@ -33,7 +33,6 @@ export const metadata: Metadata = {
     template: "%s | Purple Squad",
   },
   description: siteConfig.description,
-  keywords: siteConfig.keywords,
   applicationName: siteConfig.name,
   authors: [{ name: "Purple Squad" }],
   creator: "Purple Squad",

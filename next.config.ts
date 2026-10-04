@@ -5,6 +5,16 @@ const apiImageHost = apiBaseUrl ? new URL(apiBaseUrl).hostname : undefined;
 
 const nextConfig: NextConfig = {
   allowedDevOrigins: ["127.0.0.1"],
+  async redirects() {
+    return [
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "www.purplesquad.in" }],
+        destination: "https://purplesquad.in/:path*",
+        permanent: true,
+      },
+    ];
+  },
   images: {
     dangerouslyAllowLocalIP: process.env.NODE_ENV !== "production",
     remotePatterns: [
