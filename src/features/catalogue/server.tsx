@@ -97,7 +97,7 @@ export async function getSeoLandingPagesForSeo() {
 
 export async function getSeoLandingPageForSeo(pageSlug: string) {
   try {
-    return await fetchFreshJson<SeoLandingPage>(apiPaths.seoPageDetail(pageSlug));
+    return await fetchJson<SeoLandingPage>(apiPaths.seoPageDetail(pageSlug));
   } catch {
     return null;
   }
