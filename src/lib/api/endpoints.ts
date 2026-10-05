@@ -49,6 +49,7 @@ import type {
   AdminSettings,
   AdminStaff,
   AdminReview,
+  AdminReviewRequest,
   StaffGroup,
   ScheduleClosure,
   SeoLandingPage,
@@ -598,12 +599,16 @@ export const adminApi = {
   listAuditLogs: (query?: { page?: number; page_size?: number; action?: string; resource_type?: string; search?: string }) =>
     apiRequest<PaginatedResponse<AuditLog>>(apiPaths.adminAuditLogs, { auth: true, query }),
   getSettings: () => apiRequest<AdminSettings>(apiPaths.adminSettings, { auth: true }),
-  listReviews: (query?: { page?: number; page_size?: number; search?: string; is_visible?: boolean }) =>
+  listReviews: (query?: { page?: number; page_size?: number; search?: string; is_visible?: boolean; service?: UUID }) =>
     apiRequest<PaginatedResponse<AdminReview>>(apiPaths.adminReviews, { auth: true, query }),
+  createReview: (body: AdminReviewRequest) =>
+    apiRequest<AdminReview>(apiPaths.adminReviews, { method: "POST", body, auth: true }),
   updateReview: (id: UUID, body: Partial<AdminReview>) =>
     apiRequest<AdminReview>(apiPaths.adminReviewDetail(id), {
       method: "PATCH",
       body,
       auth: true,
     }),
+  removeReview: (id: UUID) =>
+    apiRequest<void>(apiPaths.adminReviewDetail(id), { method: "DELETE", auth: true }),
 };

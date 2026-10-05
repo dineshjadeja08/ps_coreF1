@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Activity, FileClock, Loader2, Save, Settings, Shield, Star, TrendingUp } from "lucide-react";
+import { Activity, FileClock, Loader2, Save, Settings, Shield, TrendingUp } from "lucide-react";
 import { useDeferredValue, useState } from "react";
 
 import { AdminDataTable } from "@/components/admin/admin-data-table";
@@ -295,50 +295,6 @@ export function AdminSettingsScreen() {
             ))}
           </div>
         </div>
-      )}
-    </>
-  );
-}
-
-export function AdminReviewsScreen() {
-  const queryClient = useQueryClient();
-  const [search, setSearch] = useState("");
-  const [visibility, setVisibility] = useState("");
-  const [selected, setSelected] = useState<import("@/types/api").AdminReview | null>(null);
-  const query = useQuery({ queryKey: ["admin", "reviews", search, visibility], queryFn: () => adminApi.listReviews({ page_size: 50, search: search || undefined, is_visible: visibility === "" ? undefined : visibility === "true" }) });
-  const save = useMutation({
-    mutationFn: ({ id, is_visible }: { id: string; is_visible: boolean }) => adminApi.updateReview(id, { is_visible }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin", "reviews"] }),
-  });
-  return (
-    <>
-      <AdminPageHeader title="Reviews" description="Moderate customer reviews and control public visibility." />
-      <div className="mb-5 grid gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-[1fr_220px_auto]"><Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search booking, service or review" /><select className="h-11 rounded-md border border-slate-200 px-3 text-sm" value={visibility} onChange={(event) => setVisibility(event.target.value)}><option value="">All reviews</option><option value="true">Visible</option><option value="false">Hidden</option></select><Button type="button" variant="outline" onClick={() => { setSearch(""); setVisibility(""); }}>Clear</Button></div>
-      {selected ? <section className="mb-5 rounded-lg border border-violet-200 bg-white p-5 shadow-sm"><div className="flex items-center justify-between"><h2 className="font-bold text-slate-950">Review for {selected.booking_number}</h2><Button type="button" variant="ghost" size="sm" onClick={() => setSelected(null)}>Close</Button></div><p className="mt-3 text-sm font-semibold">{selected.service_name} · {selected.rating}/5</p><p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-slate-700">{selected.comment || "No written comment."}</p></section> : null}
-      {query.isLoading ? <Loading /> : query.isError ? <AdminErrorState message={query.error.message} onRetry={() => void query.refetch()} /> : (
-        <AdminDataTable
-          rows={query.data?.results ?? []}
-          getRowKey={(review) => review.id}
-          emptyIcon={Star}
-          emptyTitle="No reviews"
-          emptyMessage="Completed booking reviews will appear here."
-          columns={[
-            { key: "booking", header: "Booking", render: (review) => <span className="font-semibold text-slate-950">{review.booking_number}</span> },
-            { key: "service", header: "Service", render: (review) => review.service_name || "-" },
-            { key: "rating", header: "Rating", render: (review) => `${review.rating}/5` },
-            { key: "comment", header: "Comment", render: (review) => <button type="button" className="inline-block max-w-sm truncate text-left text-violet-700 hover:underline" onClick={() => setSelected(review)}>{review.comment || "View"}</button> },
-            { key: "status", header: "Status", render: (review) => <AdminStatusBadge status={review.is_visible ? "VISIBLE" : "HIDDEN"} /> },
-            {
-              key: "actions",
-              header: "Actions",
-              render: (review) => (
-                <Button type="button" variant="outline" size="sm" disabled={save.isPending} onClick={() => save.mutate({ id: review.id, is_visible: !review.is_visible })}>
-                  {review.is_visible ? "Hide" : "Show"}
-                </Button>
-              ),
-            },
-          ]}
-        />
       )}
     </>
   );

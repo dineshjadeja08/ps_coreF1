@@ -11,7 +11,8 @@ export function ReviewCard({ review }: { review: Review }) {
       </div>
       <p className="mt-4 text-sm leading-6 text-foreground">{review.comment}</p>
       <div className="mt-5 border-t border-border pt-4">
-        <p className="font-semibold text-foreground">Purple Squad customer</p>
+        <p className="font-semibold text-foreground">{review.reviewer_name || (typeof review.customer.name === "string" && review.customer.name) || "Purple Squad customer"}</p>
+        {review.is_booking_review ? <p className="text-xs text-secondary">Completed booking review</p> : null}
         <p className="text-sm text-secondary">{new Intl.DateTimeFormat("en-IN", { dateStyle: "medium" }).format(new Date(review.created_at))}</p>
       </div>
     </article>

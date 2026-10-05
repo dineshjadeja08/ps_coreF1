@@ -120,9 +120,11 @@ export type AddressAutocompleteResponse = {
 
 export type Review = {
   id: UUID;
-  booking: UUID;
+  booking: UUID | null;
   customer: Record<string, unknown>;
-  technician: Record<string, unknown>;
+  technician: Record<string, unknown> | null;
+  reviewer_name?: string;
+  is_booking_review?: boolean;
   rating: number;
   comment: string;
   is_visible: boolean;
@@ -133,6 +135,15 @@ export type Review = {
 export type AdminReview = Review & {
   booking_number: string;
   service_name: string;
+  service: UUID;
+};
+
+export type AdminReviewRequest = {
+  service: UUID;
+  reviewer_name: string;
+  rating: number;
+  comment: string;
+  is_visible: boolean;
 };
 
 export type ReviewCreateRequest = {
