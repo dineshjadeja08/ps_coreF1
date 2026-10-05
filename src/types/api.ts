@@ -534,6 +534,42 @@ export type TechnicianProfile = {
   joined_at: ISODate | null;
   id_document_available?: boolean;
   address_document_available?: boolean;
+  address?: string;
+  internal_notes?: string;
+  active_job_count?: number;
+  completed_jobs?: number;
+  cancelled_jobs?: number;
+  approved_rating?: DecimalString | null;
+  approved_review_count?: number;
+  eligibility_errors?: string[];
+};
+
+export type TechnicianWriteRequest = {
+  employee_code: string;
+  display_name: string;
+  phone: string;
+  alternate_phone: string;
+  email: string;
+  address: string;
+  city: string;
+  pincode: string;
+  technician_type: NonNullable<TechnicianProfile["technician_type"]>;
+  employment_status: NonNullable<TechnicianProfile["employment_status"]>;
+  background_verification_status: NonNullable<TechnicianProfile["background_verification_status"]>;
+  availability_status: NonNullable<TechnicianProfile["availability_status"]>;
+  experience_years: string;
+  joined_at: ISODate | null;
+  is_active: boolean;
+  internal_notes: string;
+  skill_names: string[];
+  service_area_ids: UUID[];
+  supported_service_ids: UUID[];
+};
+
+export type TechnicianOptions = {
+  skills: Array<{ id: UUID; name: string; is_active: boolean }>;
+  services: Array<{ id: UUID; name: string; is_active: boolean }>;
+  areas: Array<{ id: UUID; name: string; city: string; postal_code: string; is_active: boolean }>;
 };
 
 export type AdminDashboardSummary = {

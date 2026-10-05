@@ -21,12 +21,13 @@ export function AdminBookingOperations({ booking, onChanged, showHistory = true 
   const [message, setMessage] = useState("");
   const technicians = useQuery({
     queryKey: ["admin", "technicians", "eligible", booking.id],
-    queryFn: () => adminApi.listTechnicians({ booking_id: booking.id }),
+    queryFn: () => adminApi.listTechnicians({ booking_id: booking.id, include_ineligible: true }),
   });
 
   async function refresh(messageText: string) {
     setMessage(messageText);
     await queryClient.invalidateQueries({ queryKey: ["admin", "bookings"] });
+    await queryClient.invalidateQueries({ queryKey: ["admin", "technicians"] });
     onChanged?.();
   }
 
@@ -58,30 +59,37 @@ export function AdminBookingOperations({ booking, onChanged, showHistory = true 
     },
   });
   const activeError = assign.error ?? remove.error ?? operate.error ?? balance.error ?? paymentOrder.error;
+  const assignable = ["CONFIRMED", "TECHNICIAN_ASSIGNED"].includes(booking.booking_status);
+  const selectedTechnician = technicians.data?.find((technician) => technician.id === technicianId);
+  const canAssign = assignable && selectedTechnician && !selectedTechnician.eligibility_errors?.length && !technicians.isError;
 
   return (
     <div className="grid gap-5">
       <section className="rounded-lg border border-slate-200 bg-slate-50 p-4">
         <h3 className="font-bold text-slate-950">Assign or reassign technician</h3>
         <div className="mt-3 grid gap-3 md:grid-cols-2">
-          <select className={inputClass} value={technicianId} onChange={(event) => setTechnicianId(event.target.value)}>
+          <select aria-label="Technician for assignment" className={inputClass} value={technicianId} onChange={(event) => setTechnicianId(event.target.value)} disabled={!assignable || technicians.isLoading || assign.isPending}>
             <option value="">Select an eligible technician</option>
             {(technicians.data ?? []).map((technician) => (
-              <option key={technician.id} value={technician.id}>
-                {technician.display_name} · {technician.employee_code} · {technician.availability_status ?? "AVAILABLE"}
+              <option key={technician.id} value={technician.id} disabled={Boolean(technician.eligibility_errors?.length)}>
+                {technician.display_name} · {technician.employee_code} · {technician.eligibility_errors?.join(" ") || "Eligible"}
               </option>
             ))}
           </select>
           <Input value={reason} onChange={(event) => setReason(event.target.value)} placeholder="Assignment or reassignment reason" />
           <div className="flex flex-wrap gap-2 md:col-span-2">
-            <Button type="button" disabled={!technicianId || assign.isPending} onClick={() => assign.mutate()}>
+            <Button type="button" disabled={!canAssign || assign.isPending || remove.isPending} onClick={() => assign.mutate()}>
               {assign.isPending ? "Assigning" : "Assign technician"}
             </Button>
-            <Button type="button" variant="outline" disabled={remove.isPending} onClick={() => remove.mutate()}>
+            <Button type="button" variant="outline" disabled={!booking.assigned_technician || remove.isPending || assign.isPending} onClick={() => remove.mutate()}>
               {remove.isPending ? "Removing" : "Remove assignment"}
             </Button>
           </div>
         </div>
+        {!assignable ? <p className="mt-3 text-sm text-slate-600">Assignment is available only for confirmed or technician-assigned bookings.</p> : null}
+        {technicians.isError ? <p role="alert" className="mt-3 text-sm text-red-600">Could not check technician eligibility. <button type="button" className="underline" onClick={() => void technicians.refetch()}>Retry</button></p> : null}
+        {assignable && technicians.data && !technicians.data.some((technician) => !technician.eligibility_errors?.length) ? <p className="mt-3 text-sm text-amber-700">No eligible technicians for this slot. Check verification, availability, coverage, leave, or overlapping jobs.</p> : null}
+        {selectedTechnician?.eligibility_errors?.length ? <p role="alert" className="mt-3 text-sm text-amber-700">{selectedTechnician.eligibility_errors.join(" ")}</p> : null}
       </section>
 
       <section className="rounded-lg border border-slate-200 bg-slate-50 p-4">

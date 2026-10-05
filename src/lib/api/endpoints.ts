@@ -32,6 +32,8 @@ import type {
   TimeSlot,
   TokenRefreshResponse,
   TechnicianProfile,
+  TechnicianWriteRequest,
+  TechnicianOptions,
   UUID,
   User,
   UserProfileUpdateRequest,
@@ -432,7 +434,13 @@ export const adminApi = {
       body,
       auth: true,
     }),
-  listTechnicians: (query?: { booking_id?: UUID }) => apiRequest<TechnicianProfile[]>(apiPaths.adminTechnicians, { auth: true, query }),
+  listTechnicians: (query?: { booking_id?: UUID; include_inactive?: boolean; include_ineligible?: boolean; search?: string; service_id?: UUID; area_id?: UUID; availability_status?: string; is_active?: boolean }) => apiRequest<TechnicianProfile[]>(apiPaths.adminTechnicians, { auth: true, query }),
+  getTechnician: (id: UUID) => apiRequest<TechnicianProfile>(`${apiPaths.adminTechnicians}${id}/`, { auth: true }),
+  getTechnicianOptions: () => apiRequest<TechnicianOptions>(`${apiPaths.adminTechnicians}options/`, { auth: true }),
+  createTechnician: (body: TechnicianWriteRequest) => apiRequest<TechnicianProfile>(apiPaths.adminTechnicians, { method: "POST", auth: true, body }),
+  updateTechnician: (id: UUID, body: Partial<TechnicianWriteRequest>) => apiRequest<TechnicianProfile>(`${apiPaths.adminTechnicians}${id}/`, { method: "PATCH", auth: true, body }),
+  listTechnicianJobs: (id: UUID, query?: { active?: boolean; page?: number; page_size?: number }) => apiRequest<PaginatedResponse<Booking>>(`${apiPaths.adminTechnicians}${id}/jobs/`, { auth: true, query }),
+  listTechnicianActivities: (id: UUID) => apiRequest<import("@/types/api").BookingActivity[]>(`${apiPaths.adminTechnicians}${id}/activities/`, { auth: true }),
   listLeads: (query?: {
     page?: number;
     page_size?: number;
