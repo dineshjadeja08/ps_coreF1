@@ -7,6 +7,7 @@ import Link from "next/link";
 import { FormEvent, useDeferredValue, useEffect, useMemo, useState } from "react";
 
 import { AdminDataTable } from "@/components/admin/admin-data-table";
+import { AdminDetailPanel } from "@/components/admin/admin-detail-panel";
 import { AdminErrorState } from "@/components/admin/admin-error-state";
 import { AdminPagination } from "@/components/admin/admin-pagination";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
@@ -237,17 +238,7 @@ function Textarea(props: React.ComponentProps<"textarea">) {
 }
 
 function Panel({ title, children, onClose }: { title: string; children: React.ReactNode; onClose: () => void }) {
-  return (
-    <section className="rounded-lg border border-slate-200 bg-white shadow-sm">
-      <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-        <h2 className="text-base font-bold text-slate-950">{title}</h2>
-        <Button type="button" variant="ghost" size="sm" onClick={onClose}>
-          Close
-        </Button>
-      </div>
-      <div className="p-5">{children}</div>
-    </section>
-  );
+  return <AdminDetailPanel title={title} onClose={onClose}>{children}</AdminDetailPanel>;
 }
 
 export function AdminCategoriesScreen() {

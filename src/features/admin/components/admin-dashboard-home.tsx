@@ -3,6 +3,8 @@
 import { AlertCircle, CalendarCheck, CreditCard, Loader2, Users, Wrench } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
+import { useState } from "react";
+import { AdminBookingDrawer } from "@/features/admin/components/admin-booking-drawer";
 
 import { AdminDataTable } from "@/components/admin/admin-data-table";
 import { AdminErrorState } from "@/components/admin/admin-error-state";
@@ -22,6 +24,7 @@ function money(value: string | number | null | undefined) {
 }
 
 export function AdminDashboardHome() {
+  const [selectedId, setSelectedId] = useState("");
   const query = useQuery({
     queryKey: ["admin", "dashboard"],
     queryFn: getAdminDashboardSummary,
@@ -37,7 +40,7 @@ export function AdminDashboardHome() {
     );
   }
 
-  if (query.isError) {
+  if (query.isError && !query.data) {
     return <AdminErrorState message={query.error instanceof Error ? query.error.message : "Dashboard unavailable."} onRetry={() => void query.refetch()} />;
   }
 
@@ -45,6 +48,7 @@ export function AdminDashboardHome() {
 
   return (
     <>
+      {selectedId ? <AdminBookingDrawer key={selectedId} bookingId={selectedId} onClose={() => setSelectedId("")} /> : null}
       <AdminPageHeader
         title="Dashboard"
         description="Today’s operations snapshot from the current backend APIs."
@@ -84,6 +88,7 @@ export function AdminDashboardHome() {
           <AdminDataTable
             rows={data?.recentBookings ?? []}
             getRowKey={(booking) => booking.id}
+            onRowClick={(booking) => setSelectedId(booking.id)}
             emptyIcon={CalendarCheck}
             emptyTitle="No bookings yet"
             emptyMessage="Bookings will appear here once customers complete the flow."
@@ -101,6 +106,7 @@ export function AdminDashboardHome() {
           <AdminDataTable
             rows={data?.pendingPayments ?? []}
             getRowKey={(booking) => booking.id}
+            onRowClick={(booking) => setSelectedId(booking.id)}
             emptyIcon={CreditCard}
             emptyTitle="No pending payments"
             emptyMessage="Advance payment pending bookings will appear here."

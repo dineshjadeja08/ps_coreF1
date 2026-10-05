@@ -31,7 +31,7 @@ export function LeadScheduleDialog({ open, initialDate, initialTime, pending, er
             <div><Dialog.Title className="text-xl font-black text-foreground">Schedule Job</Dialog.Title><Dialog.Description className="mt-1 text-sm text-secondary">Choose a service date and hourly arrival time.</Dialog.Description></div>
             <Dialog.Close className="grid h-11 w-11 place-items-center rounded-full hover:bg-muted" aria-label="Close schedule dialog"><X className="h-5 w-5" /></Dialog.Close>
           </div>
-          <div className="mt-5 flex gap-2 overflow-x-auto pb-2">
+          <div className="mt-5 flex flex-wrap gap-2 pb-2">
             {nextDates().map((item) => <button key={item.value} type="button" onClick={() => setDate(item.value)} className={`min-h-11 min-w-20 rounded-lg border px-3 py-2 text-sm font-bold ${date === item.value ? "border-primary bg-primary text-primary-foreground" : "border-border"}`}>{item.label}</button>)}
             <label className="min-w-36 rounded-lg border border-border px-3 py-2 text-xs font-bold">Select Custom<input type="date" min={new Date().toISOString().slice(0, 10)} value={date} onChange={(event) => setDate(event.target.value)} className="mt-1 block w-full bg-transparent" /></label>
           </div>

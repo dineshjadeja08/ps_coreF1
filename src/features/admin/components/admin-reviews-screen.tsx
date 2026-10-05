@@ -5,6 +5,7 @@ import { Loader2, Plus, Save, Star } from "lucide-react";
 import { useDeferredValue, useState } from "react";
 
 import { AdminDataTable } from "@/components/admin/admin-data-table";
+import { AdminDetailPanel } from "@/components/admin/admin-detail-panel";
 import { AdminErrorState } from "@/components/admin/admin-error-state";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminPagination } from "@/components/admin/admin-pagination";
@@ -80,8 +81,7 @@ export function AdminReviewsScreen() {
       </div>
       {services.isError ? <AdminErrorState message="Could not load services. Retry before adding a review." onRetry={() => void services.refetch()} /> : null}
       {form ? (
-        <section className="mb-5 rounded-lg border border-violet-200 bg-white p-5 shadow-sm">
-          <div className="mb-4 flex items-center justify-between"><h2 className="font-bold text-slate-950">{form.id ? "Edit review" : "New review"}</h2><Button type="button" variant="ghost" disabled={save.isPending} onClick={() => setForm(null)}>Close</Button></div>
+        <AdminDetailPanel title={form.id ? "Edit review" : "New review"} onClose={() => { if (!save.isPending) setForm(null); }}>
           <form className="grid gap-4 md:grid-cols-2" onSubmit={(event) => { event.preventDefault(); save.mutate(form); }}>
             <label className="grid gap-2 text-sm font-semibold">Service<select className={selectClass} value={form.service} disabled={form.isBookingReview || services.isLoading || save.isPending} required onChange={(event) => setForm({ ...form, service: event.target.value })}><option value="">Select service</option>{services.data?.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
             <label className="grid gap-2 text-sm font-semibold">Reviewer name<Input value={form.reviewer_name} maxLength={150} required={!form.isBookingReview} disabled={save.isPending} onChange={(event) => setForm({ ...form, reviewer_name: event.target.value })} placeholder="Customer name" /></label>
@@ -90,13 +90,13 @@ export function AdminReviewsScreen() {
             <label className="grid gap-2 text-sm font-semibold md:col-span-2">Review<textarea className="min-h-28 rounded-lg border border-slate-200 p-3 text-sm font-normal" value={form.comment} required disabled={save.isPending} onChange={(event) => setForm({ ...form, comment: event.target.value })} /></label>
             <div className="md:col-span-2"><Button type="submit" disabled={save.isPending || !form.service || services.isError}><Save className="h-4 w-4" />{save.isPending ? "Saving…" : "Save review"}</Button>{save.isError ? <p role="alert" className="mt-2 text-sm text-red-600">{save.error.message}</p> : null}</div>
           </form>
-        </section>
+        </AdminDetailPanel>
       ) : null}
       {selected ? <section className="mb-5 rounded-lg border border-violet-200 bg-white p-5"><div className="flex items-center justify-between"><h2 className="font-bold">{selected.service_name} · {selected.rating}/5</h2><Button type="button" variant="ghost" onClick={() => setSelected(null)}>Close</Button></div><p className="mt-3 whitespace-pre-wrap text-sm leading-6">{selected.comment}</p></section> : null}
       {moderate.isError || remove.isError ? <p role="alert" className="mb-4 text-sm text-red-600">{moderate.error?.message || remove.error?.message}</p> : null}
       {query.isLoading ? <div className="grid min-h-64 place-items-center"><Loader2 className="h-6 w-6 animate-spin text-violet-700" /></div> : query.isError ? <AdminErrorState message={query.error.message} onRetry={() => void query.refetch()} /> : (
         <>
-          <AdminDataTable rows={query.data?.results ?? []} getRowKey={(review) => review.id} emptyIcon={Star} emptyTitle="No reviews" emptyMessage="Add a review for a service, or view customer booking reviews." columns={[
+          <AdminDataTable rows={query.data?.results ?? []} getRowKey={(review) => review.id} onRowClick={edit} emptyIcon={Star} emptyTitle="No reviews" emptyMessage="Add a review for a service, or view customer booking reviews." columns={[
             { key: "service", header: "Service", render: (review) => review.service_name },
             { key: "customer", header: "Reviewer", render: (review) => review.reviewer_name || (typeof review.customer.name === "string" && review.customer.name) || "Customer" },
             { key: "booking", header: "Source", render: (review) => review.booking_number || "Added by admin" },

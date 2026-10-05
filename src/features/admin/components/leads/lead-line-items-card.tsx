@@ -47,8 +47,8 @@ export function LeadLineItemsCard(props: Props) {
       <h2 className="border-b border-border pb-4 text-xl font-bold text-foreground">Line items</h2>
       {!hasItems ? <div className="grid min-h-52 place-items-center text-sm font-medium text-secondary">No Line Items</div> : (
         <>
-          <div className="overflow-x-auto">
-            <table className="mt-4 w-full min-w-[360px] text-left text-sm">
+          <div className="min-w-0">
+            <table className="mt-4 w-full table-fixed text-left text-sm [&_td]:break-words [&_td]:[overflow-wrap:anywhere]">
               <thead><tr className="border-b border-border text-xs font-semibold text-secondary"><th className="pb-3">Package</th><th className="pb-3">Unit</th><th className="pb-3 text-right">Cost</th></tr></thead>
               <tbody>{props.items.map((item) => <tr key={item.key} className="border-b border-border"><td className="py-4 font-semibold text-foreground">{item.name}</td><td className="py-4">{item.quantity}</td><td className="py-4 text-right">{formatInr(Number(item.unitCost) * item.quantity)}</td></tr>)}</tbody>
             </table>

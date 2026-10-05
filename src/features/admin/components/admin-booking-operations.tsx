@@ -11,7 +11,7 @@ import type { Booking, UUID } from "@/types/api";
 
 const inputClass = "h-11 rounded-md border border-slate-200 bg-white px-3 text-sm";
 
-export function AdminBookingOperations({ booking, onChanged }: { booking: Booking; onChanged?: () => void }) {
+export function AdminBookingOperations({ booking, onChanged, showHistory = true }: { booking: Booking; onChanged?: () => void; showHistory?: boolean }) {
   const queryClient = useQueryClient();
   const [technicianId, setTechnicianId] = useState("");
   const [notes, setNotes] = useState("");
@@ -116,7 +116,7 @@ export function AdminBookingOperations({ booking, onChanged }: { booking: Bookin
         </div>
       </section>
 
-      <section>
+      {showHistory ? <section>
         <h3 className="font-bold text-slate-950">Status history</h3>
         <div className="mt-3 grid gap-2">
           {booking.status_history.map((history) => (
@@ -130,7 +130,7 @@ export function AdminBookingOperations({ booking, onChanged }: { booking: Bookin
           ))}
           {!booking.status_history.length ? <p className="text-sm text-slate-500">No status history recorded.</p> : null}
         </div>
-      </section>
+      </section> : null}
 
       {message ? <p className="text-sm font-semibold text-emerald-700">{message}</p> : null}
       {activeError ? <p className="text-sm font-semibold text-red-600">{activeError.message}</p> : null}

@@ -313,6 +313,8 @@ export const technicianApi = {
 };
 
 export const adminApi = {
+  getBooking: (id: UUID) => apiRequest<Booking>(apiPaths.adminBookingDetail(id), { auth: true }),
+  listBookingActivities: (id: UUID) => apiRequest<import("@/types/api").BookingActivity[]>(`${apiPaths.adminBookingDetail(id)}activities/`, { auth: true }),
   listTimeSlots: (query?: { service_area?: string; date?: string; page_size?: number }) =>
     apiRequest<PaginatedResponse<AdminTimeSlot>>(apiPaths.adminTimeSlots, { auth: true, query }),
   updateTimeSlot: (id: UUID, body: Partial<Pick<AdminTimeSlot, "date" | "start_time" | "end_time" | "capacity" | "is_active">>) =>

@@ -429,6 +429,14 @@ export type BookingStatusHistory = {
   created_at: ISODateTime;
 };
 
+export type BookingActivity = {
+  id: string;
+  title: string;
+  description: string;
+  actor: string;
+  created_at: ISODateTime;
+};
+
 export type BookingCreateRequest = {
   service_id: UUID;
   address_id: UUID;

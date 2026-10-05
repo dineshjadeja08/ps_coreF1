@@ -20,5 +20,5 @@ const toneByStatus: Record<string, string> = {
 };
 
 export function AdminStatusBadge({ status }: { status: string }) {
-  return <Badge className={toneByStatus[status] ?? "bg-slate-100 text-slate-700"}>{status.replaceAll("_", " ")}</Badge>;
+  return <Badge className={`max-w-full whitespace-normal ${toneByStatus[status] ?? "bg-slate-100 text-slate-700"}`}>{status.replaceAll("_", " ")}</Badge>;
 }
