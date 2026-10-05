@@ -7,6 +7,7 @@ import { ErrorState } from "@/components/common/error-state";
 import { Button } from "@/components/ui/button";
 import { routes } from "@/constants/routes";
 import { BookingActionsPanel } from "@/features/bookings/components/booking-actions-panel";
+import { JobProgressTracker } from "@/features/bookings/components/job-progress-tracker";
 import { StatusBadge } from "@/features/bookings/components/status-badge";
 import { useBooking } from "@/features/bookings/queries";
 import {
@@ -38,7 +39,7 @@ export function BookingDetailScreen({ bookingId }: { bookingId: string }) {
     );
   }
 
-  if (booking.isError) {
+  if (booking.isError && !booking.data) {
     return (
       <section className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
         <ErrorState title="We could not load this booking" error={booking.error} onRetry={() => booking.refetch()} />
@@ -60,6 +61,11 @@ export function BookingDetailScreen({ bookingId }: { bookingId: string }) {
           Back to bookings
         </Link>
       </Button>
+      <div className="mb-5 flex flex-wrap items-center gap-3 text-xs text-secondary">
+        <span>{booking.dataUpdatedAt ? `Last checked: ${formatDisplayDateTime(new Date(booking.dataUpdatedAt).toISOString())}` : "Checking updates…"} · Active bookings refresh every 15 seconds.</span>
+        <Button type="button" variant="outline" size="sm" disabled={booking.isFetching} onClick={() => void booking.refetch()}>{booking.isFetching ? "Refreshing…" : "Refresh"}</Button>
+        {booking.isError ? <p role="alert" className="text-red-600">Could not refresh. Showing the last received status; please retry.</p> : null}
+      </div>
 
       <div className="grid gap-8 lg:grid-cols-[1fr_360px] lg:items-start">
         <main className="space-y-6">
@@ -79,6 +85,8 @@ export function BookingDetailScreen({ bookingId }: { bookingId: string }) {
               </div>
             </div>
           </section>
+
+          <JobProgressTracker booking={item} />
 
           <section className="rounded-md border border-border bg-surface p-6 shadow-sm">
             <h2 className="text-xl font-bold text-foreground">Visit details</h2>

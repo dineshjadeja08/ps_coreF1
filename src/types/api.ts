@@ -365,6 +365,7 @@ export type BookingStatus =
   | "CONFIRMED"
   | "TECHNICIAN_ASSIGNED"
   | "TECHNICIAN_EN_ROUTE"
+  | "TECHNICIAN_ARRIVED"
   | "IN_PROGRESS"
   | "COMPLETED"
   | "CLOSED"

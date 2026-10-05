@@ -10,6 +10,7 @@ const bookingStatusLabels: Record<BookingStatus, string> = {
   CONFIRMED: "Confirmed",
   TECHNICIAN_ASSIGNED: "Technician assigned",
   TECHNICIAN_EN_ROUTE: "Technician en route",
+  TECHNICIAN_ARRIVED: "Technician arrived",
   IN_PROGRESS: "In progress",
   COMPLETED: "Completed",
   CLOSED: "Closed",

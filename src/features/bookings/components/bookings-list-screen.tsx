@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { routes } from "@/constants/routes";
 import { StatusBadge } from "@/features/bookings/components/status-badge";
 import { useBookings } from "@/features/bookings/queries";
-import { formatMoney, getBookingAddressLine, getBookingSchedule, getBookingServiceName } from "@/features/bookings/utils";
+import { formatDisplayDateTime, formatMoney, getBookingAddressLine, getBookingSchedule, getBookingServiceName } from "@/features/bookings/utils";
 
 export function BookingsListScreen() {
   const bookings = useBookings({ page_size: 20 });
@@ -26,7 +26,7 @@ export function BookingsListScreen() {
     );
   }
 
-  if (bookings.isError) {
+  if (bookings.isError && !bookings.data) {
     return (
       <section className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
         <ErrorState title="We could not load your bookings" error={bookings.error} onRetry={() => bookings.refetch()} />
@@ -41,11 +41,13 @@ export function BookingsListScreen() {
           <p className="text-sm font-semibold uppercase tracking-wide text-primary">Bookings</p>
           <h1 className="mt-2 text-3xl font-bold text-foreground">My bookings</h1>
           <p className="mt-2 text-sm leading-6 text-secondary">Track service visits, payment state, and booking progress from the backend record.</p>
+          <p className="mt-2 text-xs text-secondary">Refreshes every 15 seconds.{bookings.dataUpdatedAt ? ` Last checked: ${formatDisplayDateTime(new Date(bookings.dataUpdatedAt).toISOString())}` : ""}</p>
         </div>
         <Button asChild>
           <Link href={routes.services}>Book a service</Link>
         </Button>
       </div>
+      {bookings.isError ? <p role="alert" className="mt-4 text-sm text-red-600">Could not refresh bookings. Showing the last received status. <button type="button" className="underline" onClick={() => void bookings.refetch()}>Retry</button></p> : null}
 
       {!items.length ? (
         <div className="mt-8">

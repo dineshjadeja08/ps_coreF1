@@ -124,6 +124,7 @@ export const apiPaths = {
   adminScheduleClosureDetail: (id: UUID) => `/api/v1/admin/schedule-closures/${id}/`,
   technicianJobs: "/api/v1/technician/jobs/",
   technicianJobEnRoute: (id: UUID) => `/api/v1/technician/jobs/${id}/en-route/`,
+  technicianJobArrived: (id: UUID) => `/api/v1/technician/jobs/${id}/arrived/`,
   technicianJobStart: (id: UUID) => `/api/v1/technician/jobs/${id}/start/`,
   technicianJobComplete: (id: UUID) => `/api/v1/technician/jobs/${id}/complete/`,
   adminLeads: "/api/v1/admin/leads/",
@@ -308,8 +309,9 @@ export const authApi = {
 };
 
 export const technicianApi = {
-  listJobs: () => apiRequest<PaginatedResponse<Booking>>(apiPaths.technicianJobs, { auth: true, query: { page_size: 100 } }),
+  listJobs: (query?: { page?: number; page_size?: number; job_status?: "active" | "history" }) => apiRequest<PaginatedResponse<Booking>>(apiPaths.technicianJobs, { auth: true, query: { page_size: 25, ...query } }),
   markEnRoute: (id: UUID) => apiRequest<Booking>(apiPaths.technicianJobEnRoute(id), { method: "POST", body: {}, auth: true }),
+  markArrived: (id: UUID) => apiRequest<Booking>(apiPaths.technicianJobArrived(id), { method: "POST", body: {}, auth: true }),
   startJob: (id: UUID) => apiRequest<Booking>(apiPaths.technicianJobStart(id), { method: "POST", body: {}, auth: true }),
   completeJob: (id: UUID) => apiRequest<Booking>(apiPaths.technicianJobComplete(id), { method: "POST", body: {}, auth: true }),
 };
