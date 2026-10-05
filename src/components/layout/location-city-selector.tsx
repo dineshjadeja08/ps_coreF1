@@ -2,10 +2,12 @@
 
 import * as Dialog from "@radix-ui/react-dialog";
 import { ChevronDown, LocateFixed, Loader2, MapPin, Search, X } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { servicePathForLocation } from "@/constants/routes";
 import { addressesApi } from "@/features/addresses/api";
 import { detectCurrentAddress, resolveAddressSuggestion, searchAddressSuggestions } from "@/features/addresses/location";
 import { matchSupportedArea, matchSupportedCity, setSelectedLocation, useSelectedLocation } from "@/features/location/selected-location";
@@ -15,6 +17,7 @@ import type { AddressSuggestion } from "@/types/api";
 type LocationCitySelectorProps = { compact?: boolean; className?: string; headerStyle?: boolean };
 
 export function LocationCitySelector({ compact = false, className, headerStyle = false }: LocationCitySelectorProps) {
+  const router = useRouter();
   const location = useSelectedLocation();
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState<"idle" | "loading" | "error" | "success">("idle");
@@ -64,6 +67,11 @@ export function LocationCitySelector({ compact = false, className, headerStyle =
     setSelectedLocation({ city, pincode: cleaned, label: locationLabel, areaSlug: selectedArea?.slug ?? "" });
     setStatus("success");
     setOpen(false);
+    const { pathname, search, hash } = window.location;
+    const nextPath = servicePathForLocation(pathname, selectedArea?.slug ?? "", city);
+    if (nextPath && nextPath !== pathname) {
+      router.replace(`${nextPath}${search}${hash}`, { scroll: false });
+    }
   }
 
   async function detectCurrentLocation() {
