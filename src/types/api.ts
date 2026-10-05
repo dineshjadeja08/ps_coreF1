@@ -530,6 +530,7 @@ export type TechnicianProfile = {
   completed_job_count?: number;
   cancellation_count?: number;
   is_available: boolean;
+  whatsapp_notifications_enabled?: boolean;
   is_active: boolean;
   joined_at: ISODate | null;
   id_document_available?: boolean;
@@ -560,6 +561,7 @@ export type TechnicianWriteRequest = {
   experience_years: string;
   joined_at: ISODate | null;
   is_active: boolean;
+  whatsapp_notifications_enabled: boolean;
   internal_notes: string;
   skill_names: string[];
   service_area_ids: UUID[];

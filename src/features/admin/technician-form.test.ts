@@ -10,6 +10,7 @@ describe("technician editor payload", () => {
     expect(form.employment_status).toBe("ACTIVE");
     expect(form.joined_at).toBeNull();
     expect(form.service_area_ids).toEqual([]);
+    expect(form.whatsapp_notifications_enabled).toBe(false);
   });
 
   it("preserves coverage, availability, notes and inactive status when editing", () => {

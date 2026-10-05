@@ -14,6 +14,7 @@ import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminStatusBadge } from "@/components/admin/admin-status-badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { listAllServiceOptions } from "@/features/admin/service-options";
 import { adminApi } from "@/lib/api/endpoints";
 import type { AdminService, AdminServiceCategory, FAQ, HomepageBanner, UUID } from "@/types/api";
 
@@ -791,12 +792,12 @@ export function AdminPackagesScreen() {
 export function AdminFaqsScreen() {
   const queryClient = useQueryClient();
   const categories = useQuery({ queryKey: ["admin", "categories"], queryFn: adminApi.listCategories });
-  const services = useQuery({ queryKey: ["admin", "service-options", ""], queryFn: () => adminApi.listServices({ page_size: 20 }), staleTime: 2 * 60_000 });
+  const services = useQuery({ queryKey: ["admin", "faq-service-options"], queryFn: listAllServiceOptions, staleTime: 2 * 60_000 });
   const [search, setSearch] = useState("");
   const faqs = useQuery({ queryKey: ["admin", "faqs", search], queryFn: () => adminApi.listFaqs({ page_size: 50, search: search || undefined }) });
   const [form, setForm] = useState<FaqForm | null>(null);
   const firstCategory = categories.data?.results?.[0]?.id;
-  const firstService = services.data?.results?.[0]?.id;
+  const firstService = services.data?.[0]?.id;
   const save = useMutation({
     mutationFn: (payload: FaqForm) => {
       const body = {
@@ -827,11 +828,11 @@ export function AdminFaqsScreen() {
             <Field label="Question"><Input className={fieldClass} value={form.question} onChange={(event) => setForm({ ...form, question: event.target.value })} required /></Field>
             <Field label="Order"><Input className={fieldClass} type="number" value={form.display_order} onChange={(event) => setForm({ ...form, display_order: event.target.value })} /></Field>
             <Field label="Category"><select className={`${fieldClass} h-11 rounded-lg border px-3 text-sm`} value={form.category} onChange={(event) => setForm({ ...form, category: event.target.value })}><option value="">General</option>{categories.data?.results.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></Field>
-            <Field label="Service"><select className={`${fieldClass} h-11 rounded-lg border px-3 text-sm`} value={form.service} onChange={(event) => setForm({ ...form, service: event.target.value })}><option value="">All services</option>{services.data?.results.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></Field>
+            <Field label="Service"><select className={`${fieldClass} h-11 rounded-lg border px-3 text-sm`} value={form.service} disabled={services.isPending || services.isError} onChange={(event) => setForm({ ...form, service: event.target.value })}><option value="">{services.isPending ? "Loading services..." : "All services"}</option>{services.data?.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select>{services.isError ? <AdminErrorState message="Could not load all services. Please retry." onRetry={() => void services.refetch()} /> : null}</Field>
             <Field label="Package label"><Input className={fieldClass} value={form.package} onChange={(event) => setForm({ ...form, package: event.target.value })} /></Field>
             <label className="flex items-center gap-2 pt-6 text-sm font-semibold text-slate-700"><input type="checkbox" checked={form.is_active} onChange={(event) => setForm({ ...form, is_active: event.target.checked })} />Active</label>
             <Field label="Answer"><Textarea className="md:col-span-2" value={form.answer} onChange={(event) => setForm({ ...form, answer: event.target.value })} required /></Field>
-            <div className="md:col-span-2"><Button type="submit" disabled={save.isPending}><Save className="h-4 w-4" />Save FAQ</Button>{save.isError ? <p className="mt-2 text-sm font-semibold text-red-600">{save.error.message}</p> : null}</div>
+            <div className="md:col-span-2"><Button type="submit" disabled={save.isPending || services.isPending || services.isError}><Save className="h-4 w-4" />Save FAQ</Button>{save.isError ? <p className="mt-2 text-sm font-semibold text-red-600">{save.error.message}</p> : null}</div>
           </form>
         </Panel>
       ) : null}

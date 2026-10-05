@@ -17,6 +17,7 @@ export function technicianForm(profile?: TechnicianProfile): TechnicianWriteRequ
     experience_years: profile?.experience_years ?? "0.0",
     joined_at: profile?.joined_at ?? null,
     is_active: profile?.is_active ?? true,
+    whatsapp_notifications_enabled: profile?.whatsapp_notifications_enabled ?? false,
     internal_notes: profile?.internal_notes ?? "",
     skill_names: profile?.skills.map((skill) => skill.name) ?? [],
     service_area_ids: profile?.service_areas.map((area) => area.id) ?? [],
