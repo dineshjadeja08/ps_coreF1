@@ -96,7 +96,7 @@ export function HomeDiscovery() {
           <div className="flex min-w-0 flex-col justify-center lg:max-h-full">
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
               <h1 className="max-w-xl text-[2.15rem] font-bold leading-[1.08] text-foreground sm:text-[3.25rem] lg:text-[clamp(2.25rem,4.8vh,3.4rem)]">
-                Home Appliance Services at <span className="text-primary">Your Doorstep in {location.city}</span>
+                Home Appliance Services at <span className="text-primary">Your Doorstep in {location.label || location.city}</span>
               </h1>
             </motion.div>
 
@@ -109,14 +109,14 @@ export function HomeDiscovery() {
                 return item.opensApplianceSelector ? (
                   <button key={item.name} type="button" className={className} onClick={openApplianceSelector}>{content}</button>
                 ) : (
-                  <Link key={item.name} href={routes.serviceCategory(item.slug)} className={className}>{content}</Link>
+                  <Link key={item.name} href={routes.localizedServiceCategory(item.slug, location.areaSlug)} className={className}>{content}</Link>
                 );
               })}
             </div>
             <Button asChild className="mt-6 lg:mt-[clamp(.6rem,1.5vh,1.25rem)]"><Link href={routes.services}>Book a Service <ArrowRight className="h-4 w-4" /></Link></Button>
           </div>
 
-          <HeroImageMosaic />
+          <HeroImageMosaic areaSlug={location.areaSlug} />
         </div>
       </section>
       <div className="relative z-10 mx-auto grid w-full max-w-7xl grid-cols-2 gap-px border-y border-border bg-border px-0 sm:grid-cols-4 lg:px-0">
@@ -133,9 +133,9 @@ export function HomeDiscovery() {
           ))}
       </div>
 
-      <HomepageOfferBanner />
+      <HomepageOfferBanner areaSlug={location.areaSlug} />
 
-      <SpotlightCarousel />
+      <SpotlightCarousel areaSlug={location.areaSlug} />
 
       <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-5 flex items-center justify-between gap-4">
@@ -150,7 +150,7 @@ export function HomeDiscovery() {
               return <div key={item.name} aria-disabled="true" className="relative flex aspect-square min-w-0 cursor-not-allowed flex-col items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 p-2 text-center shadow-[0_2px_8px_rgba(24,24,27,0.04)] sm:p-4">{content}</div>;
             }
 
-            return <Link key={item.name} href={routes.serviceCategory(item.slug)} className="group flex aspect-square min-w-0 flex-col items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white p-2 text-center shadow-[0_2px_8px_rgba(24,24,27,0.04)] transition hover:border-primary/40 hover:bg-primary-soft sm:p-4">{content}</Link>;
+            return <Link key={item.name} href={routes.localizedServiceCategory(item.slug, location.areaSlug)} className="group flex aspect-square min-w-0 flex-col items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white p-2 text-center shadow-[0_2px_8px_rgba(24,24,27,0.04)] transition hover:border-primary/40 hover:bg-primary-soft sm:p-4">{content}</Link>;
           })}
         </div>
       </section>
@@ -204,12 +204,16 @@ export function HomeDiscovery() {
   );
 }
 
-function HomepageOfferBanner() {
+function HomepageOfferBanner({ areaSlug }: { areaSlug: string }) {
   const banners = useHomepageBanners("MAIN");
   const banner = banners.data?.[0];
   const desktopImage = banner?.desktop_image_url || banner?.desktop_image || "/images/hero/ac-service.webp";
   const mobileImage = banner?.mobile_image_url || banner?.mobile_image || desktopImage;
-  const href = banner?.button_link || routes.serviceCategory("ac-services");
+  const configuredHref = banner?.button_link;
+  const configuredCategory = configuredHref?.match(/^\/services\/([^/?#]+)\/?$/)?.[1];
+  const href = configuredCategory
+    ? routes.localizedServiceCategory(decodeURIComponent(configuredCategory), areaSlug)
+    : configuredHref || routes.localizedServiceCategory("ac-services", areaSlug);
 
   return (
     <section aria-label={banner?.image_alt_text || "AC service"} className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 lg:px-8">
@@ -245,7 +249,7 @@ function HomepageOfferBanner() {
   );
 }
 
-function SpotlightCarousel() {
+function SpotlightCarousel({ areaSlug }: { areaSlug: string }) {
   const row = useRef<HTMLDivElement>(null);
   const [start, setStart] = useState(0);
   const [last, setLast] = useState(5);
@@ -300,7 +304,7 @@ function SpotlightCarousel() {
           return item.opensApplianceSelector ? (
             <button key={item.slug} type="button" onClick={openApplianceSelector} className={className}>{content}</button>
           ) : (
-            <Link key={item.slug} href={routes.serviceCategory(item.slug)} className={className}>{content}</Link>
+            <Link key={item.slug} href={routes.localizedServiceCategory(item.slug, areaSlug)} className={className}>{content}</Link>
           );
         })}
       </div>
@@ -309,7 +313,7 @@ function SpotlightCarousel() {
   );
 }
 
-function HeroImageMosaic() {
+function HeroImageMosaic({ areaSlug }: { areaSlug: string }) {
   const cards = [
     { image: "/images/hero/ac-service.webp", title: "AC Service", slug: "ac-services" },
     { image: "/images/hero/washing-machine-service.webp", title: "Appliance Repair", slug: "home-appliances-repair", opensApplianceSelector: true },
@@ -320,7 +324,7 @@ function HeroImageMosaic() {
     const className = "group relative aspect-[4/3] min-h-0 overflow-hidden rounded-md text-left focus-visible:outline-2 focus-visible:outline-primary";
     const content = <><Image src={card.image} alt={`Purple Squad ${card.title}`} fill priority sizes="(min-width: 1024px) 28vw, 46vw" className="object-cover object-center transition duration-300 group-hover:scale-[1.02]" /><span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent px-3 pb-3 pt-8 text-xs font-bold text-white sm:text-sm">{card.title}</span></>;
 
-    return card.opensApplianceSelector ? <button key={card.image} type="button" onClick={openApplianceSelector} className={className}>{content}</button> : <Link key={card.image} href={routes.serviceCategory(card.slug)} className={className}>{content}</Link>;
+    return card.opensApplianceSelector ? <button key={card.image} type="button" onClick={openApplianceSelector} className={className}>{content}</button> : <Link key={card.image} href={routes.localizedServiceCategory(card.slug, areaSlug)} className={className}>{content}</Link>;
   })}</div>;
 }
 

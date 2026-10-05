@@ -1,13 +1,17 @@
+"use client";
+
 import { Wrench } from "lucide-react";
 import Link from "next/link";
 
 import type { ServiceCategory } from "@/features/catalogue/types";
 import { routes } from "@/constants/routes";
+import { useSelectedLocation } from "@/features/location/selected-location";
 
 export function CategoryCard({ category }: { category: ServiceCategory }) {
+  const location = useSelectedLocation();
   return (
     <Link
-      href={routes.serviceCategory(category.slug)}
+      href={routes.localizedServiceCategory(category.slug, location.areaSlug)}
       className="group rounded-md border border-border bg-surface p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[var(--shadow-card)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
     >
       <div className="grid gap-3">

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { addressesApi } from "@/features/addresses/api";
 import { detectCurrentAddress, resolveAddressSuggestion, searchAddressSuggestions } from "@/features/addresses/location";
-import { matchSupportedCity, setSelectedLocation, useSelectedLocation } from "@/features/location/selected-location";
+import { matchSupportedArea, matchSupportedCity, setSelectedLocation, useSelectedLocation } from "@/features/location/selected-location";
 import { cn } from "@/lib/utils";
 import type { AddressSuggestion } from "@/types/api";
 
@@ -50,7 +50,7 @@ export function LocationCitySelector({ compact = false, className, headerStyle =
     };
   }, [open, searchQuery]);
 
-  async function applyLocation(cityValue: string, postalCode: string, label: string) {
+  async function applyLocation(cityValue: string, postalCode: string, label: string, locality = label) {
     const cleaned = postalCode.trim();
     if (!cleaned) throw new Error("We could not find a pincode for this location. Please search for another nearby address.");
 
@@ -59,8 +59,9 @@ export function LocationCitySelector({ compact = false, className, headerStyle =
 
     const areaCity = String(availability.service_area?.city ?? cityValue ?? location.city);
     const city = matchSupportedCity(areaCity) ?? location.city;
-    const locationLabel = String(availability.service_area?.name ?? label ?? `${city} ${cleaned}`);
-    setSelectedLocation({ city, pincode: cleaned, label: locationLabel });
+    const selectedArea = matchSupportedArea(locality, availability.areas) ?? matchSupportedArea(label, availability.areas);
+    const locationLabel = selectedArea?.name ?? String(availability.service_area?.name ?? label ?? `${city} ${cleaned}`);
+    setSelectedLocation({ city, pincode: cleaned, label: locationLabel, areaSlug: selectedArea?.slug ?? "" });
     setStatus("success");
     setOpen(false);
   }
@@ -70,7 +71,8 @@ export function LocationCitySelector({ compact = false, className, headerStyle =
     setMessage("");
     try {
       const detected = await detectCurrentAddress();
-      await applyLocation(detected.city ?? "", detected.postal_code ?? "", detected.locality || detected.address_line_1 || "Current location");
+      const label = detected.locality || detected.address_line_1 || "Current location";
+      await applyLocation(detected.city ?? "", detected.postal_code ?? "", label, detected.locality || label);
     } catch (error) {
       setStatus("error");
       setMessage(error instanceof Error ? error.message : "Could not detect your current location.");
@@ -84,7 +86,8 @@ export function LocationCitySelector({ compact = false, className, headerStyle =
     setSuggestions([]);
     try {
       const resolved = await resolveAddressSuggestion(suggestion);
-      await applyLocation(resolved.city ?? "", resolved.postal_code ?? "", suggestion.main_text || suggestion.description);
+      const label = suggestion.main_text || suggestion.description;
+      await applyLocation(resolved.city ?? "", resolved.postal_code ?? "", label, resolved.locality || label);
     } catch (error) {
       setStatus("error");
       setMessage(error instanceof Error ? error.message : "Could not use this address.");

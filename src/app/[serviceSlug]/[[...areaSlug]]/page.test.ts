@@ -21,9 +21,9 @@ const page = {
   city: "Chennai",
   area: "Velachery",
   postal_code: "600042",
+  is_indexable: true,
   meta_title: "AC Service in Velachery, Chennai | Purple Squad",
   meta_description: "Book AC service in Velachery with Purple Squad.",
-  is_indexable: true,
   canonical_override: "https://purplesquad.in/ac-service-chennai/velachery",
 } as SeoLandingPage;
 

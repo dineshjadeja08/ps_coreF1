@@ -70,6 +70,7 @@ export type SeoLandingPageSummary = {
   city: string;
   area: string;
   postal_code: string;
+  is_indexable: boolean;
   updated_at: ISODateTime;
 };
 
@@ -85,7 +86,6 @@ export type SeoLandingPage = SeoLandingPageSummary & {
   pricing_intro: string;
   coverage_areas: string[];
   faqs: Array<{ question: string; answer: string }>;
-  is_indexable: boolean;
   canonical_override: string;
   services: ServiceListItem[];
   parent_page: SeoPageLink | null;

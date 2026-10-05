@@ -89,7 +89,7 @@ export async function getServiceReviewsForSeo(serviceId: string) {
 
 export async function getSeoLandingPagesForSeo() {
   try {
-    return await fetchJson<SeoLandingPageSummary[]>(apiPaths.seoPages);
+    return await fetchJson<SeoLandingPageSummary[]>(apiPaths.seoPages, { include_unindexed: true });
   } catch {
     return [];
   }

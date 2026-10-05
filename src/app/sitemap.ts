@@ -42,7 +42,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     images: service.cover_image ? [absoluteUrl(service.cover_image)] : undefined,
   }));
 
-  const landingEntries: MetadataRoute.Sitemap = seoPages.map((page) => ({
+  const landingEntries: MetadataRoute.Sitemap = seoPages.filter((page) => page.is_indexable).map((page) => ({
     url: `${siteUrl}${page.path}`,
     lastModified: new Date(page.updated_at),
     changeFrequency: "weekly",
