@@ -37,6 +37,9 @@ export const metadata: Metadata = {
   authors: [{ name: "Purple Squad" }],
   creator: "Purple Squad",
   publisher: "Purple Squad",
+  verification: {
+    google: "tcmzX6q64XpBgxBW3rNKLNFxfpXwBEBHSRPctzRZUCo",
+  },
   alternates: {
     canonical: "/",
   },
