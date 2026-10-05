@@ -14,38 +14,19 @@ import { AddToCartButton, CartSummary } from "@/features/cart/cart-controls";
 import { ServiceImage } from "@/features/catalogue/components/service-image";
 import { ReviewCard } from "@/features/catalogue/components/review-card";
 import { ServiceDetailSkeleton } from "@/features/catalogue/components/skeletons";
+import { packageFamilyKey } from "@/features/catalogue/package-family";
 import { useServiceDetail, useServiceFaqs, useServiceReviews, useServices } from "@/features/catalogue/queries";
 import type { ServiceDetail, ServiceListItem } from "@/features/catalogue/types";
 import type { FAQ, Review } from "@/types/api";
 import { formatDuration, formatPrice, getCurrentPrice, hasOfferPrice } from "@/features/catalogue/utils";
 import { useSelectedLocation } from "@/features/location/selected-location";
 
-function packageFamilyKey(service: Pick<ServiceListItem, "name" | "short_description" | "category">) {
-  const text = `${service.name} ${service.short_description} ${service.category.name}`.toLowerCase();
-  if (text.includes("ac ")) return "ac";
-  if (text.includes("washing")) return "washing";
-  if (text.includes("refrigerator") || text.includes("fridge")) return "refrigerator";
-  if (text.includes("wall mount")) return "tv-wall-mount";
-  if (text.includes("tv")) return "tv";
-  if (text.includes("purifier")) return "water-purifier";
-  if (text.includes("geyser")) return "geyser";
-  if (text.includes("cctv")) return "cctv";
-  if (text.includes("dishwasher")) return "dishwasher";
-  if (text.includes("chimney")) return "chimney";
-  if (text.includes("water tank") || text.includes("sump")) return "water-tank";
-  if (text.includes("mosquito")) return "mosquito-net";
-  if (text.includes("sofa")) return "sofa";
-  if (text.includes("bathroom")) return "bathroom";
-  if (text.includes("house")) return "house-cleaning";
-  return service.category.slug;
-}
-
 function packageSectionTitle(service: ServiceDetail) {
   const family = packageFamilyKey(service);
   if (family === "ac") return "AC service packages";
   if (family === "water-tank") return "Water tank and sump cleaning packages";
   if (family === "chimney") return "Chimney cleaning packages";
-  if (family === "tv-wall-mount") return "TV wall mount packages";
+  if (family === "tv") return "TV repair and wall mount packages";
   return `${service.name} packages`;
 }
 
