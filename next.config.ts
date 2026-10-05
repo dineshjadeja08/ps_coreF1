@@ -4,6 +4,8 @@ const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 const apiImageHost = apiBaseUrl ? new URL(apiBaseUrl).hostname : undefined;
 
 const nextConfig: NextConfig = {
+  // Keep metadata in the head so GTM's noscript is the first body element.
+  htmlLimitedBots: /.*/,
   allowedDevOrigins: ["127.0.0.1"],
   async redirects() {
     return [

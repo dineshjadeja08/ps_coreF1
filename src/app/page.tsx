@@ -4,6 +4,9 @@ import { JsonLd } from "@/components/seo/json-ld";
 import { HomeDiscovery } from "@/features/catalogue/components/home-discovery";
 import { canonicalFor, defaultOgImagePath, localBusinessJsonLd, websiteJsonLd } from "@/lib/seo";
 
+// Avoid the prerendered metadata wrapper before the GTM verification iframe.
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: {
     absolute: "Purple Squad | Home Appliance Services in Chennai",
