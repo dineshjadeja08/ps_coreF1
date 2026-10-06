@@ -51,7 +51,7 @@ export function AdminServiceAreasScreen() {
   const queryClient = useQueryClient();
   const [form, setForm] = useState<AreaForm | null>(null);
   const areas = useQuery({ queryKey: ["admin", "service-areas"], queryFn: adminApi.listServiceAreas });
-  const services = useQuery({ queryKey: ["admin", "service-options", ""], queryFn: () => adminApi.listServices({ page_size: 20 }), staleTime: 2 * 60_000 });
+  const services = useQuery({ queryKey: ["admin", "service-options", "service-areas"], queryFn: () => adminApi.listServices({ page_size: 100 }), staleTime: 2 * 60_000 });
   const save = useMutation({
     mutationFn: (payload: AreaForm) => {
       const body = {
@@ -123,6 +123,8 @@ export function AdminServiceAreasScreen() {
                 </div>
               </div>
               <div className="mt-3 grid max-h-80 gap-2 overflow-y-auto rounded-lg border border-slate-200 p-3 sm:grid-cols-2 lg:grid-cols-3">
+                {services.isLoading ? <p className="text-sm text-slate-500">Loading services…</p> : null}
+                {services.isError ? <p role="alert" className="text-sm font-semibold text-red-600">Could not load services: {services.error.message}</p> : null}
                 {(services.data?.results ?? []).map((service) => (
                   <label key={service.id} className="flex cursor-pointer items-start gap-3 rounded-md p-2 hover:bg-slate-50">
                     <input type="checkbox" className="mt-1 h-4 w-4 accent-violet-700" checked={form.service_ids.includes(service.id)} onChange={() => toggleService(service.id)} />
@@ -137,7 +139,7 @@ export function AdminServiceAreasScreen() {
               Pincode is active
             </label>
             <div>
-              <Button type="submit" disabled={save.isPending}><Save className="h-4 w-4" />{save.isPending ? "Saving" : "Save service area"}</Button>
+              <Button type="submit" disabled={save.isPending || services.isLoading || services.isError}><Save className="h-4 w-4" />{save.isPending ? "Saving" : "Save service area"}</Button>
               {save.isError ? <p role="alert" className="mt-2 text-sm font-semibold text-red-600">{save.error.message}</p> : null}
             </div>
           </form>
