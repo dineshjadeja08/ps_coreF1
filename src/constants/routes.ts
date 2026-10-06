@@ -5,6 +5,12 @@ const localSeoServiceSlugs: Record<string, string> = {
   "water-purifier-repair-services": "water-purifier-service-chennai",
 };
 
+export function isServiceBrowsingRoute(pathname: string) {
+  if (["/", "/services", "/search"].includes(pathname) || pathname.startsWith("/services/")) return true;
+  const segments = pathname.split("/").filter(Boolean);
+  return segments.length <= 2 && /^[a-z0-9-]+-chennai$/.test(segments[0] ?? "");
+}
+
 export function servicePathForLocation(pathname: string, areaSlug: string, city: string) {
   const segments = pathname.split("/").filter(Boolean);
   const family = Object.entries(localSeoServiceSlugs).find(([serviceSlug, seoSlug]) =>

@@ -1,6 +1,20 @@
 import { describe, expect, it } from "vitest";
 
-import { routes, servicePathForLocation } from "@/constants/routes";
+import { isServiceBrowsingRoute, routes, servicePathForLocation } from "@/constants/routes";
+
+describe("mobile service proceed routes", () => {
+  it("includes browsing pages and locality service pages", () => {
+    for (const path of ["/", "/search", "/services", "/services/ac-services", "/ac-service-chennai", "/ac-service-chennai/velachery", "/refrigerator-repair-chennai/guindy", "/tv-repair-chennai/anna-nagar"]) {
+      expect(isServiceBrowsingRoute(path)).toBe(true);
+    }
+  });
+
+  it("does not show another proceed bar during checkout or account management", () => {
+    for (const path of ["", "/cart", "/book", "/book/pay/123", "/booking-success/123", "/profile", "/admin/bookings", "/technician/jobs", "/ac-service-chennai/guindy/extra"]) {
+      expect(isServiceBrowsingRoute(path)).toBe(false);
+    }
+  });
+});
 
 describe("localized service category routes", () => {
   it("uses the selected locality for supported SEO service families", () => {

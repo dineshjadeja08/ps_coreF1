@@ -8,13 +8,14 @@ import { Header } from "@/components/layout/header";
 import { InstantBookingBanner } from "@/components/layout/instant-booking-banner";
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 import { RouteProgress } from "@/components/layout/route-progress";
+import { isServiceBrowsingRoute } from "@/constants/routes";
 import { MobileServiceProceedBar } from "@/features/cart/mobile-service-proceed-bar";
 
 export function AppChrome({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const isAdminRoute = pathname?.startsWith("/admin");
   const isAppStyleRoute = appStyleRoutes.has(pathname ?? "");
-  const showServiceProceed = Boolean(pathname?.startsWith("/services/") && !isAppStyleRoute);
+  const showServiceProceed = isServiceBrowsingRoute(pathname ?? "") && !isAppStyleRoute;
 
   if (isAdminRoute) {
     return <main className="min-h-screen bg-[#f4f5f7]">{children}</main>;

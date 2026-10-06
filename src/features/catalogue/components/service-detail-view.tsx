@@ -11,6 +11,7 @@ import { ErrorState } from "@/components/common/error-state";
 import { SectionHeading } from "@/components/common/section-heading";
 import { routes } from "@/constants/routes";
 import { AddToCartButton, CartSummary } from "@/features/cart/cart-controls";
+import { CartStickyBar } from "@/features/catalogue/components/landing/cart-sticky-bar";
 import { ServiceImage } from "@/features/catalogue/components/service-image";
 import { ReviewCard } from "@/features/catalogue/components/review-card";
 import { ServiceDetailSkeleton } from "@/features/catalogue/components/skeletons";
@@ -306,7 +307,8 @@ function PackageDetailsDialog({
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/55 data-[state=open]:animate-in data-[state=closed]:animate-out" />
-        <Dialog.Content className="fixed inset-x-2 top-1/2 z-50 max-h-[94vh] -translate-y-1/2 overflow-x-hidden overflow-y-auto rounded-lg bg-white shadow-2xl outline-none sm:inset-x-auto sm:left-1/2 sm:max-h-[92vh] sm:w-[min(680px,calc(100vw-2rem))] sm:-translate-x-1/2">
+        <Dialog.Content className="fixed inset-x-2 top-1/2 z-50 flex max-h-[94vh] -translate-y-1/2 flex-col overflow-hidden rounded-lg bg-white shadow-2xl outline-none sm:inset-x-auto sm:left-1/2 sm:max-h-[92vh] sm:w-[min(680px,calc(100vw-2rem))] sm:-translate-x-1/2">
+          <div className="min-h-0 overflow-x-hidden overflow-y-auto">
           {service ? <ServiceImage src={popupImage(service)} alt={service.name} className="aspect-[16/10] h-auto w-full rounded-none bg-white" imageClassName="object-cover" /> : null}
           <Dialog.Close className="absolute right-3 top-3 grid h-10 w-10 place-items-center rounded-full bg-white/95 text-foreground shadow-md hover:bg-white" aria-label="Close package details">
             <X className="h-5 w-5" />
@@ -351,6 +353,8 @@ function PackageDetailsDialog({
               </section>
             </div>
           ) : null}
+          </div>
+          <div className="shrink-0 md:hidden"><CartStickyBar insideSheet /></div>
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
