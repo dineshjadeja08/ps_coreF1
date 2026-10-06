@@ -29,7 +29,7 @@ export function formatSlotTime(time: string) {
 export function getSlotDaypart(slot: TimeSlot) {
   const hour = Number(slot.start_time.split(":")[0]);
   if (hour < 12) return "Morning";
-  if (hour < 17) return "Afternoon";
+  if (hour < 18) return "Afternoon";
   return "Evening";
 }
 
