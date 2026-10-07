@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { AdminBookingDrawer } from "@/features/admin/components/admin-booking-drawer";
 import { AdminTechnicianDrawer } from "@/features/admin/components/admin-technician-drawer";
 import { adminApi } from "@/lib/api/endpoints";
+import { technicianCoverageSummary, technicianSkillsSummary } from "@/features/admin/technician-summary";
 
 const selectClass = "h-11 min-w-0 rounded-lg border border-slate-200 bg-white px-3 text-sm";
 const pageSize = 25;
@@ -64,8 +65,8 @@ export function AdminTechniciansScreen() {
           emptyMessage="Add a technician or adjust the filters."
           columns={[
             { key: "name", header: "Technician", render: (technician) => <div><p className="font-semibold">{technician.display_name}</p><p className="text-xs text-slate-500">{technician.employee_code}</p><a className="text-sm text-violet-700" href={`tel:${technician.phone}`}>{technician.phone}</a></div> },
-            { key: "skills", header: "Skills / Services", render: (technician) => <div><p>{technician.skills.map((skill) => skill.name).join(", ") || "No skills recorded"}</p><p className="mt-1 text-xs text-slate-500">{technician.supported_services?.map((item) => item.name).join(", ") || "All services (unrestricted)"}</p></div> },
-            { key: "areas", header: "Coverage", render: (technician) => technician.service_areas.map((item) => `${item.name} (${item.postal_code})`).join(", ") || technician.pincode || "All areas (unrestricted)" },
+            { key: "skills", header: "Skills", render: technicianSkillsSummary },
+            { key: "areas", header: "Service area", render: technicianCoverageSummary },
             { key: "availability", header: "Availability / Jobs", render: (technician) => <div><AdminStatusBadge status={technician.availability_status ?? "OFFLINE"} /><p className="mt-2 text-sm">{technician.active_job_count ?? 0} active jobs</p></div> },
             { key: "status", header: "Status", render: (technician) => <div className="flex flex-wrap gap-2"><AdminStatusBadge status={technician.is_active ? "ACTIVE" : "INACTIVE"} /><AdminStatusBadge status={technician.background_verification_status ?? "PENDING"} /></div> },
           ]}
