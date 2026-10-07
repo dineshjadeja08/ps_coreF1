@@ -112,7 +112,7 @@ export function ServiceOptionSheet({ group, onClose }: { group: ServiceLandingGr
                 </section>
                 <section className="py-6">
                   <h2 className="text-base font-extrabold text-foreground">Customer Reviews</h2>
-                  {reviews.data?.results.length ? <div className="mt-4 grid gap-3">{reviews.data.results.map((review) => <ReviewCard key={review.id} review={review} />)}</div> : <p className="mt-2 text-sm text-secondary">No customer reviews have been published yet.</p>}
+                  {reviews.data?.results.length ? <div className="mt-4 grid gap-3">{reviews.data.results.slice(0, 5).map((review) => <ReviewCard key={review.id} review={review} />)}</div> : <p className="mt-2 text-sm text-secondary">No customer reviews have been published yet.</p>}
                 </section>
               </div>
             </div>

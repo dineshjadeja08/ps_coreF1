@@ -197,13 +197,9 @@ export function ServiceDetailView({
       {reviews.data?.results?.length ? (
         <section className="mx-auto max-w-7xl space-y-5 px-4 py-8 sm:px-6 lg:px-8">
           <SectionHeading eyebrow="Reviews" title="Customer feedback" />
-          <div className="grid gap-4 md:grid-cols-3">
-            {reviews.data.results.map((review) => (
-              <article key={review.id} className="rounded-lg border border-border bg-surface p-5">
-                <p className="font-semibold text-foreground">Rating {review.rating}/5</p>
-                <p className="mt-2 text-sm leading-6 text-secondary">{review.comment}</p>
-              </article>
-            ))}
+          <p className="text-sm text-secondary">Experiences shared by our customers, including what went well and what could be better.</p>
+          <div className="grid items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {reviews.data.results.slice(0, 5).map((review) => <ReviewCard key={review.id} review={review} />)}
           </div>
         </section>
       ) : null}
@@ -349,7 +345,7 @@ function PackageDetailsDialog({
               </section>
               <section className="py-6">
                 <h3 className="text-lg font-bold text-foreground">Customer Reviews</h3>
-                {reviews.length ? <div className="mt-3 grid gap-3">{reviews.map((review) => <ReviewCard key={review.id} review={review} />)}</div> : <p className="mt-2 text-sm text-secondary">No customer reviews have been published yet.</p>}
+                {reviews.length ? <div className="mt-3 grid gap-3">{reviews.slice(0, 5).map((review) => <ReviewCard key={review.id} review={review} />)}</div> : <p className="mt-2 text-sm text-secondary">No customer reviews have been published yet.</p>}
               </section>
             </div>
           ) : null}

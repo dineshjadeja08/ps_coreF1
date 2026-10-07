@@ -18,7 +18,7 @@ export function ReviewsSheet({ open, reviews, onOpenChange }: { open: boolean; r
               <div><Dialog.Title className="text-2xl font-extrabold">Customer reviews</Dialog.Title><Dialog.Description className="mt-1 text-sm text-secondary">Customer feedback for this service.</Dialog.Description></div>
               <Dialog.Close className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-border" aria-label="Close reviews"><X className="h-5 w-5" /></Dialog.Close>
             </div>
-            <div className="mt-5 grid gap-4">{reviews.map((review) => <ReviewCard key={review.id} review={review} />)}</div>
+            <div className="mt-5 grid gap-4">{reviews.slice(0, 5).map((review) => <ReviewCard key={review.id} review={review} />)}</div>
           </motion.div>
         </Dialog.Content>
       </Dialog.Portal>
