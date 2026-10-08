@@ -47,7 +47,7 @@ const popularCategories = [
   { name: "Geyser", slug: "geyser-repair-services", image: "/images/service-icons/geyser.png" },
   { name: "Microwave", slug: "microwave-oven-repair-services", image: "/images/service-icons/microwave.png" },
   { name: "Dishwasher", slug: "dishwasher-repair-service", image: "/images/service-icons/dishwasher.png" },
-  { name: "Cleaning Services", image: "/images/categories/cleaning.png", comingSoon: true },
+  { name: "Chimney", slug: "chimney-cleaning-services", image: "/images/service-icons/chimney.svg" },
 ] as const;
 
 const spotlights = [
@@ -144,11 +144,7 @@ export function HomeDiscovery() {
         </div>
         <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-4 sm:gap-3 lg:grid-cols-6">
           {popularCategories.map((item) => {
-            const content = <><Image src={item.image} alt="" width={88} height={88} className={`h-12 w-12 object-contain transition sm:h-16 sm:w-16 ${"comingSoon" in item ? "grayscale opacity-55" : "group-hover:scale-105"}`} /><h3 className={`line-clamp-2 text-xs font-semibold leading-4 sm:text-sm ${"comingSoon" in item ? "text-zinc-500" : "group-hover:text-primary"}`}>{item.name}</h3>{"comingSoon" in item ? <span className="rounded-full bg-amber-100 px-2 py-1 text-[9px] font-bold uppercase tracking-wide text-amber-800 sm:text-[10px]">Coming soon</span> : null}</>;
-
-            if ("comingSoon" in item) {
-              return <div key={item.name} aria-disabled="true" className="relative flex aspect-square min-w-0 cursor-not-allowed flex-col items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 p-2 text-center shadow-[0_2px_8px_rgba(24,24,27,0.04)] sm:p-4">{content}</div>;
-            }
+            const content = <><Image src={item.image} alt="" width={88} height={88} className="h-12 w-12 object-contain transition group-hover:scale-105 sm:h-16 sm:w-16" /><h3 className="line-clamp-2 text-xs font-semibold leading-4 group-hover:text-primary sm:text-sm">{item.name}</h3></>;
 
             return <Link key={item.name} href={routes.localizedServiceCategory(item.slug, location.areaSlug)} className="group flex aspect-square min-w-0 flex-col items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white p-2 text-center shadow-[0_2px_8px_rgba(24,24,27,0.04)] transition hover:border-primary/40 hover:bg-primary-soft sm:p-4">{content}</Link>;
           })}
