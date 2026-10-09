@@ -17,6 +17,7 @@ import { routes } from "@/constants/routes";
 import { AddToCartButton } from "@/features/cart/cart-controls";
 import { ServiceIcon } from "@/features/catalogue/components/service-icon";
 import { ServiceImage } from "@/features/catalogue/components/service-image";
+import { getCategoryVisualSrc } from "@/lib/service-images";
 import { CategorySkeletonGrid, ServiceCardSkeletonGrid } from "@/features/catalogue/components/skeletons";
 import { useServiceCategories, useServices } from "@/features/catalogue/queries";
 import type { PaginatedResponse, ServiceCategory, ServiceListItem } from "@/features/catalogue/types";
@@ -321,15 +322,6 @@ function CategoryDialog({
   );
 }
 
-function getCategoryVisualSrc(category: ServiceCategory) {
-  const text = `${category.name} ${category.slug}`.toLowerCase();
-  if (text.includes("clean")) return "/images/categories/cleaning.png";
-  if (text.includes("appliance") || text.includes("repair") || text.includes("home")) {
-    return "/images/categories/home-appliances-repair.png";
-  }
-  return category.image_url ?? null;
-}
-
 function CategoryLink({ label, href, active, count, visualSrc }: { label: string; href: string; active: boolean; count: number; visualSrc?: string | null }) {
   return (
     <Link
@@ -342,7 +334,7 @@ function CategoryLink({ label, href, active, count, visualSrc }: { label: string
       <span className="flex min-w-0 items-center gap-3">
         {visualSrc ? (
           <span className="relative h-9 w-9 shrink-0 overflow-hidden rounded-md bg-white/80">
-            <Image src={visualSrc} alt="" fill unoptimized={visualSrc.startsWith("http")} className="object-cover" />
+            <Image src={visualSrc} alt="" fill sizes="36px" unoptimized={visualSrc.startsWith("http")} className="object-cover" />
           </span>
         ) : null}
         <span className="min-w-0">{label}</span>

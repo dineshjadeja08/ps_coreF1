@@ -125,6 +125,7 @@ export function ServiceDetailView({
             <div className="min-w-0 rounded-lg border border-border bg-white p-3 shadow-sm sm:p-4">
               <ServiceImage
                 src={landingImage(detail)}
+                fallbackLabel={detail.name}
                 alt={`${pageTitle} by Purple Squad in ${location.city}`}
                 priority
                 sizes="(min-width: 1280px) 800px, (min-width: 1024px) 65vw, 100vw"

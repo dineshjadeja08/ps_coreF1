@@ -8,6 +8,7 @@ import { ServiceDetailSkeleton } from "@/features/catalogue/components/skeletons
 import { getSeoLandingPageForSeo, getSeoLandingPagesForSeo, getServiceReviewsForSeo } from "@/features/catalogue/server";
 import { breadcrumbJsonLd, canonicalFor, localBusinessJsonLd, serviceJsonLd } from "@/lib/seo";
 import { publicPageMetadata } from "@/lib/page-metadata";
+import { serviceHeroImage } from "@/lib/service-images";
 
 type SeoLandingPageProps = {
   params: Promise<{ serviceSlug: string; areaSlug?: string[] }>;
@@ -35,7 +36,7 @@ export async function generateMetadata({ params }: SeoLandingPageProps): Promise
   if (!page) return { title: "Page not found", robots: { index: false, follow: false } };
 
   return {
-    ...publicPageMetadata(page.path, page.meta_title.replace(/\s*\|\s*Purple Squad$/i, ""), page.meta_description),
+    ...publicPageMetadata(page.path, page.meta_title.replace(/\s*\|\s*Purple Squad$/i, ""), page.meta_description, page.services[0] ? serviceHeroImage(page.services[0]) : undefined),
     alternates: { canonical: canonicalFor(page.canonical_override || page.path) },
     robots: { index: page.is_indexable, follow: true },
   };

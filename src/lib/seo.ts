@@ -1,6 +1,7 @@
 import { siteConfig } from "@/config/site";
 import type { Review, ServiceDetail, ServiceListItem } from "@/features/catalogue/types";
 import { getCurrentPrice } from "@/features/catalogue/utils";
+import { serviceHeroImage } from "@/lib/service-images";
 
 // Secondary-city schema claims require operational confirmation.
 export const serviceAreas = ["Chennai"];
@@ -131,7 +132,7 @@ export function serviceJsonLd(service: ServiceListItem | ServiceDetail, path: st
     })),
     category: service.category.name,
     url: canonicalFor(`/services/${service.slug}`),
-    image: absoluteUrl(service.cover_image || defaultOgImagePath),
+    image: absoluteUrl(serviceHeroImage(service)),
     offers: {
       "@type": "Offer",
       priceCurrency: "INR",

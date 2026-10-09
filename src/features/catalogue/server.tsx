@@ -150,5 +150,12 @@ export async function getSitemapCatalogue() {
     const page = buildLocalCityPage(slug, available);
     return page ? [page] : [];
   });
-  return { services, categories, pages: [...pages, ...added] };
+  const published = pages.filter((page) => page.is_indexable && page.city === "Chennai" && page.path === `/${page.page_slug}` && /^\/[a-z0-9-]+-chennai(?:\/[a-z0-9-]+)?$/.test(page.path));
+  const imagePages: SeoLandingPage[] = [];
+  // Bound API concurrency as the published locality catalogue grows.
+  for (let offset = 0; offset < published.length; offset += 8) {
+    const batch = await Promise.all(published.slice(offset, offset + 8).map((page) => getSeoLandingPageForSeo(page.page_slug)));
+    imagePages.push(...batch.filter((page): page is SeoLandingPage => Boolean(page)));
+  }
+  return { services, categories, categoryServices: available, pages: [...imagePages, ...added] };
 }

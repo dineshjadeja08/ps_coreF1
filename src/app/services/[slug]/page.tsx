@@ -9,8 +9,9 @@ import { WaterTankLanding } from "@/features/catalogue/components/landing/water-
 import { isWaterTankService } from "@/features/catalogue/group-services";
 import { ServiceCardSkeletonGrid } from "@/features/catalogue/components/skeletons";
 import { getServiceCategoriesForSeo, getServiceDetailForSeo, getServiceReviewsForSeo, getServicesForSeo } from "@/features/catalogue/server";
-import { breadcrumbJsonLd, canonicalFor, compactDescription, defaultOgImagePath, localBusinessJsonLd, serviceJsonLd, servicesJsonLd } from "@/lib/seo";
+import { breadcrumbJsonLd, compactDescription, defaultOgImagePath, localBusinessJsonLd, serviceJsonLd, servicesJsonLd } from "@/lib/seo";
 import { publicPageMetadata } from "@/lib/page-metadata";
+import { getCategoryVisualSrc, serviceHeroImage } from "@/lib/service-images";
 
 type ServiceDetailPageProps = {
   params: Promise<{ slug: string }>;
@@ -29,7 +30,10 @@ export async function generateMetadata({ params }: ServiceDetailPageProps): Prom
   if (category || fallbackCategoryName) {
     const categoryName = category?.name ?? fallbackCategoryName;
     const description = compactDescription(category?.description ?? "", `Book ${categoryName} services with Purple Squad.`);
-    return publicPageMetadata(`/services/${slug}`, `${categoryName} in Chennai`, description);
+    const services = await getServicesForSeo({ category: slug, page_size: 40, city: "Chennai" });
+    const primary = services.results.find((service) => service.landing_thumbnail || service.cover_image) ?? services.results[0];
+    const image = slug === "ac-services" && primary ? serviceHeroImage(primary) : (category && getCategoryVisualSrc(category)) || (primary ? serviceHeroImage(primary) : defaultOgImagePath);
+    return publicPageMetadata(`/services/${slug}`, `${categoryName} in Chennai`, description, image);
   }
 
   const service = await getServiceDetailForSeo(slug);
@@ -38,24 +42,7 @@ export async function generateMetadata({ params }: ServiceDetailPageProps): Prom
       service.short_description || service.description,
       `Book ${service.name} at your doorstep in Chennai with Purple Squad.`,
     );
-    return {
-      title: /\bin Chennai$/i.test(service.name) ? service.name : `${service.name} in Chennai`,
-      description,
-      alternates: {
-        canonical: canonicalFor(`/services/${service.slug}`),
-      },
-      openGraph: {
-        title: `${service.name} in Chennai | Purple Squad`,
-        description,
-        url: canonicalFor(`/services/${service.slug}`),
-        images: [service.cover_image || defaultOgImagePath],
-      },
-      twitter: {
-        title: `${service.name} in Chennai | Purple Squad`,
-        description,
-        images: [service.cover_image || defaultOgImagePath],
-      },
-    };
+    return publicPageMetadata(`/services/${service.slug}`, /\bin Chennai$/i.test(service.name) ? service.name : `${service.name} in Chennai`, description, serviceHeroImage(service));
   }
 
   notFound();

@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/config/env", () => ({ env: { apiBaseUrl: "https://backend.example" } }));
-import { getAllServicesForSeo, getServiceDetailForSeo } from "./server";
+import { getAllServicesForSeo, getServiceDetailForSeo, getSitemapCatalogue } from "./server";
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -25,5 +25,20 @@ describe("server catalogue discovery", () => {
     expect(await getServiceDetailForSeo("missing")).toBeNull();
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 500 })));
     await expect(getServiceDetailForSeo("available")).rejects.toThrow("500");
+  });
+  it("resolves published page packages for image discovery, excluding private/non-indexable pages", async () => {
+    const page = { page_slug: "tv-repair-chennai", path: "/tv-repair-chennai", city: "Chennai", is_indexable: true };
+    const service = { id: "tv", slug: "tv-repair", name: "TV Repair", category: { slug: "appliances" }, cover_image: null };
+    const fetcher = vi.fn(async (input: URL) => {
+      if (input.pathname === "/api/v1/services/") return Response.json({ results: [service], next: null });
+      if (input.pathname === "/api/v1/service-categories/") return Response.json([]);
+      if (input.pathname === "/api/v1/seo-pages/") return Response.json([page, { ...page, page_slug: "hidden-chennai", path: "/hidden-chennai", is_indexable: false }]);
+      if (input.pathname === "/api/v1/seo-pages/tv-repair-chennai/") return Response.json({ ...page, services: [service] });
+      return new Response(null, { status: 404 });
+    });
+    vi.stubGlobal("fetch", fetcher);
+    const catalogue = await getSitemapCatalogue();
+    expect(catalogue.pages).toEqual([{ ...page, services: [service] }]);
+    expect(fetcher.mock.calls.some(([url]) => url.pathname.includes("hidden-chennai"))).toBe(false);
   });
 });

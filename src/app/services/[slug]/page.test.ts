@@ -19,4 +19,10 @@ describe("service route resource validation", () => {
     await expect(Page({ params: Promise.resolve({ slug: "real-service" }) })).rejects.toThrow("503");
     expect(notFound).not.toHaveBeenCalled();
   });
+  it("uses the rendered bundled hero for service social previews when cover_image is missing", async () => {
+    detail.mockResolvedValue({ name: "TV Repair", slug: "tv-repair", short_description: "Repair your TV", cover_image: null });
+    const metadata = await generateMetadata({ params: Promise.resolve({ slug: "tv-repair" }) });
+    expect(metadata.openGraph).toMatchObject({ images: ["/images/services/tv.png"] });
+    expect(metadata.twitter).toMatchObject({ images: ["/images/services/tv.png"] });
+  });
 });

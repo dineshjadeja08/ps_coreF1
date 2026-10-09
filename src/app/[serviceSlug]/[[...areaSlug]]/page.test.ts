@@ -25,6 +25,7 @@ const page = {
   meta_title: "AC Service in Velachery, Chennai | Purple Squad",
   meta_description: "Book AC service in Velachery with Purple Squad.",
   canonical_override: "https://purplesquad.in/ac-service-chennai/velachery",
+  services: [{ name: "AC Inspection", slug: "ac-service", landing_thumbnail: "/images/services/ac-inspection.png" }],
 } as SeoLandingPage;
 
 describe("SEO landing route metadata", () => {
