@@ -16,12 +16,16 @@ function genuineDate(value?: string) {
 }
 
 function imageUrls(sources: Array<string | null | undefined>) {
-  return Array.from(new Set(sources.filter((source): source is string => Boolean(source && (/^https:\/\//i.test(source) || /^\/(?!\/)/.test(source)))).map((source) => absoluteUrl(source)))).filter((source) => {
+  return Array.from(new Set(sources.flatMap((value) => {
+    const source = value?.trim();
+    if (!source || !(/^https:\/\//i.test(source) || /^\/(?!\/)/.test(source))) return [];
     try {
-      const url = new URL(source);
-      return url.protocol === "https:" && !url.username && !url.password && !/^(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(url.hostname);
-    } catch { return false; }
-  });
+      const url = new URL(absoluteUrl(source));
+      if (url.protocol !== "https:" || url.username || url.password || /^(localhost|0\.|127\.|10\.|169\.254\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|\[::1\]|\[::\])/.test(url.hostname)) return [];
+      url.hash = ""; // Fragments do not identify a different image response.
+      return [url.href];
+    } catch { return []; }
+  })));
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -50,6 +54,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   for (const page of pages) {
     if (!page.is_indexable || page.city !== "Chennai" || !/^\/[a-z0-9-]+-chennai(?:\/[a-z0-9-]+)?$/.test(page.path)) continue;
     if (page.path !== `/${page.page_slug}`) continue;
+    if ("canonical_override" in page && page.canonical_override && canonicalFor(page.canonical_override) !== canonicalFor(page.path)) continue;
     entries.push({ url: canonicalFor(page.path), lastModified: genuineDate(page.updated_at), images: "services" in page ? imageUrls([page.services[0] ? serviceHeroImage(page.services[0]) : null, ...page.services.map(serviceListImage)]) : undefined });
   }
   if (entries.length > 50000) throw new Error("Sitemap exceeds 50,000 URLs; split it before publishing");

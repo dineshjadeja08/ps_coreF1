@@ -1,11 +1,23 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/config/env", () => ({ env: { apiBaseUrl: "https://backend.example" } }));
-import { getAllServicesForSeo, getServiceDetailForSeo, getSitemapCatalogue } from "./server";
+import { getAllServicesForSeo, getServiceDetailForSeo, getSitemapCatalogue, getServicesForSeo, getSeoLandingPageForSeo, getSeoLandingPagesForSeo } from "./server";
 
 afterEach(() => vi.unstubAllGlobals());
 
 describe("server catalogue discovery", () => {
+  it("propagates listing and build-discovery failures rather than returning empty success", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 503 })));
+    await expect(getServicesForSeo()).rejects.toThrow("503");
+    await expect(getSeoLandingPagesForSeo()).rejects.toThrow("503");
+    await expect(getSeoLandingPageForSeo("tv-repair-chennai")).rejects.toThrow("503");
+  });
+  it("rejects network failures and invalid JSON", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("Network failed")));
+    await expect(getServicesForSeo()).rejects.toThrow("Network failed");
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("not JSON", { status: 200 })));
+    await expect(getSitemapCatalogue()).rejects.toThrow();
+  });
   it("follows every service page and deduplicates overlapping IDs", async () => {
     const fetcher = vi.fn()
       .mockResolvedValueOnce(Response.json({ results: [{ id: "1", slug: "ac" }], next: "https://untrusted.example/next" }))

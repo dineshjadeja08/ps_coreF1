@@ -136,18 +136,18 @@ export function resolveServiceImage(src: string | null | undefined, label: strin
 }
 
 export function serviceHeroImage(service: { name: string; landing_thumbnail?: string | null; cover_image?: string | null }) {
-  return resolveServiceImage(service.landing_thumbnail || service.cover_image, service.name).src;
+  return resolveServiceImage(service.landing_thumbnail?.trim() || service.cover_image, service.name).src;
 }
 
 export function servicePageImages(service: { name: string; cover_image?: string | null; landing_thumbnail?: string | null; list_image?: string | null }) {
   return Array.from(new Set([
     serviceHeroImage(service),
-    resolveServiceImage(service.list_image || service.landing_thumbnail || service.cover_image, service.name).src,
+    serviceListImage(service),
   ]));
 }
 
 export function serviceListImage(service: { name: string; cover_image?: string | null; landing_thumbnail?: string | null; list_image?: string | null }) {
-  return resolveServiceImage(service.list_image || service.landing_thumbnail || service.cover_image, service.name).src;
+  return resolveServiceImage(service.list_image?.trim() || service.landing_thumbnail?.trim() || service.cover_image, service.name).src;
 }
 
 export function getCategoryVisualSrc(category: { name: string; slug: string; image_url?: string | null }) {

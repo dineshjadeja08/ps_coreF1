@@ -32,7 +32,7 @@ function packageSectionTitle(service: ServiceDetail) {
 }
 
 function landingImage(service: ServiceListItem) {
-  return service.landing_thumbnail || service.cover_image;
+  return service.landing_thumbnail?.trim() || service.cover_image;
 }
 
 function popupImage(service: ServiceListItem) {
@@ -40,7 +40,7 @@ function popupImage(service: ServiceListItem) {
 }
 
 function listImage(service: ServiceListItem) {
-  return service.list_image || service.landing_thumbnail || service.cover_image;
+  return service.list_image?.trim() || service.landing_thumbnail?.trim() || service.cover_image;
 }
 
 export function ServiceDetailView({

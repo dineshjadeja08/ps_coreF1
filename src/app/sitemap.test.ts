@@ -54,4 +54,24 @@ describe("production sitemap", () => {
     expect(xml).not.toContain("&amp;amp;");
     expect(xml).not.toMatch(/&(?!amp;|lt;|gt;|quot;|apos;)/);
   });
+  it("preserves uploaded query parameters and percent escapes, while normalizing duplicate fragments", async () => {
+    const source = "https://res.cloudinary.com/demo/image/upload/tv.png?label=repair%26clean&width=960";
+    catalogue.mockResolvedValue({ categories: [], pages: [], services: [{ name: "TV Repair", slug: "tv", landing_thumbnail: `${source}#hero`, list_image: `${source}#package` }] });
+    const entries = await sitemap();
+    expect(entries.find((entry) => entry.url.endsWith("/tv"))?.images).toEqual([source.replaceAll("&", "&amp;")]);
+    const xml = resolveSitemap(entries);
+    expect(xml).toContain("repair%26clean&amp;width=960");
+    expect(xml).not.toContain("#hero");
+    expect(xml).not.toContain("&amp;amp;");
+  });
+  it("deduplicates relative/absolute images and excludes noncanonical local pages", async () => {
+    catalogue.mockResolvedValue({ categories: [], services: [{ name: "TV Repair", slug: "tv", landing_thumbnail: "/images/services/tv.png", list_image: "https://purplesquad.in/images/services/tv.png" }], pages: [{ path: "/tv-repair-chennai", page_slug: "tv-repair-chennai", city: "Chennai", is_indexable: true, canonical_override: "/services/tv" }] });
+    const entries = await sitemap();
+    expect(entries.find((entry) => entry.url.endsWith("/tv"))?.images).toEqual(["https://purplesquad.in/images/services/tv.png"]);
+    expect(entries.some((entry) => entry.url.endsWith("/tv-repair-chennai"))).toBe(false);
+  });
+  it("excludes link-local/loopback sources, including IPv6", async () => {
+    catalogue.mockResolvedValue({ categories: [], pages: [], services: [{ name: "TV Repair", slug: "tv", landing_thumbnail: "https://[::1]/tv.png", list_image: "https://169.254.169.254/tv.png" }] });
+    expect((await sitemap()).find((entry) => entry.url.endsWith("/tv"))?.images).toEqual([]);
+  });
 });

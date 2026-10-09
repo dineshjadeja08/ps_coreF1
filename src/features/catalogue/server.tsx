@@ -62,17 +62,13 @@ async function fetchFreshJson<T>(path: string, query?: Record<string, string | n
 export const getServiceCategoriesForSeo = cache(async () => fetchJson<ServiceCategory[]>(apiPaths.serviceCategories));
 
 export async function getServicesForSeo(query: ServiceQuery = {}) {
-  try {
-    return await fetchFreshJson<PaginatedResponse<ServiceListItem>>(apiPaths.services, {
-      page_size: query.page_size ?? 40,
-      category: query.category,
-      search: query.search,
-      featured: query.featured,
-      city: query.city,
-    });
-  } catch {
-    return { count: 0, next: null, previous: null, results: [] };
-  }
+  return await fetchFreshJson<PaginatedResponse<ServiceListItem>>(apiPaths.services, {
+    page_size: query.page_size ?? 40,
+    category: query.category,
+    search: query.search,
+    featured: query.featured,
+    city: query.city,
+  });
 }
 
 export const getServiceDetailForSeo = cache(async (slug: string) => {
@@ -93,17 +89,13 @@ export async function getServiceReviewsForSeo(serviceId: string) {
 }
 
 export async function getSeoLandingPagesForSeo() {
-  try {
-    const pages = await fetchJson<SeoLandingPageSummary[]>(apiPaths.seoPages);
-    const services = await getChennaiServicesForSeo();
-    const added = Object.keys(localCityPages).filter((slug) => !pages.some((page) => page.page_slug === slug)).flatMap((slug) => {
-      const page = buildLocalCityPage(slug, services);
-      return page ? [page] : [];
-    });
-    return [...pages, ...added];
-  } catch {
-    return [];
-  }
+  const pages = await fetchJson<SeoLandingPageSummary[]>(apiPaths.seoPages);
+  const services = await getChennaiServicesForSeo();
+  const added = Object.keys(localCityPages).filter((slug) => !pages.some((page) => page.page_slug === slug)).flatMap((slug) => {
+    const page = buildLocalCityPage(slug, services);
+    return page ? [page] : [];
+  });
+  return [...pages, ...added];
 }
 
 export const getSeoLandingPageForSeo = cache(async (pageSlug: string) => {

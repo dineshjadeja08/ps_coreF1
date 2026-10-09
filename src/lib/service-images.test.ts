@@ -26,4 +26,10 @@ describe("shared image discovery", () => {
     }
     expect(getCategoryVisualSrc({ name: "Cleaning", slug: "cleaning" })).toBe("/images/categories/cleaning.png");
   });
+  it("treats whitespace slots as missing instead of masking usable covers", () => {
+    const service = { name: "TV Repair", landing_thumbnail: "  ", list_image: "\n", cover_image: "https://res.cloudinary.com/demo/image/upload/tv.png?a=1&b=2" };
+    expect(serviceHeroImage(service)).toBe(service.cover_image);
+    expect(servicePageImages(service)).toEqual([service.cover_image]);
+    expect(resolveServiceImage("  ", "TV Repair").src).toBe("/images/services/tv.png");
+  });
 });
