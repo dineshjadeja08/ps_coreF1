@@ -3,14 +3,15 @@
 import { useQueries, useQuery } from "@tanstack/react-query";
 
 import { publicCatalogueApi } from "@/features/catalogue/api";
-import type { PaginatedResponse, ServiceDetail, ServiceListItem } from "@/features/catalogue/types";
+import type { PaginatedResponse, Review, ServiceCategory, ServiceDetail, ServiceListItem } from "@/features/catalogue/types";
 import type { HomepageBanner } from "@/types/api";
 import { queryKeys } from "@/lib/api/query-keys";
 
-export function useServiceCategories() {
+export function useServiceCategories(initialData?: ServiceCategory[]) {
   return useQuery({
     queryKey: queryKeys.serviceCategories,
     queryFn: publicCatalogueApi.listCategories,
+    initialData,
     staleTime: 5 * 60_000,
   });
 }
@@ -54,11 +55,12 @@ export function useServiceDetail(slug: string, initialData?: ServiceDetail) {
   });
 }
 
-export function useServiceReviews(serviceId?: string) {
+export function useServiceReviews(serviceId?: string, initialData?: PaginatedResponse<Review>) {
   return useQuery({
     queryKey: serviceId ? queryKeys.serviceReviews(serviceId) : ["catalogue", "reviews", "missing"],
     queryFn: () => publicCatalogueApi.listServiceReviews(serviceId ?? ""),
     enabled: Boolean(serviceId),
+    initialData,
   });
 }
 

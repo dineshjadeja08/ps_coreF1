@@ -40,13 +40,9 @@ export const metadata: Metadata = {
   verification: {
     google: "tcmzX6q64XpBgxBW3rNKLNFxfpXwBEBHSRPctzRZUCo",
   },
-  alternates: {
-    canonical: "/",
-  },
   openGraph: {
     type: "website",
     locale: "en_IN",
-    url: "/",
     siteName: siteConfig.name,
     title: "Purple Squad | Home Appliance Services in Chennai",
     description: siteConfig.description,

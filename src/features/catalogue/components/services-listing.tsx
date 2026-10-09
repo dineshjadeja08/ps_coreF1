@@ -1,7 +1,7 @@
 "use client";
 
 import * as Dialog from "@radix-ui/react-dialog";
-import { ArrowRight, CheckCircle2, Clock, Grid2X2, ListFilter, MapPin, Search, ShieldCheck, Star, X } from "lucide-react";
+import { ArrowRight, CheckCircle2, Clock, Grid2X2, ListFilter, MapPin, Search, ShieldCheck, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -19,7 +19,7 @@ import { ServiceIcon } from "@/features/catalogue/components/service-icon";
 import { ServiceImage } from "@/features/catalogue/components/service-image";
 import { CategorySkeletonGrid, ServiceCardSkeletonGrid } from "@/features/catalogue/components/skeletons";
 import { useServiceCategories, useServices } from "@/features/catalogue/queries";
-import type { ServiceCategory, ServiceListItem } from "@/features/catalogue/types";
+import type { PaginatedResponse, ServiceCategory, ServiceListItem } from "@/features/catalogue/types";
 import { formatDuration, formatPrice, getCategoryName, getCurrentPrice, hasOfferPrice } from "@/features/catalogue/utils";
 import { setSelectedLocation, useSelectedLocation } from "@/features/location/selected-location";
 import { cn } from "@/lib/utils";
@@ -29,9 +29,12 @@ const popularSearches = ["AC Service", "Bathroom Cleaning", "Washing Machine", "
 type ServicesListingProps = {
   mode?: "browse" | "search";
   categorySlug?: string;
+  initialServices?: PaginatedResponse<ServiceListItem>;
+  initialCategories?: ServiceCategory[];
+  initialQuery?: { category?: string; q?: string };
 };
 
-export function ServicesListing({ mode = "browse", categorySlug }: ServicesListingProps) {
+export function ServicesListing({ mode = "browse", categorySlug, initialServices, initialCategories, initialQuery }: ServicesListingProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const category = categorySlug ?? searchParams.get("category");
@@ -41,13 +44,14 @@ export function ServicesListing({ mode = "browse", categorySlug }: ServicesListi
   const location = useSelectedLocation();
   const locationFilter = location.pincode ? { postal_code: location.pincode } : { city: location.city };
 
-  const categories = useServiceCategories();
+  const categories = useServiceCategories(initialCategories);
+  const canSeed = location.city === "Chennai" && !location.pincode && (category ?? "") === (initialQuery?.category ?? categorySlug ?? "") && query === (initialQuery?.q ?? "");
   const services = useServices({
     category: category ?? undefined,
     search: query || undefined,
     page_size: 40,
     ...locationFilter,
-  });
+  }, canSeed ? initialServices : undefined);
   const allServices = useServices({ page_size: 80, ...locationFilter });
 
   const categoryTitle = getCategoryName(categories.data ?? [], category);
@@ -76,7 +80,7 @@ export function ServicesListing({ mode = "browse", categorySlug }: ServicesListi
           <div>
             <Badge className="w-fit">{mode === "search" ? "Search Purple Squad" : "Book in a few clicks"}</Badge>
             <h1 className="mt-3 text-3xl font-bold leading-tight text-foreground sm:text-4xl">
-              {mode === "search" ? "Search home services near you" : "Find and book a service package"}
+              {mode === "search" ? "Search home services near you" : selectedCategory ? `${selectedCategory.name} in ${location.city}` : `Home services in ${location.city}`}
             </h1>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-secondary sm:text-base">
               {mode === "search"
@@ -398,8 +402,8 @@ function ServicePackageRow({ service, highlight }: { service: ServiceListItem; h
               </span>
             ) : null}
             <span className="inline-flex items-center gap-1.5">
-              <Star className="h-4 w-4 fill-warning text-warning" />
-              4.8 rated
+              <ShieldCheck className="h-4 w-4 text-primary" />
+              Clear package pricing
             </span>
           </div>
         </div>

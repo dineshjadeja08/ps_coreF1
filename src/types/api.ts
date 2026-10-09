@@ -152,6 +152,7 @@ export type ReviewCreateRequest = {
 };
 
 export type ServiceListItem = {
+  updated_at?: ISODateTime;
   id: UUID;
   category: ServiceCategory;
   name: string;

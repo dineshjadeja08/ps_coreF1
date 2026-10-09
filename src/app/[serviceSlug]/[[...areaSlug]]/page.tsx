@@ -5,8 +5,9 @@ import { Suspense } from "react";
 import { JsonLd } from "@/components/seo/json-ld";
 import { ServiceDetailView } from "@/features/catalogue/components/service-detail-view";
 import { ServiceDetailSkeleton } from "@/features/catalogue/components/skeletons";
-import { getSeoLandingPageForSeo, getSeoLandingPagesForSeo } from "@/features/catalogue/server";
+import { getSeoLandingPageForSeo, getSeoLandingPagesForSeo, getServiceReviewsForSeo } from "@/features/catalogue/server";
 import { breadcrumbJsonLd, canonicalFor, localBusinessJsonLd, serviceJsonLd } from "@/lib/seo";
+import { publicPageMetadata } from "@/lib/page-metadata";
 
 type SeoLandingPageProps = {
   params: Promise<{ serviceSlug: string; areaSlug?: string[] }>;
@@ -19,7 +20,9 @@ function pageSlug(serviceSlug: string, areaSlug?: string[]) {
 
 export async function generateStaticParams() {
   const pages = await getSeoLandingPagesForSeo();
-  return pages.map((page) => {
+  // Prebuild city pages only; existing area URLs resolve on demand without
+  // multiplying builds and API traffic for near-identical locality pages.
+  return pages.filter((page) => page.is_indexable && page.city === "Chennai" && !page.area).map((page) => {
     const [serviceSlug, area] = page.page_slug.split("/");
     return { serviceSlug, areaSlug: area ? [area] : [] };
   });
@@ -32,21 +35,9 @@ export async function generateMetadata({ params }: SeoLandingPageProps): Promise
   if (!page) return { title: "Page not found", robots: { index: false, follow: false } };
 
   return {
-    title: page.meta_title.replace(/\s*\|\s*Purple Squad$/i, ""),
-    description: page.meta_description,
-    alternates: { canonical: page.canonical_override || canonicalFor(page.path) },
+    ...publicPageMetadata(page.path, page.meta_title.replace(/\s*\|\s*Purple Squad$/i, ""), page.meta_description),
+    alternates: { canonical: canonicalFor(page.canonical_override || page.path) },
     robots: { index: page.is_indexable, follow: true },
-    openGraph: {
-      type: "website",
-      title: page.meta_title,
-      description: page.meta_description,
-      url: canonicalFor(page.path),
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: page.meta_title,
-      description: page.meta_description,
-    },
   };
 }
 
@@ -58,6 +49,7 @@ export default async function SeoLandingPage({ params }: SeoLandingPageProps) {
 
   const primaryService = page.services[0];
   if (!primaryService) notFound();
+  const reviews = await getServiceReviewsForSeo(primaryService.id);
 
   const currentName = page.area ? `${page.service_name} in ${page.area}` : `${page.service_name} in ${page.city}`;
 
@@ -74,7 +66,7 @@ export default async function SeoLandingPage({ params }: SeoLandingPageProps) {
         ]}
       />
       <Suspense fallback={<ServiceDetailSkeleton />}>
-        <ServiceDetailView initialService={primaryService} serviceSlug={primaryService.slug} />
+        <ServiceDetailView initialService={primaryService} serviceSlug={primaryService.slug} landingTitle={page.service_name} initialServices={{ count: page.services.length, next: null, previous: null, results: page.services }} initialReviews={reviews} seoContent={page} />
       </Suspense>
     </>
   );

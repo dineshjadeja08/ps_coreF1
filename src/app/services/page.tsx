@@ -3,7 +3,7 @@ import { Suspense } from "react";
 
 import { JsonLd } from "@/components/seo/json-ld";
 import { ServicesListing } from "@/features/catalogue/components/services-listing";
-import { getServiceCategoriesForSeo, getServicesForSeo, ServiceSeoSnapshot } from "@/features/catalogue/server";
+import { getServiceCategoriesForSeo, getServicesForSeo } from "@/features/catalogue/server";
 import { ServiceCardSkeletonGrid } from "@/features/catalogue/components/skeletons";
 import { canonicalFor, compactDescription, defaultOgImagePath, servicesJsonLd } from "@/lib/seo";
 
@@ -15,7 +15,7 @@ export async function generateMetadata({ searchParams }: ServicesPageProps): Pro
   const { category, q } = await searchParams;
   const categories = await getServiceCategoriesForSeo();
   const selectedCategory = categories.find((item) => item.slug === category);
-  const title = selectedCategory ? `${selectedCategory.name} Services in Chennai` : q ? `Search ${q}` : "Home Services in Chennai";
+  const title = selectedCategory ? `${selectedCategory.name} in Chennai` : q ? `Search ${q}` : "Home Services in Chennai";
   const description = compactDescription(
     selectedCategory?.description,
     selectedCategory
@@ -27,11 +27,12 @@ export async function generateMetadata({ searchParams }: ServicesPageProps): Pro
   const params = new URLSearchParams();
   if (category) params.set("category", category);
   if (q) params.set("q", q);
-  const path = params.size ? `/services?${params.toString()}` : "/services";
+  const path = selectedCategory && !q ? `/services/${selectedCategory.slug}` : "/services";
 
   return {
     title,
     description,
+    robots: { index: !category && !q, follow: true },
     alternates: {
       canonical: canonicalFor(path),
     },
@@ -51,7 +52,7 @@ export async function generateMetadata({ searchParams }: ServicesPageProps): Pro
 
 export default async function ServicesPage({ searchParams }: ServicesPageProps) {
   const { category, q } = await searchParams;
-  const services = await getServicesForSeo({ category, search: q, page_size: 60 });
+  const [services, categories] = await Promise.all([getServicesForSeo({ category, search: q, page_size: 40, city: "Chennai" }), getServiceCategoriesForSeo()]);
   const params = new URLSearchParams();
   if (category) params.set("category", category);
   if (q) params.set("q", q);
@@ -60,7 +61,6 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
   return (
     <>
       <JsonLd data={servicesJsonLd(services.results, path)} />
-      <ServiceSeoSnapshot services={services.results} heading="Purple Squad service catalogue" />
       <Suspense
         fallback={
           <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
@@ -68,7 +68,7 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
           </div>
         }
       >
-        <ServicesListing />
+        <ServicesListing initialServices={services} initialCategories={categories} initialQuery={{ category, q }} />
       </Suspense>
     </>
   );

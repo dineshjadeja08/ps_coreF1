@@ -3,7 +3,7 @@ import { Suspense } from "react";
 
 import { JsonLd } from "@/components/seo/json-ld";
 import { ServicesListing } from "@/features/catalogue/components/services-listing";
-import { getServicesForSeo, ServiceSeoSnapshot } from "@/features/catalogue/server";
+import { getServiceCategoriesForSeo, getServicesForSeo } from "@/features/catalogue/server";
 import { ServiceCardSkeletonGrid } from "@/features/catalogue/components/skeletons";
 import { canonicalFor, compactDescription, defaultOgImagePath, servicesJsonLd } from "@/lib/seo";
 
@@ -50,7 +50,7 @@ export async function generateMetadata({ searchParams }: SearchPageProps): Promi
 
 export default async function SearchPage({ searchParams }: SearchPageProps) {
   const { q, category } = await searchParams;
-  const services = await getServicesForSeo({ category, search: q, page_size: 60 });
+  const [services, categories] = await Promise.all([getServicesForSeo({ category, search: q, page_size: 40, city: "Chennai" }), getServiceCategoriesForSeo()]);
   const params = new URLSearchParams();
   if (q) params.set("q", q);
   if (category) params.set("category", category);
@@ -59,7 +59,6 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   return (
     <>
       <JsonLd data={servicesJsonLd(services.results, path)} />
-      <ServiceSeoSnapshot services={services.results} heading="Purple Squad service search results" />
       <Suspense
         fallback={
           <div className="page-container py-10">
@@ -67,7 +66,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           </div>
         }
       >
-        <ServicesListing mode="search" />
+        <ServicesListing mode="search" initialServices={services} initialCategories={categories} initialQuery={{ category, q }} />
       </Suspense>
     </>
   );

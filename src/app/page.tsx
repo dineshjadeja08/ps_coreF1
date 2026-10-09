@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 
 import { JsonLd } from "@/components/seo/json-ld";
 import { HomeDiscovery } from "@/features/catalogue/components/home-discovery";
-import { canonicalFor, defaultOgImagePath, localBusinessJsonLd, websiteJsonLd } from "@/lib/seo";
+import { getServicesForSeo } from "@/features/catalogue/server";
+import { canonicalFor, defaultOgImagePath, localBusinessJsonLd, organizationJsonLd, websiteJsonLd } from "@/lib/seo";
 
 // Avoid the prerendered metadata wrapper before the GTM verification iframe.
 export const dynamic = "force-dynamic";
@@ -31,11 +32,12 @@ export const metadata: Metadata = {
   },
 };
 
-export default function Home() {
+export default async function Home() {
+  const services = await getServicesForSeo({ page_size: 80, city: "Chennai" });
   return (
     <>
-      <JsonLd data={[localBusinessJsonLd(), websiteJsonLd()]} />
-      <HomeDiscovery />
+      <JsonLd data={[organizationJsonLd(), localBusinessJsonLd(), websiteJsonLd()]} />
+      <HomeDiscovery initialServices={services} />
     </>
   );
 }

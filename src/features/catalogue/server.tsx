@@ -1,15 +1,24 @@
 import { env } from "@/config/env";
+import { cache } from "react";
 import { apiPaths } from "@/lib/api/endpoints";
-import type { PaginatedResponse, Review, SeoLandingPage, SeoLandingPageSummary, ServiceCategory, ServiceDetail, ServiceListItem } from "@/types/api";
+import { buildLocalCityPage, localCityPages } from "@/features/catalogue/local-seo";
+import type { FAQ, PaginatedResponse, Review, SeoLandingPage, SeoLandingPageSummary, ServiceCategory, ServiceDetail, ServiceListItem } from "@/types/api";
 
 const revalidateSeconds = 300;
 
 type ServiceQuery = {
+  city?: string;
   category?: string;
   search?: string;
   featured?: boolean;
   page_size?: number;
 };
+
+class CatalogueError extends Error {
+  constructor(public status: number) {
+    super(`Catalogue request failed: ${status}`);
+  }
+}
 
 function buildApiUrl(path: string, query?: Record<string, string | number | boolean | undefined>) {
   const baseUrl = env.apiBaseUrl.replace(/\/$/, "");
@@ -31,7 +40,7 @@ async function fetchJson<T>(path: string, query?: Record<string, string | number
   });
 
   if (!response.ok) {
-    throw new Error(`Catalogue request failed: ${response.status}`);
+    throw new CatalogueError(response.status);
   }
 
   return (await response.json()) as T;
@@ -44,19 +53,13 @@ async function fetchFreshJson<T>(path: string, query?: Record<string, string | n
   });
 
   if (!response.ok) {
-    throw new Error(`Catalogue request failed: ${response.status}`);
+    throw new CatalogueError(response.status);
   }
 
   return (await response.json()) as T;
 }
 
-export async function getServiceCategoriesForSeo() {
-  try {
-    return await fetchJson<ServiceCategory[]>(apiPaths.serviceCategories);
-  } catch {
-    return [];
-  }
-}
+export const getServiceCategoriesForSeo = cache(async () => fetchJson<ServiceCategory[]>(apiPaths.serviceCategories));
 
 export async function getServicesForSeo(query: ServiceQuery = {}) {
   try {
@@ -65,19 +68,21 @@ export async function getServicesForSeo(query: ServiceQuery = {}) {
       category: query.category,
       search: query.search,
       featured: query.featured,
+      city: query.city,
     });
   } catch {
     return { count: 0, next: null, previous: null, results: [] };
   }
 }
 
-export async function getServiceDetailForSeo(slug: string) {
+export const getServiceDetailForSeo = cache(async (slug: string) => {
   try {
     return await fetchFreshJson<ServiceDetail>(apiPaths.serviceDetail(slug));
-  } catch {
-    return null;
+  } catch (error) {
+    if (error instanceof CatalogueError && error.status === 404) return null;
+    throw error;
   }
-}
+});
 
 export async function getServiceReviewsForSeo(serviceId: string) {
   try {
@@ -89,37 +94,61 @@ export async function getServiceReviewsForSeo(serviceId: string) {
 
 export async function getSeoLandingPagesForSeo() {
   try {
-    return await fetchJson<SeoLandingPageSummary[]>(apiPaths.seoPages);
+    const pages = await fetchJson<SeoLandingPageSummary[]>(apiPaths.seoPages);
+    const services = await getChennaiServicesForSeo();
+    const added = Object.keys(localCityPages).filter((slug) => !pages.some((page) => page.page_slug === slug)).flatMap((slug) => {
+      const page = buildLocalCityPage(slug, services);
+      return page ? [page] : [];
+    });
+    return [...pages, ...added];
   } catch {
     return [];
   }
 }
 
-export async function getSeoLandingPageForSeo(pageSlug: string) {
+export const getSeoLandingPageForSeo = cache(async (pageSlug: string) => {
   try {
     return await fetchJson<SeoLandingPage>(apiPaths.seoPageDetail(pageSlug));
-  } catch {
-    return null;
+  } catch (error) {
+    if (error instanceof CatalogueError && error.status === 404) {
+      if (!Object.hasOwn(localCityPages, pageSlug)) return null;
+      const page = buildLocalCityPage(pageSlug, await getChennaiServicesForSeo());
+      if (!page) return null;
+      const faqs = await fetchJson<FAQ[]>(apiPaths.faqs, { service_id: page.services[0].id });
+      page.faqs = faqs.map(({ question, answer }) => ({ question, answer }));
+      page.related_pages = [{ name: "Browse available service packages", path: `/services/${page.services[0].slug}`, area: "", postal_code: "" }];
+      return page;
+    }
+    throw error;
   }
+});
+
+// Follow pagination locally, never fetch an arbitrary URL supplied by an API.
+export async function getAllServicesForSeo(city?: string) {
+  const services: ServiceListItem[] = [];
+  let page = 1;
+  for (;;) {
+    const response = await fetchJson<PaginatedResponse<ServiceListItem>>(apiPaths.services, { page_size: 100, page, city });
+    services.push(...response.results);
+    if (!response.next) break;
+    if (!response.results.length || page >= 500) throw new Error("Catalogue pagination did not terminate safely");
+    page += 1;
+  }
+  return Array.from(new Map(services.map((service) => [service.id, service])).values());
 }
 
-export function ServiceSeoSnapshot({ services, heading }: { services: ServiceListItem[]; heading: string }) {
-  if (!services.length) return null;
+const getChennaiServicesForSeo = cache(() => getAllServicesForSeo("Chennai"));
 
-  return (
-    <section className="sr-only" aria-label={heading}>
-      <h2>{heading}</h2>
-      <ul>
-        {services.map((service) => (
-          <li key={service.id}>
-            <a href={`/services/${service.slug}`}>{service.name}</a>
-            <p>{service.short_description || service.category.name}</p>
-            <p>
-              Starts at ₹{service.effective_price || service.selling_price || service.base_price}
-            </p>
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
+export async function getSitemapCatalogue() {
+  const [services, categories, pages] = await Promise.all([
+    getAllServicesForSeo(),
+    fetchJson<ServiceCategory[]>(apiPaths.serviceCategories),
+    fetchJson<SeoLandingPageSummary[]>(apiPaths.seoPages),
+  ]);
+  const available = await getChennaiServicesForSeo();
+  const added = Object.keys(localCityPages).filter((slug) => !pages.some((page) => page.page_slug === slug)).flatMap((slug) => {
+    const page = buildLocalCityPage(slug, available);
+    return page ? [page] : [];
+  });
+  return { services, categories, pages: [...pages, ...added] };
 }

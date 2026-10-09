@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
 import { JsonLd } from "@/components/seo/json-ld";
@@ -9,6 +10,7 @@ import { isWaterTankService } from "@/features/catalogue/group-services";
 import { ServiceCardSkeletonGrid } from "@/features/catalogue/components/skeletons";
 import { getServiceCategoriesForSeo, getServiceDetailForSeo, getServiceReviewsForSeo, getServicesForSeo } from "@/features/catalogue/server";
 import { breadcrumbJsonLd, canonicalFor, compactDescription, defaultOgImagePath, localBusinessJsonLd, serviceJsonLd, servicesJsonLd } from "@/lib/seo";
+import { publicPageMetadata } from "@/lib/page-metadata";
 
 type ServiceDetailPageProps = {
   params: Promise<{ slug: string }>;
@@ -27,11 +29,7 @@ export async function generateMetadata({ params }: ServiceDetailPageProps): Prom
   if (category || fallbackCategoryName) {
     const categoryName = category?.name ?? fallbackCategoryName;
     const description = compactDescription(category?.description ?? "", `Book ${categoryName} services with Purple Squad.`);
-    return {
-      title: `${categoryName} in Chennai and Coimbatore`,
-      description,
-      alternates: { canonical: canonicalFor(`/services/${slug}`) },
-    };
+    return publicPageMetadata(`/services/${slug}`, `${categoryName} in Chennai`, description);
   }
 
   const service = await getServiceDetailForSeo(slug);
@@ -41,7 +39,7 @@ export async function generateMetadata({ params }: ServiceDetailPageProps): Prom
       `Book ${service.name} at your doorstep in Chennai with Purple Squad.`,
     );
     return {
-      title: `${service.name} in Chennai`,
+      title: /\bin Chennai$/i.test(service.name) ? service.name : `${service.name} in Chennai`,
       description,
       alternates: {
         canonical: canonicalFor(`/services/${service.slug}`),
@@ -60,13 +58,7 @@ export async function generateMetadata({ params }: ServiceDetailPageProps): Prom
     };
   }
 
-  return {
-    title: "Service",
-    description: "View Purple Squad service details.",
-    alternates: {
-      canonical: canonicalFor(`/services/${slug}`),
-    },
-  };
+  notFound();
 }
 
 export default async function ServiceDetailPage({ params }: ServiceDetailPageProps) {
@@ -77,7 +69,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
 
   if (slug === "water-tank-cleaning") {
     const sourceCategory = category ?? categories.find((item) => item.slug === "cleaning");
-    const services = await getServicesForSeo({ category: sourceCategory?.slug ?? "cleaning", page_size: 100 });
+    const services = await getServicesForSeo({ category: sourceCategory?.slug ?? "cleaning", page_size: 100, city: "Chennai" });
     const waterServices = services.results.filter(isWaterTankService);
     const initialServices = { ...services, count: waterServices.length, results: waterServices, next: null, previous: null };
     return (
@@ -91,7 +83,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
   }
 
   if (categoryLandingSlug === "ac-services") {
-    const services = await getServicesForSeo({ category: categoryLandingSlug, page_size: 60 });
+    const services = await getServicesForSeo({ category: categoryLandingSlug, page_size: 80, city: "Chennai" });
     const firstService = services.results.find((service) => service.landing_thumbnail || service.cover_image)
       ?? services.results[0];
     const initialService = firstService ? await getServiceDetailForSeo(firstService.slug) : null;
@@ -104,6 +96,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
             initialService={initialService}
             serviceSlug={firstService?.slug}
             landingTitle="AC Services"
+            initialServices={services}
           />
         </Suspense>
       </>
@@ -111,18 +104,19 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
   }
 
   if (categoryLandingSlug) {
-    const services = await getServicesForSeo({ category: categoryLandingSlug, page_size: 60 });
+    const services = await getServicesForSeo({ category: categoryLandingSlug, page_size: 40, city: "Chennai" });
     return (
       <>
         <JsonLd data={servicesJsonLd(services.results, `/services/${categoryLandingSlug}`)} />
         <Suspense fallback={<div className="mx-auto max-w-7xl px-4 py-10"><ServiceCardSkeletonGrid count={8} /></div>}>
-          <ServicesListing categorySlug={categoryLandingSlug} />
+          <ServicesListing categorySlug={categoryLandingSlug} initialServices={services} initialCategories={categories} />
         </Suspense>
       </>
     );
   }
   const service = await getServiceDetailForSeo(slug);
-  const reviews = service ? await getServiceReviewsForSeo(service.id) : null;
+  if (!service) notFound();
+  const [reviews, related] = await Promise.all([getServiceReviewsForSeo(service.id), getServicesForSeo({ category: service.category.slug, page_size: 80, city: "Chennai" })]);
 
   return (
     <>
@@ -139,7 +133,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
           ]}
         />
       ) : null}
-      <ServiceDetailView initialService={service} />
+      <ServiceDetailView initialService={service} initialServices={related} initialReviews={reviews} />
     </>
   );
 }

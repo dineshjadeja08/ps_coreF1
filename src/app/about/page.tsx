@@ -1,21 +1,11 @@
-import type { Metadata } from "next";
-
 import { FooterLinkPage } from "@/components/common/footer-link-page";
 import { JsonLd } from "@/components/seo/json-ld";
-import { canonicalFor, localBusinessJsonLd } from "@/lib/seo";
+import { localBusinessJsonLd } from "@/lib/seo";
+import { publicPageMetadata } from "@/lib/page-metadata";
 
 const values = ["Clear pricing before booking", "Verified service professionals", "Simple booking flow", "Support through the service journey"];
 
-export const metadata: Metadata = {
-  title: "About Purple Squad",
-  description: "Learn about Purple Squad and our trusted home services across Chennai and Coimbatore.",
-  alternates: {
-    canonical: canonicalFor("/about"),
-  },
-  openGraph: {
-    url: canonicalFor("/about"),
-  },
-};
+export const metadata = publicPageMetadata("/about", "About Purple Squad", "Learn about Purple Squad appliance repair and home services in Chennai, transparent packages and customer support.");
 
 export default function AboutPage() {
   return (

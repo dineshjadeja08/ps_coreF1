@@ -8,7 +8,6 @@ import {
   Pause,
   Play,
   CheckCircle2,
-  Star,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -24,7 +23,7 @@ import { openApplianceSelector } from "@/features/catalogue/components/appliance
 import { ServiceImage } from "@/features/catalogue/components/service-image";
 import { ServiceCardSkeletonGrid } from "@/features/catalogue/components/skeletons";
 import { useHomepageBanners, useServices } from "@/features/catalogue/queries";
-import type { ServiceListItem } from "@/features/catalogue/types";
+import type { PaginatedResponse, ServiceListItem } from "@/features/catalogue/types";
 import { formatPrice, getCurrentPrice, hasOfferPrice } from "@/features/catalogue/utils";
 import { useSelectedLocation } from "@/features/location/selected-location";
 
@@ -69,10 +68,10 @@ const preferredServiceSlugs: Record<string, string> = {
   "water tank": "water-tank-cleaning",
 };
 
-export function HomeDiscovery() {
+export function HomeDiscovery({ initialServices }: { initialServices?: PaginatedResponse<ServiceListItem> } = {}) {
   const location = useSelectedLocation();
   const locationFilter = location.pincode ? { postal_code: location.pincode } : { city: location.city };
-  const services = useServices({ page_size: 80, ...locationFilter });
+  const services = useServices({ page_size: 80, ...locationFilter }, location.city === "Chennai" && !location.pincode ? initialServices : undefined);
   const featured = useServices({ featured: true, page_size: 10, ...locationFilter });
 
   const allServices = useMemo(() => services.data?.results ?? [], [services.data?.results]);
@@ -316,9 +315,9 @@ function HeroImageMosaic({ areaSlug }: { areaSlug: string }) {
     { image: "/images/hero/water-tank-cleaning.webp", title: "Water Tank Cleaning", slug: "water-tank-cleaning" },
     { image: "/images/hero/sofa-repair.webp", title: "Sofa Repair", slug: "sofa-repair-inspection-charge" },
   ];
-  return <div className="hidden min-w-0 grid-cols-2 content-center gap-3 lg:grid lg:w-full lg:gap-[clamp(.5rem,1vh,.75rem)]">{cards.map((card) => {
+  return <div className="hidden min-w-0 grid-cols-2 content-center gap-3 lg:grid lg:w-full lg:gap-[clamp(.5rem,1vh,.75rem)]">{cards.map((card, index) => {
     const className = "group relative aspect-[4/3] min-h-0 overflow-hidden rounded-md text-left focus-visible:outline-2 focus-visible:outline-primary";
-    const content = <><Image src={card.image} alt={`Purple Squad ${card.title}`} fill priority sizes="(min-width: 1024px) 28vw, 46vw" className="object-cover object-center transition duration-300 group-hover:scale-[1.02]" /><span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent px-3 pb-3 pt-8 text-xs font-bold text-white sm:text-sm">{card.title}</span></>;
+    const content = <><Image src={card.image} alt={`Purple Squad ${card.title}`} fill priority={index === 0} sizes="(min-width: 1024px) 28vw, 46vw" className="object-cover object-center transition duration-300 group-hover:scale-[1.02]" /><span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent px-3 pb-3 pt-8 text-xs font-bold text-white sm:text-sm">{card.title}</span></>;
 
     return card.opensApplianceSelector ? <button key={card.image} type="button" onClick={openApplianceSelector} className={className}>{content}</button> : <Link key={card.image} href={routes.localizedServiceCategory(card.slug, areaSlug)} className={className}>{content}</Link>;
   })}</div>;
@@ -341,9 +340,8 @@ function CompactPackageCard({ service }: { service: ServiceListItem }) {
           <Link href={routes.serviceDetail(service.slug)}>{service.name}</Link>
         </h3>
         <div className="mt-2 flex items-center gap-1 text-xs font-semibold text-secondary">
-          <Star className="h-3.5 w-3.5 fill-warning text-warning" />
-          <span>4.8</span>
-          <span>Verified</span>
+          <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
+          <span>Clear package pricing</span>
         </div>
         <div className="mt-2 flex flex-wrap items-baseline gap-2">
           <span className="text-base font-bold text-foreground">{currentPrice ?? "View price"}</span>

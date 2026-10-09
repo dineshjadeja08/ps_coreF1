@@ -10,7 +10,8 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/admin/", "/api/", "/book", "/bookings", "/booking-success", "/cart", "/checkout", "/login", "/profile", "/search", "/technician/"],
+        // Private page shells must remain crawlable for their noindex metadata.
+        disallow: ["/api/"],
       },
     ],
     sitemap: `${siteUrl}/sitemap.xml`,

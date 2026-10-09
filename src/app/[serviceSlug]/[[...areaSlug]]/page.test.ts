@@ -56,11 +56,11 @@ describe("SEO landing route metadata", () => {
     expect(metadata.robots).toEqual({ index: false, follow: false });
   });
 
-  it("only prebuilds sitemap-approved pages", async () => {
-    getSeoLandingPagesForSeo.mockResolvedValue([page]);
+  it("prebuilds published city pages while preserving on-demand area routes", async () => {
+    getSeoLandingPagesForSeo.mockResolvedValue([page, { ...page, page_slug: "ac-service-chennai", area: "" }]);
 
     await expect(generateStaticParams()).resolves.toEqual([
-      { serviceSlug: "ac-service-chennai", areaSlug: ["velachery"] },
+      { serviceSlug: "ac-service-chennai", areaSlug: [] },
     ]);
   });
 });

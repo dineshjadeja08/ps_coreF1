@@ -17,8 +17,8 @@ import { ReviewCard } from "@/features/catalogue/components/review-card";
 import { ServiceDetailSkeleton } from "@/features/catalogue/components/skeletons";
 import { packageFamilyKey } from "@/features/catalogue/package-family";
 import { useServiceDetail, useServiceFaqs, useServiceReviews, useServices } from "@/features/catalogue/queries";
-import type { ServiceDetail, ServiceListItem } from "@/features/catalogue/types";
-import type { FAQ, Review } from "@/types/api";
+import type { PaginatedResponse, ServiceDetail, ServiceListItem } from "@/features/catalogue/types";
+import type { FAQ, Review, SeoLandingPage } from "@/types/api";
 import { formatDuration, formatPrice, getCurrentPrice, hasOfferPrice } from "@/features/catalogue/utils";
 import { useSelectedLocation } from "@/features/location/selected-location";
 
@@ -47,10 +47,16 @@ export function ServiceDetailView({
   initialService,
   serviceSlug,
   landingTitle,
+  initialServices,
+  initialReviews,
+  seoContent,
 }: {
   initialService?: ServiceDetail | null;
   serviceSlug?: string;
   landingTitle?: string;
+  initialServices?: PaginatedResponse<ServiceListItem>;
+  initialReviews?: PaginatedResponse<Review>;
+  seoContent?: SeoLandingPage;
 }) {
   const params = useParams<{ slug: string }>();
   const slug = serviceSlug ?? params.slug;
@@ -61,8 +67,8 @@ export function ServiceDetailView({
     category: service.data?.category.slug,
     page_size: 80,
     ...locationFilter,
-  });
-  const reviews = useServiceReviews(service.data?.id);
+  }, location.city === "Chennai" && !location.pincode ? initialServices : undefined);
+  const reviews = useServiceReviews(service.data?.id, service.data?.id === initialService?.id ? initialReviews : undefined);
   const [selectedPackage, setSelectedPackage] = useState<ServiceListItem | null>(null);
   const selectedPackageDetail = useServiceDetail(selectedPackage?.slug ?? "");
   const selectedPackageFaqs = useServiceFaqs(selectedPackage?.id);
@@ -89,12 +95,15 @@ export function ServiceDetailView({
   }
 
   const detail = service.data;
-  const allRelated = related.data?.results ?? [];
+  const allRelated = (related.data?.results ?? []).filter((item) => !seoContent || seoContent.services.some((service) => service.id === item.id));
   const currentFamily = packageFamilyKey(detail);
   const familyPackages = allRelated.filter((item) => packageFamilyKey(item) === currentFamily);
   const packageServices = familyPackages.length > 1 ? familyPackages : [detail];
   const familyPopupContentImage = packageServices.map((item) => item.popup_content_image).find(Boolean) ?? detail.popup_content_image;
   const pageTitle = landingTitle ?? detail.name;
+  const heading = pageTitle.toLowerCase().endsWith(` in ${location.city.toLowerCase()}`) ? pageTitle : `${pageTitle} in ${location.city}`;
+  const displayedReviews = (reviews.data?.results ?? []).filter((review) => review.is_visible).slice(0, 5);
+  const averageRating = displayedReviews.length ? displayedReviews.reduce((total, review) => total + review.rating, 0) / displayedReviews.length : null;
 
   return (
     <div className="overflow-x-clip bg-[#f7f7f7]">
@@ -118,15 +127,17 @@ export function ServiceDetailView({
                 src={landingImage(detail)}
                 alt={`${pageTitle} by Purple Squad in ${location.city}`}
                 priority
+                sizes="(min-width: 1280px) 800px, (min-width: 1024px) 65vw, 100vw"
                 className="aspect-[16/10] h-auto w-full rounded-lg bg-white sm:aspect-[16/7]"
                 imageClassName="object-contain sm:object-cover"
               />
               <div className="mt-5">
-                <h1 className="text-2xl font-bold leading-tight text-foreground sm:text-3xl">{pageTitle} in {location.city}</h1>
-                <p className="mt-2 flex items-center gap-2 text-sm font-semibold text-secondary">
+                <h1 className="text-2xl font-bold leading-tight text-foreground sm:text-3xl">{seoContent?.h1 || heading}</h1>
+                {averageRating !== null ? <p className="mt-2 flex items-center gap-2 text-sm font-semibold text-secondary">
                   <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-                  4.8 service quality
-                </p>
+                  {averageRating.toFixed(1)} ({displayedReviews.length} customer reviews)
+                </p> : null}
+                {detail.description || detail.short_description ? <p className="mt-3 text-sm leading-6 text-secondary">{detail.description || detail.short_description}</p> : null}
               </div>
             </div>
 
@@ -144,7 +155,7 @@ export function ServiceDetailView({
       </section>
 
       <section className="mx-auto grid min-w-0 max-w-7xl gap-0 px-3 py-5 sm:px-6 sm:py-6 lg:grid-cols-[minmax(0,1fr)_280px] lg:px-8">
-        <main className="min-w-0 border-border bg-white p-4 sm:p-5 lg:border-r lg:p-7">
+        <div className="min-w-0 border-border bg-white p-4 sm:p-5 lg:border-r lg:p-7">
           <div className="border-b border-border pb-5">
             <p className="text-xs font-bold uppercase tracking-wide text-primary">Available services</p>
             <h2 className="mt-1 text-2xl font-bold text-foreground">{packageSectionTitle(detail)}</h2>
@@ -158,7 +169,7 @@ export function ServiceDetailView({
               <PackageRow key={item.id} service={item} featured={index === 0} onReadMore={() => setSelectedPackage(item)} />
             ))}
           </div>
-        </main>
+        </div>
 
         <aside className="hidden bg-[#f7f7f7] p-5 lg:block">
           <div className="sticky top-28 space-y-4">
@@ -194,12 +205,19 @@ export function ServiceDetailView({
         </aside>
       </section>
 
-      {reviews.data?.results?.length ? (
+      {seoContent ? <section className="mx-auto max-w-7xl space-y-5 px-4 py-8 sm:px-6 lg:px-8">
+        <div><h2 className="text-xl font-bold">About {seoContent.service_name}</h2><p className="mt-2 whitespace-pre-line text-sm leading-7 text-secondary">{seoContent.intro_content}</p>{seoContent.pricing_intro ? <p className="mt-2 text-sm leading-7 text-secondary">{seoContent.pricing_intro}</p> : null}</div>
+        {seoContent.coverage_areas.length ? <div><h2 className="text-xl font-bold">Service coverage</h2><p className="mt-2 text-sm leading-7 text-secondary">{seoContent.coverage_areas.join(", ")}</p></div> : null}
+        {seoContent.faqs.length ? <div><h2 className="text-xl font-bold">Frequently asked questions</h2>{seoContent.faqs.map((faq) => <details key={faq.question} className="mt-3 rounded-lg border border-border bg-white p-4"><summary className="cursor-pointer font-semibold">{faq.question}</summary><p className="mt-2 whitespace-pre-line text-sm leading-7 text-secondary">{faq.answer}</p></details>)}</div> : null}
+        {seoContent.related_pages.length ? <nav aria-label="Related services"><h2 className="text-xl font-bold">Related services</h2><ul className="mt-3 flex flex-wrap gap-3">{seoContent.related_pages.map((page) => <li key={page.path}><Link href={page.path} className="text-sm text-primary underline">{page.name}</Link></li>)}</ul></nav> : null}
+      </section> : null}
+
+      {displayedReviews.length ? (
         <section className="mx-auto max-w-7xl space-y-5 px-4 py-8 sm:px-6 lg:px-8">
           <SectionHeading eyebrow="Reviews" title="Customer feedback" />
           <p className="text-sm text-secondary">Experiences shared by our customers, including what went well and what could be better.</p>
           <div className="grid items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {reviews.data.results.slice(0, 5).map((review) => <ReviewCard key={review.id} review={review} />)}
+            {displayedReviews.map((review) => <ReviewCard key={review.id} review={review} />)}
           </div>
         </section>
       ) : null}
@@ -233,8 +251,8 @@ function PackageRow({ service, featured, onReadMore }: { service: ServiceListIte
         <h3 className="mt-0.5 break-words text-base font-bold text-foreground sm:text-lg">{service.name}</h3>
         <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs font-semibold text-secondary">
           <span className="inline-flex items-center gap-1">
-            <Star className="h-3.5 w-3.5 fill-primary text-primary" />
-            4.8
+            <ShieldCheck className="h-3.5 w-3.5 text-primary" />
+            Package details
           </span>
           {duration ? (
             <>
@@ -315,7 +333,7 @@ function PackageDetailsDialog({
             {service ? (
               <div className="min-w-0 pr-10">
                 <Dialog.Title className="text-xl font-bold text-foreground sm:text-2xl">{service.name}</Dialog.Title>
-                <p className="mt-2 flex items-center gap-1.5 text-sm text-secondary"><Star className="h-4 w-4 fill-amber-400 text-amber-400" />4.8 customer rating</p>
+                {reviews.length ? <p className="mt-2 flex items-center gap-1.5 text-sm text-secondary"><Star className="h-4 w-4 fill-amber-400 text-amber-400" />{(reviews.reduce((total, review) => total + review.rating, 0) / reviews.length).toFixed(1)} ({reviews.length} customer reviews)</p> : null}
                 <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
                   <div className="flex items-baseline gap-2"><span className="text-xl font-bold text-foreground">{price ?? "Price unavailable"}</span>{showOffer ? <span className="text-sm text-muted-foreground line-through">{basePrice}</span> : null}</div>
                   <AddToCartButton service={service} className="shrink-0" />

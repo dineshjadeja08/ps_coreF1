@@ -1,8 +1,9 @@
 import { siteConfig } from "@/config/site";
 import type { Review, ServiceDetail, ServiceListItem } from "@/features/catalogue/types";
-import { formatPrice, getCurrentPrice } from "@/features/catalogue/utils";
+import { getCurrentPrice } from "@/features/catalogue/utils";
 
-export const serviceAreas = ["Chennai", "Coimbatore"];
+// Secondary-city schema claims require operational confirmation.
+export const serviceAreas = ["Chennai"];
 export const defaultOgImagePath = "/images/hero/purple-squad-home-services-og.webp";
 
 export function absoluteUrl(path = "/") {
@@ -12,7 +13,8 @@ export function absoluteUrl(path = "/") {
 }
 
 export function canonicalFor(path = "/") {
-  return absoluteUrl(path);
+  const url = new URL(path, siteConfig.url);
+  return `${siteConfig.url}${url.pathname === "/" ? "/" : url.pathname.replace(/\/$/, "")}`;
 }
 
 export function compactDescription(value?: string | null, fallback = siteConfig.description) {
@@ -35,7 +37,6 @@ export function localBusinessJsonLd() {
       "@type": "City",
       name,
     })),
-    priceRange: "₹₹",
     sameAs: [
       "https://www.linkedin.com/company/purplesquad",
       "https://www.instagram.com/purplesquad.in/",
@@ -88,6 +89,19 @@ export function websiteJsonLd() {
   };
 }
 
+export function organizationJsonLd() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "@id": `${siteConfig.url}/#organization`,
+    name: siteConfig.name,
+    url: siteConfig.url,
+    logo: absoluteUrl("/purple-squad-favicon.png"),
+    telephone: "+917676076361",
+    email: "support@purplesquad.in",
+  };
+}
+
 export function servicesJsonLd(services: Array<ServiceListItem | ServiceDetail>, path: string, reviews?: Review[]) {
   return {
     "@context": "https://schema.org",
@@ -97,14 +111,19 @@ export function servicesJsonLd(services: Array<ServiceListItem | ServiceDetail>,
 
 export function serviceJsonLd(service: ServiceListItem | ServiceDetail, path: string, reviews?: Review[]) {
   const currentPrice = getCurrentPrice(service);
-  const visibleReviews = reviews?.filter((review) => review.is_visible && Number.isFinite(review.rating)) ?? [];
+  // Admin-supplied testimonials are displayed, but aren't verified booking ratings.
+  const visibleReviews = reviews?.slice(0, 5).filter((review) => review.is_visible && review.is_booking_review && Number.isFinite(review.rating) && review.rating >= 1 && review.rating <= 5) ?? [];
   const schema: Record<string, unknown> = {
+    "@context": "https://schema.org",
     "@type": "Service",
     "@id": `${canonicalFor(path)}#service-${service.slug}`,
     name: service.name,
     description: compactDescription(("description" in service && service.description) || service.short_description || service.category.name),
     provider: {
+      "@type": "Organization",
       "@id": `${siteConfig.url}/#localbusiness`,
+      name: siteConfig.name,
+      url: siteConfig.url,
     },
     areaServed: serviceAreas.map((name) => ({
       "@type": "City",
@@ -112,18 +131,17 @@ export function serviceJsonLd(service: ServiceListItem | ServiceDetail, path: st
     })),
     category: service.category.name,
     url: canonicalFor(`/services/${service.slug}`),
-    image: service.cover_image || absoluteUrl(defaultOgImagePath),
+    image: absoluteUrl(service.cover_image || defaultOgImagePath),
     offers: {
       "@type": "Offer",
       priceCurrency: "INR",
-      price: currentPrice ? String(currentPrice) : undefined,
+      price: currentPrice !== null && currentPrice !== undefined && Number.isFinite(Number(currentPrice)) && Number(currentPrice) >= 0 ? String(currentPrice) : undefined,
       url: canonicalFor(`/services/${service.slug}`),
       availability: "https://schema.org/InStock",
     },
-    priceRange: formatPrice(currentPrice) ?? undefined,
   };
 
-  if (visibleReviews.length) {
+  if (visibleReviews.length && visibleReviews.length === reviews?.slice(0, 5).filter((review) => review.is_visible).length) {
     const ratingValue = visibleReviews.reduce((total, review) => total + review.rating, 0) / visibleReviews.length;
     schema.aggregateRating = {
       "@type": "AggregateRating",
