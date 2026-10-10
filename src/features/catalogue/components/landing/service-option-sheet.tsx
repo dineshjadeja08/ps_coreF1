@@ -8,7 +8,8 @@ import { useRef } from "react";
 import { AddToCartButton } from "@/features/cart/cart-controls";
 import { CartStickyBar } from "@/features/catalogue/components/landing/cart-sticky-bar";
 import { ServiceImage } from "@/features/catalogue/components/service-image";
-import { ReviewCard } from "@/features/catalogue/components/review-card";
+import { ReviewList } from "@/features/catalogue/components/review-list";
+import { FaqItem } from "@/features/catalogue/components/faq-item";
 import { splitServiceBullets, stripGroupPrefix, type ServiceLandingGroup } from "@/features/catalogue/group-services";
 import { useServiceDetail, useServiceFaqs, useServiceReviews } from "@/features/catalogue/queries";
 import type { ServiceDetail } from "@/features/catalogue/types";
@@ -106,13 +107,13 @@ export function ServiceOptionSheet({ group, onClose }: { group: ServiceLandingGr
                   <h2 className="text-base font-extrabold text-foreground">Frequently Asked Questions</h2>
                   {faqQuery.data?.length ? (
                     <div className="mt-3 divide-y divide-border rounded-xl border border-border">
-                      {faqQuery.data.map((faq) => <details key={faq.id} className="p-4"><summary className="cursor-pointer text-sm font-bold text-foreground">{faq.question}</summary><p className="mt-3 whitespace-pre-line text-sm leading-6 text-secondary">{faq.answer}</p></details>)}
+                      {faqQuery.data.map((faq) => <FaqItem key={faq.id} question={faq.question} answer={faq.answer} />)}
                     </div>
                   ) : <p className="mt-2 text-sm text-secondary">No service-specific FAQs have been published yet.</p>}
                 </section>
                 <section className="py-6">
                   <h2 className="text-base font-extrabold text-foreground">Customer Reviews</h2>
-                  {reviews.data?.results.length ? <div className="mt-4 grid gap-3">{reviews.data.results.slice(0, 5).map((review) => <ReviewCard key={review.id} review={review} />)}</div> : <p className="mt-2 text-sm text-secondary">No customer reviews have been published yet.</p>}
+                  {reviews.data?.results.length ? <ReviewList reviews={reviews.data.results} /> : <p className="mt-2 text-sm text-secondary">No customer reviews have been published yet.</p>}
                 </section>
               </div>
             </div>

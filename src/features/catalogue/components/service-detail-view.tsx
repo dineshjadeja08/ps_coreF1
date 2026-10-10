@@ -14,6 +14,8 @@ import { AddToCartButton, CartSummary } from "@/features/cart/cart-controls";
 import { CartStickyBar } from "@/features/catalogue/components/landing/cart-sticky-bar";
 import { ServiceImage } from "@/features/catalogue/components/service-image";
 import { ReviewCard } from "@/features/catalogue/components/review-card";
+import { ReviewList } from "@/features/catalogue/components/review-list";
+import { FaqItem } from "@/features/catalogue/components/faq-item";
 import { ServiceDetailSkeleton } from "@/features/catalogue/components/skeletons";
 import { packageFamilyKey } from "@/features/catalogue/package-family";
 import { useServiceDetail, useServiceFaqs, useServiceReviews, useServices } from "@/features/catalogue/queries";
@@ -360,11 +362,11 @@ function PackageDetailsDialog({
               ) : null}
               <section className="py-6">
                 <h3 className="text-lg font-bold text-foreground">Frequently Asked Questions</h3>
-                {faqs.length ? <div className="mt-3 divide-y divide-border rounded-md border border-border">{faqs.map((faq) => <details key={faq.id} className="group p-4"><summary className="cursor-pointer list-none pr-6 text-sm font-semibold text-foreground">{faq.question}</summary><p className="mt-3 whitespace-pre-line text-sm leading-6 text-secondary">{faq.answer}</p></details>)}</div> : <p className="mt-2 text-sm text-secondary">No package-specific questions have been added yet.</p>}
+                {faqs.length ? <div className="mt-3 divide-y divide-border overflow-hidden rounded-xl border border-border">{faqs.map((faq) => <FaqItem key={faq.id} question={faq.question} answer={faq.answer} />)}</div> : <p className="mt-2 text-sm text-secondary">No package-specific questions have been added yet.</p>}
               </section>
               <section className="py-6">
                 <h3 className="text-lg font-bold text-foreground">Customer Reviews</h3>
-                {reviews.length ? <div className="mt-3 grid gap-3">{reviews.slice(0, 5).map((review) => <ReviewCard key={review.id} review={review} />)}</div> : <p className="mt-2 text-sm text-secondary">No customer reviews have been published yet.</p>}
+                {reviews.length ? <ReviewList reviews={reviews} /> : <p className="mt-2 text-sm text-secondary">No customer reviews have been published yet.</p>}
               </section>
             </div>
           ) : null}

@@ -46,7 +46,7 @@ const popularCategories = [
   { name: "Geyser", slug: "geyser-repair-services", image: "/images/service-icons/geyser.png" },
   { name: "Microwave", slug: "microwave-oven-repair-services", image: "/images/service-icons/microwave.png" },
   { name: "Dishwasher", slug: "dishwasher-repair-service", image: "/images/service-icons/dishwasher.png" },
-  { name: "Chimney", slug: "chimney-cleaning-services", image: "/images/service-icons/chimney.svg" },
+  { name: "Chimney", slug: "chimney-cleaning-services", image: "/images/service-icons/chimney.jpg" },
 ] as const;
 
 const spotlights = [
