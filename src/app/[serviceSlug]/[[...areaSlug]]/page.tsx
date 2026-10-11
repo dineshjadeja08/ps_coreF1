@@ -9,6 +9,7 @@ import { getSeoLandingPageForSeo, getSeoLandingPagesForSeo, getServiceReviewsFor
 import { breadcrumbJsonLd, canonicalFor, localBusinessJsonLd, serviceJsonLd } from "@/lib/seo";
 import { publicPageMetadata } from "@/lib/page-metadata";
 import { serviceHeroImage } from "@/lib/service-images";
+import { enhancePrimaryCityPage } from "@/features/catalogue/local-seo";
 
 type SeoLandingPageProps = {
   params: Promise<{ serviceSlug: string; areaSlug?: string[] }>;
@@ -32,7 +33,8 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: SeoLandingPageProps): Promise<Metadata> {
   const values = await params;
   const slug = pageSlug(values.serviceSlug, values.areaSlug);
-  const page = slug ? await getSeoLandingPageForSeo(slug) : null;
+  const resolved = slug ? await getSeoLandingPageForSeo(slug) : null;
+  const page = resolved ? enhancePrimaryCityPage(resolved) : null;
   if (!page) return { title: "Page not found", robots: { index: false, follow: false } };
 
   return {
@@ -45,7 +47,8 @@ export async function generateMetadata({ params }: SeoLandingPageProps): Promise
 export default async function SeoLandingPage({ params }: SeoLandingPageProps) {
   const values = await params;
   const slug = pageSlug(values.serviceSlug, values.areaSlug);
-  const page = slug ? await getSeoLandingPageForSeo(slug) : null;
+  const resolved = slug ? await getSeoLandingPageForSeo(slug) : null;
+  const page = resolved ? enhancePrimaryCityPage(resolved) : null;
   if (!page || page.page_slug !== slug) notFound();
 
   const primaryService = page.services[0];

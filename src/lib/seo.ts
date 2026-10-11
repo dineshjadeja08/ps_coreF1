@@ -122,7 +122,7 @@ export function serviceJsonLd(service: ServiceListItem | ServiceDetail, path: st
     description: compactDescription(("description" in service && service.description) || service.short_description || service.category.name),
     provider: {
       "@type": "Organization",
-      "@id": `${siteConfig.url}/#localbusiness`,
+      "@id": `${siteConfig.url}/#organization`,
       name: siteConfig.name,
       url: siteConfig.url,
     },

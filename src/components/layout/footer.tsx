@@ -27,6 +27,7 @@ export function Footer() {
         { href: "/bookings", label: "Bookings" },
         { href: "/services", label: "Categories near you" },
         { href: "/faq", label: "FAQs" },
+        { href: "/guides", label: "Appliance care guides" },
         { href: "/support", label: "Help centre" },
       ],
     },

@@ -1,6 +1,24 @@
 import type { SeoLandingPage, ServiceListItem } from "@/types/api";
 
 export const localCityPages = {
+  "ac-service-chennai": {
+    name: "AC Service",
+    intro: "Compare AC cleaning, inspection, repair, gas refilling and installation packages available in Chennai. For poor cooling, water leakage or unusual noise, choose diagnosis before assuming a gas refill is needed. Check each package for the supported AC type and included work before booking.",
+    pricing: "The live prices below apply to the named packages, not every AC repair. Installation, uninstallation, cleaning and gas-refill work are priced separately. Extra work should be quoted before it starts.",
+    matches: (service: ServiceListItem) => /\bac\b|air.condition/i.test(`${service.name} ${service.slug}`),
+  },
+  "washing-machine-repair-chennai": {
+    name: "Washing Machine Repair",
+    intro: "A washing machine that will not drain, spin or start needs inspection to establish the cause. Compare available washing machine repair and service packages in Chennai, and check whether your front-load or top-load model is covered. Share the symptoms and model when booking; parts and additional work depend on diagnosis.",
+    pricing: "Check the live inspection or service price before selecting a package. Repair parts are not automatically included in an inspection price. Confirm the scope and any additional quote before approving work.",
+    matches: (service: ServiceListItem) => /washing.machine/i.test(`${service.name} ${service.slug}`),
+  },
+  "refrigerator-repair-chennai": {
+    name: "Refrigerator Repair",
+    intro: "If your fridge is not cooling, has excess frost or makes unusual noise, select an available refrigerator inspection or repair package in Chennai. Diagnosis helps distinguish a thermostat, drainage or cooling-system problem. Gas refilling should only be selected where offered and after the cause has been checked.",
+    pricing: "Compare the current package prices and inclusions below. An inspection price is not a promise that every fridge fault or replacement part is covered. Confirm additional repair costs before work begins.",
+    matches: (service: ServiceListItem) => /refrigerator|\bfridge\b/i.test(`${service.name} ${service.slug}`),
+  },
   "ac-repair-chennai": {
     name: "AC Repair",
     intro: "An AC that is not cooling, leaking water or making unusual noise needs diagnosis before choosing a repair. Compare the available inspection and repair packages below, check what each package includes, and choose the appropriate service before booking your visit.",
@@ -14,6 +32,17 @@ export const localCityPages = {
     matches: (service: ServiceListItem) => /(?:water.tank|sump)/i.test(`${service.name} ${service.slug}`) && /cleaning/i.test(`${service.name} ${service.slug}`),
   },
 };
+
+// Enhance primary city pages only; preserve published local-area content and URLs.
+export function enhancePrimaryCityPage(page: SeoLandingPage): SeoLandingPage {
+  if (page.area || !Object.hasOwn(localCityPages, page.page_slug)) return page;
+  const config = localCityPages[page.page_slug as keyof typeof localCityPages];
+  return { ...page, meta_title: `${config.name} in Chennai | Purple Squad`,
+    meta_description: `Book ${config.name.toLowerCase()} in Chennai with Purple Squad. Compare available packages, current prices and included work before booking online.`,
+    h1: `${config.name} in Chennai`,
+    intro_content: [page.intro_content?.trim(), config.intro].filter(Boolean).filter((text, index, all) => all.indexOf(text) === index).join("\n\n"),
+    pricing_intro: page.pricing_intro?.trim() || config.pricing };
+}
 
 // Call only with the API's city=Chennai availability-filtered catalogue.
 export function buildLocalCityPage(slug: string, availableServices: ServiceListItem[]): SeoLandingPage | null {

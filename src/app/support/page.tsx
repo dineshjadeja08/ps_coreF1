@@ -1,6 +1,9 @@
 import Link from "next/link";
 
 import { FooterLinkPage } from "@/components/common/footer-link-page";
+import { publicPageMetadata } from "@/lib/page-metadata";
+
+export const metadata = publicPageMetadata("/support", "Contact Purple Squad", "Contact Purple Squad for home-service bookings in Chennai, rescheduling, payment questions and service support. Call or message our support team.");
 
 export default function SupportPage() {
   return (

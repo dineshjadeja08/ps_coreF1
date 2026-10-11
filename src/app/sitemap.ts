@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 
 import { getSitemapCatalogue } from "@/features/catalogue/server";
+import { maintenanceGuides } from "@/features/catalogue/maintenance-guides";
 import { absoluteUrl, canonicalFor } from "@/lib/seo";
 import { getCategoryVisualSrc, resolveServiceImage, serviceHeroImage, serviceListImage, servicePageImages } from "@/lib/service-images";
 
@@ -31,6 +32,7 @@ function imageUrls(sources: Array<string | null | undefined>) {
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const { services, categories, categoryServices = services, pages } = await getSitemapCatalogue();
   const entries: MetadataRoute.Sitemap = publicRoutes.map((path) => ({ url: canonicalFor(path) }));
+  entries.push({ url: canonicalFor("/guides") }, ...Object.keys(maintenanceGuides).map((slug) => ({ url: canonicalFor(`/guides/${slug}`) })));
   entries.push({ url: canonicalFor("/services"), images: imageUrls([
     ...categories.map(getCategoryVisualSrc),
     ...categoryServices.slice(0, 40).map((service) => resolveServiceImage(service.cover_image, service.name).src),

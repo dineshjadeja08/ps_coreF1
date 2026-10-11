@@ -10,6 +10,7 @@ import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 import { RouteProgress } from "@/components/layout/route-progress";
 import { isServiceBrowsingRoute } from "@/constants/routes";
 import { MobileServiceProceedBar } from "@/features/cart/mobile-service-proceed-bar";
+import { ConversionTracker } from "@/components/seo/conversion-tracker";
 
 export function AppChrome({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -23,6 +24,7 @@ export function AppChrome({ children }: { children: ReactNode }) {
 
   return (
     <>
+      <ConversionTracker />
       <Suspense fallback={null}>
         <RouteProgress />
       </Suspense>

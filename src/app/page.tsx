@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: {
-    absolute: "Purple Squad | Home Appliance Services in Chennai",
+    absolute: "Home Appliance Services in Chennai | Purple Squad",
   },
   description:
     "Book trusted AC, appliance repair, cleaning, CCTV, geyser, and water purifier services at your doorstep in Chennai with Purple Squad.",
@@ -18,14 +18,14 @@ export const metadata: Metadata = {
     canonical: canonicalFor("/"),
   },
   openGraph: {
-    title: "Purple Squad | Home Appliance Services in Chennai",
+    title: "Home Appliance Services in Chennai | Purple Squad",
     description:
       "Book trusted AC, appliance repair, cleaning, CCTV, geyser, and water purifier services at your doorstep in Chennai.",
     url: canonicalFor("/"),
     images: [defaultOgImagePath],
   },
   twitter: {
-    title: "Purple Squad | Home Appliance Services in Chennai",
+    title: "Home Appliance Services in Chennai | Purple Squad",
     description:
       "Book trusted AC, appliance repair, cleaning, CCTV, geyser, and water purifier services at your doorstep in Chennai.",
     images: [defaultOgImagePath],

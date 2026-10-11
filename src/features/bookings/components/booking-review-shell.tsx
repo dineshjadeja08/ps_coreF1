@@ -29,6 +29,7 @@ import { ServiceImage } from "@/features/catalogue/components/service-image";
 import { formatDuration } from "@/features/catalogue/utils";
 import { useAvailableSlots } from "@/features/slots/queries";
 import { formatSlotTime, isSlotAvailable } from "@/features/slots/utils";
+import { trackConversion } from "@/lib/conversion-tracking";
 
 export function BookingReviewShell() {
   const cart = useCart();
@@ -139,6 +140,7 @@ export function BookingReviewShell() {
         }),
       );
       window.sessionStorage.removeItem("purple-squad-booking-notes");
+      trackConversion("booking_created", booking.id);
       cart.markBooked();
       router.replace(routes.bookingPayment(booking.id));
     } catch (error) {
