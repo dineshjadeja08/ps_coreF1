@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { adminApi } from "@/lib/api/endpoints";
 import type { AdminServiceArea, UUID } from "@/types/api";
+import { loadAllPages } from "../load-all-pages";
 
 type AreaForm = {
   id?: UUID;
@@ -50,8 +51,16 @@ function toForm(area: AdminServiceArea): AreaForm {
 export function AdminServiceAreasScreen() {
   const queryClient = useQueryClient();
   const [form, setForm] = useState<AreaForm | null>(null);
-  const areas = useQuery({ queryKey: ["admin", "service-areas"], queryFn: adminApi.listServiceAreas });
-  const services = useQuery({ queryKey: ["admin", "service-options", "service-areas"], queryFn: () => adminApi.listServices({ page_size: 100 }), staleTime: 2 * 60_000 });
+  const [notice, setNotice] = useState("");
+  const areas = useQuery({
+    queryKey: ["admin", "service-areas", "all"],
+    queryFn: () => loadAllPages((page) => adminApi.listServiceAreas({ page, page_size: 100 })),
+  });
+  const services = useQuery({
+    queryKey: ["admin", "service-options", "service-areas", "all"],
+    queryFn: () => loadAllPages((page) => adminApi.listServices({ page, page_size: 100 })),
+    staleTime: 2 * 60_000,
+  });
   const save = useMutation({
     mutationFn: (payload: AreaForm) => {
       const body = {
@@ -65,8 +74,9 @@ export function AdminServiceAreasScreen() {
       };
       return payload.id ? adminApi.updateServiceArea(payload.id, body) : adminApi.createServiceArea(body);
     },
-    onSuccess: async () => {
+    onSuccess: async (_savedArea, payload) => {
       setForm(null);
+      setNotice(payload.id ? "Service area updated." : "Service area added.");
       await queryClient.invalidateQueries({ queryKey: ["admin", "service-areas"] });
     },
   });
@@ -77,7 +87,10 @@ export function AdminServiceAreasScreen() {
 
   function submit(event: FormEvent) {
     event.preventDefault();
-    if (form) save.mutate(form);
+    if (form) {
+      setNotice("");
+      save.mutate(form);
+    }
   }
 
   function toggleService(id: UUID) {
@@ -93,8 +106,9 @@ export function AdminServiceAreasScreen() {
       <AdminPageHeader
         title="Service Areas"
         description="Choose exactly which services customers can book in each pincode."
-        action={<Button type="button" onClick={() => setForm({ ...emptyForm })}><Plus className="h-4 w-4" />Add pincode</Button>}
+        action={<Button type="button" onClick={() => { setNotice(""); setForm({ ...emptyForm }); }}><Plus className="h-4 w-4" />Add pincode</Button>}
       />
+      {notice ? <p role="status" className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">{notice}</p> : null}
 
       {form ? (
         <section className="mb-6 rounded-lg border border-slate-200 bg-white shadow-sm">
@@ -118,14 +132,14 @@ export function AdminServiceAreasScreen() {
                   <p className="text-xs text-slate-500">Only selected services can be scheduled or booked for this pincode.</p>
                 </div>
                 <div className="flex gap-2">
-                  <Button type="button" size="sm" variant="outline" onClick={() => setForm({ ...form, service_ids: (services.data?.results ?? []).map((item) => item.id) })}>Select all</Button>
+                  <Button type="button" size="sm" variant="outline" onClick={() => setForm({ ...form, service_ids: (services.data ?? []).map((item) => item.id) })}>Select all</Button>
                   <Button type="button" size="sm" variant="ghost" onClick={() => setForm({ ...form, service_ids: [] })}>Clear</Button>
                 </div>
               </div>
               <div className="mt-3 grid max-h-80 gap-2 overflow-y-auto rounded-lg border border-slate-200 p-3 sm:grid-cols-2 lg:grid-cols-3">
                 {services.isLoading ? <p className="text-sm text-slate-500">Loading services…</p> : null}
                 {services.isError ? <p role="alert" className="text-sm font-semibold text-red-600">Could not load services: {services.error.message}</p> : null}
-                {(services.data?.results ?? []).map((service) => (
+                {(services.data ?? []).map((service) => (
                   <label key={service.id} className="flex cursor-pointer items-start gap-3 rounded-md p-2 hover:bg-slate-50">
                     <input type="checkbox" className="mt-1 h-4 w-4 accent-violet-700" checked={form.service_ids.includes(service.id)} onChange={() => toggleService(service.id)} />
                     <span><span className="block text-sm font-semibold text-slate-800">{service.name}</span><span className="text-xs text-slate-500">{service.category_detail.name}</span></span>
@@ -150,7 +164,7 @@ export function AdminServiceAreasScreen() {
       {areas.isError ? <AdminErrorState message={areas.error.message} onRetry={() => void areas.refetch()} /> : null}
       {areas.data ? (
         <AdminDataTable
-          rows={areas.data.results}
+          rows={areas.data}
           getRowKey={(area) => area.id}
           emptyIcon={MapPin}
           emptyTitle="No service areas"
@@ -160,7 +174,7 @@ export function AdminServiceAreasScreen() {
             { key: "area", header: "Area", render: (area) => `${area.name}, ${area.city}` },
             { key: "services", header: "Services", render: (area) => `${area.services.length} selected` },
             { key: "status", header: "Status", render: (area) => <AdminStatusBadge status={area.is_active ? "ACTIVE" : "INACTIVE"} /> },
-            { key: "actions", header: "Actions", render: (area) => <div className="flex gap-2"><Button type="button" size="sm" variant="outline" onClick={() => setForm(toForm(area))}>Edit</Button><Button type="button" size="icon" variant="ghost" aria-label={`Delete ${area.postal_code}`} onClick={() => { if (window.confirm(`Delete service area ${area.postal_code}?`)) remove.mutate(area.id); }}><Trash2 className="h-4 w-4 text-red-600" /></Button></div> },
+            { key: "actions", header: "Actions", render: (area) => <div className="flex gap-2"><Button type="button" size="sm" variant="outline" onClick={() => { setNotice(""); setForm(toForm(area)); }}>Edit</Button><Button type="button" size="icon" variant="ghost" aria-label={`Delete ${area.postal_code}`} onClick={() => { if (window.confirm(`Delete service area ${area.postal_code}?`)) remove.mutate(area.id); }}><Trash2 className="h-4 w-4 text-red-600" /></Button></div> },
           ]}
         />
       ) : null}

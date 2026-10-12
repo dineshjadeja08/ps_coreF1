@@ -331,7 +331,8 @@ export const adminApi = {
     apiRequest<ScheduleClosure>(apiPaths.adminScheduleClosureDetail(id), { method: "PATCH", body, auth: true }),
   removeScheduleClosure: (id: UUID) =>
     apiRequest<void>(apiPaths.adminScheduleClosureDetail(id), { method: "DELETE", auth: true }),
-  listServiceAreas: () => apiRequest<PaginatedResponse<AdminServiceArea>>(apiPaths.adminServiceAreas, { auth: true }),
+  listServiceAreas: (query?: { page?: number; page_size?: number }) =>
+    apiRequest<PaginatedResponse<AdminServiceArea>>(apiPaths.adminServiceAreas, { auth: true, query }),
   createServiceArea: (body: Partial<AdminServiceArea> & { service_ids: UUID[] }) =>
     apiRequest<AdminServiceArea>(apiPaths.adminServiceAreas, { method: "POST", body, auth: true }),
   updateServiceArea: (id: UUID, body: Partial<AdminServiceArea> & { service_ids?: UUID[] }) =>
