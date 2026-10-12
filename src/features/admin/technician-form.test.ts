@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { technicianForm, technicianSkillNames } from "@/features/admin/technician-form";
+import { technicianAreaIdsForCity, technicianForm, technicianSkillNames } from "@/features/admin/technician-form";
 import type { TechnicianProfile } from "@/types/api";
 
 describe("technician editor payload", () => {
@@ -32,5 +32,13 @@ describe("technician editor payload", () => {
 
   it("trims and deduplicates skills without sending empty names", () => {
     expect(technicianSkillNames("AC repair, , Electrical work, AC repair ")).toEqual(["AC repair", "Electrical work"]);
+  });
+
+  it("selects only active areas in the chosen city", () => {
+    expect(technicianAreaIdsForCity([
+      { id: "chennai-1", name: "Guindy", city: "Chennai", postal_code: "600032", is_active: true },
+      { id: "chennai-2", name: "Inactive", city: "Chennai", postal_code: "600033", is_active: false },
+      { id: "coimbatore-1", name: "RS Puram", city: "Coimbatore", postal_code: "641002", is_active: true },
+    ], "Chennai")).toEqual(["chennai-1"]);
   });
 });

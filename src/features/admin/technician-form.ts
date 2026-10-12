@@ -1,4 +1,4 @@
-import type { TechnicianProfile, TechnicianWriteRequest } from "@/types/api";
+import type { TechnicianOptions, TechnicianProfile, TechnicianWriteRequest } from "@/types/api";
 
 export function technicianForm(profile?: TechnicianProfile): TechnicianWriteRequest {
   return {
@@ -27,4 +27,8 @@ export function technicianForm(profile?: TechnicianProfile): TechnicianWriteRequ
 
 export function technicianSkillNames(value: string) {
   return [...new Set(value.split(",").map((name) => name.trim()).filter(Boolean))];
+}
+
+export function technicianAreaIdsForCity(areas: TechnicianOptions["areas"], city: string) {
+  return areas.filter((area) => area.is_active && area.city === city).map((area) => area.id);
 }
