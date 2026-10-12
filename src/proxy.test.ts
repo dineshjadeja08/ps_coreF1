@@ -31,6 +31,14 @@ describe("pre-streaming public resource validation", () => {
     expect((await proxy(new NextRequest("https://purplesquad.in/tv-repair-chennai/unknown"))).status).toBe(404);
     mocks.page.mockResolvedValue({ page_slug: "tv-repair-chennai", services: [{}] });
     expect((await proxy(new NextRequest("https://purplesquad.in/tv-repair-chennai"))).status).toBe(200);
+    mocks.page.mockResolvedValue({ page_slug: "washing-machine-repair-coimbatore/coimbatore-central", services: [{}] });
+    expect((await proxy(new NextRequest("https://purplesquad.in/washing-machine-repair-coimbatore/coimbatore-central"))).status).toBe(200);
+  });
+  it("redirects an old Chennai-slug link for a Coimbatore area", async () => {
+    const response = await proxy(new NextRequest("https://purplesquad.in/washing-machine-repair-chennai/coimbatore-central?ref=shared"));
+    expect(response.status).toBe(308);
+    expect(response.headers.get("location")).toBe("https://purplesquad.in/washing-machine-repair-coimbatore/coimbatore-central?ref=shared");
+    expect(mocks.page).not.toHaveBeenCalled();
   });
   it("does not query the backend or alter private routes/assets", async () => {
     for (const path of ["/login", "/admin", "/book/pay/id", "/api/test", "/_next/image", "/images/services/ac.png"]) expect((await proxy(new NextRequest(`https://purplesquad.in${path}`))).headers.get("x-middleware-next")).toBe("1");
@@ -38,7 +46,7 @@ describe("pre-streaming public resource validation", () => {
     expect(mocks.page).not.toHaveBeenCalled();
   });
   it("matches public service resources only in Next's actual matcher", () => {
-    for (const url of ["/services/tv", "/services/tv/nested", "/ac-service-chennai", "/ac-service-chennai/velachery"]) expect(unstable_doesMiddlewareMatch({ config, nextConfig: {}, url })).toBe(true);
+    for (const url of ["/services/tv", "/services/tv/nested", "/ac-service-chennai", "/ac-service-chennai/velachery", "/washing-machine-repair-coimbatore/coimbatore-central"]) expect(unstable_doesMiddlewareMatch({ config, nextConfig: {}, url })).toBe(true);
     for (const url of ["/services", "/login", "/admin", "/book/pay/id", "/api/test", "/_next/image?url=/images/tv.png", "/images/services/ac.png"]) expect(unstable_doesMiddlewareMatch({ config, nextConfig: {}, url })).toBe(false);
   });
   it("rejects malformed and nested service paths without sending user-controlled path syntax upstream", async () => {

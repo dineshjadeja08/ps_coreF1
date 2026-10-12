@@ -72,7 +72,7 @@ export function ApplianceSelectorDialog() {
 
               return (
                 <Dialog.Close asChild key={item.name}>
-                  <Link href={routes.localizedServiceCategory(item.slug, location.areaSlug)} className="flex min-h-32 flex-col items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white p-2 text-center transition hover:border-primary/40 hover:bg-primary-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:min-h-40 sm:p-3">
+                  <Link href={routes.localizedServiceCategory(item.slug, location.areaSlug, location.city)} className="flex min-h-32 flex-col items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white p-2 text-center transition hover:border-primary/40 hover:bg-primary-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:min-h-40 sm:p-3">
                     {content}
                   </Link>
                 </Dialog.Close>

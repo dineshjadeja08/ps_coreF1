@@ -4,7 +4,7 @@ import { isServiceBrowsingRoute, routes, servicePathForLocation } from "@/consta
 
 describe("mobile service proceed routes", () => {
   it("includes browsing pages and locality service pages", () => {
-    for (const path of ["/", "/search", "/services", "/services/ac-services", "/ac-service-chennai", "/ac-service-chennai/velachery", "/refrigerator-repair-chennai/guindy", "/tv-repair-chennai/anna-nagar"]) {
+    for (const path of ["/", "/search", "/services", "/services/ac-services", "/ac-service-chennai", "/ac-service-chennai/velachery", "/refrigerator-repair-chennai/guindy", "/tv-repair-chennai/anna-nagar", "/washing-machine-repair-coimbatore/coimbatore-central"]) {
       expect(isServiceBrowsingRoute(path)).toBe(true);
     }
   });
@@ -29,6 +29,10 @@ describe("localized service category routes", () => {
   it("keeps the existing route for services without a published SEO family", () => {
     expect(routes.localizedServiceCategory("geyser-repair-services", "guindy")).toBe("/services/geyser-repair-services");
   });
+  it("uses supported Coimbatore localities and falls back to its city page for unknown areas", () => {
+    expect(routes.localizedServiceCategory("washing-machine-repair-service", "coimbatore-central", "Coimbatore")).toBe("/washing-machine-repair-coimbatore/coimbatore-central");
+    expect(routes.localizedServiceCategory("ac-services", "unknown", "Coimbatore")).toBe("/ac-service-coimbatore");
+  });
 });
 
 describe("current service URL after changing location", () => {
@@ -45,8 +49,9 @@ describe("current service URL after changing location", () => {
     expect(servicePathForLocation("/ac-service-chennai/guindy", "", "Chennai")).toBe("/ac-service-chennai");
   });
 
-  it("does not send customers in other cities to Chennai locality pages", () => {
-    expect(servicePathForLocation("/ac-service-chennai/guindy", "rs-puram", "Coimbatore")).toBe("/services/ac-services");
+  it("switches between Chennai and Coimbatore locality pages", () => {
+    expect(servicePathForLocation("/ac-service-chennai/guindy", "rs-puram", "Coimbatore")).toBe("/ac-service-coimbatore/rs-puram");
+    expect(servicePathForLocation("/washing-machine-repair-coimbatore/coimbatore-central", "velachery", "Chennai")).toBe("/washing-machine-repair-chennai/velachery");
   });
 
   it("leaves non-service routes and services without locality pages alone", () => {

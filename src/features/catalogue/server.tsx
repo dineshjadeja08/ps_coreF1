@@ -1,8 +1,8 @@
 import { env } from "@/config/env";
 import { cache } from "react";
 import { apiPaths } from "@/lib/api/endpoints";
-import { buildLocalCityPage, localCityPages } from "@/features/catalogue/local-seo";
-import type { FAQ, PaginatedResponse, Review, SeoLandingPage, SeoLandingPageSummary, ServiceCategory, ServiceDetail, ServiceListItem } from "@/types/api";
+import { buildCoimbatorePage, buildLocalCityPage, localCityPages } from "@/features/catalogue/local-seo";
+import type { FAQ, PaginatedResponse, Review, SeoLandingPage, SeoLandingPageSummary, ServiceArea, ServiceCategory, ServiceDetail, ServiceListItem } from "@/types/api";
 
 const revalidateSeconds = 300;
 
@@ -103,6 +103,18 @@ export const getSeoLandingPageForSeo = cache(async (pageSlug: string) => {
     return await fetchJson<SeoLandingPage>(apiPaths.seoPageDetail(pageSlug));
   } catch (error) {
     if (error instanceof CatalogueError && error.status === 404) {
+      if (/^[a-z0-9-]+-coimbatore(?:\/[a-z0-9-]+)?$/.test(pageSlug)) {
+        const areaSlug = pageSlug.split("/")[1];
+        const areas = await fetchJson<ServiceArea[]>(apiPaths.serviceAreas, { city: "Coimbatore" });
+        const area = areaSlug ? areas.find((item) => item.localities.some((locality) => locality.slug === areaSlug) ||
+          item.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") === areaSlug) : null;
+        if (areaSlug && !area) return null;
+        const cityServices = await getAllServicesForSeo("Coimbatore");
+        const areaServices = area ? await getAllServicesForSeo({ postal_code: area.postal_code }) : cityServices;
+        const availableIds = new Set(areaServices.map((service) => service.id));
+        const services = cityServices.filter((service) => availableIds.has(service.id));
+        return buildCoimbatorePage(pageSlug, areas, services);
+      }
       if (!Object.hasOwn(localCityPages, pageSlug)) return null;
       const page = buildLocalCityPage(pageSlug, await getChennaiServicesForSeo());
       if (!page) return null;
@@ -116,11 +128,12 @@ export const getSeoLandingPageForSeo = cache(async (pageSlug: string) => {
 });
 
 // Follow pagination locally, never fetch an arbitrary URL supplied by an API.
-export async function getAllServicesForSeo(city?: string) {
+export async function getAllServicesForSeo(cityOrQuery?: string | { city?: string; postal_code?: string }) {
+  const query = typeof cityOrQuery === "string" ? { city: cityOrQuery } : cityOrQuery;
   const services: ServiceListItem[] = [];
   let page = 1;
   for (;;) {
-    const response = await fetchJson<PaginatedResponse<ServiceListItem>>(apiPaths.services, { page_size: 100, page, city });
+    const response = await fetchJson<PaginatedResponse<ServiceListItem>>(apiPaths.services, { page_size: 100, page, ...query });
     services.push(...response.results);
     if (!response.next) break;
     if (!response.results.length || page >= 500) throw new Error("Catalogue pagination did not terminate safely");

@@ -1,4 +1,5 @@
-import type { SeoLandingPage, ServiceListItem } from "@/types/api";
+import { coimbatoreAreaSlugs } from "@/constants/routes";
+import type { SeoLandingPage, ServiceArea, ServiceListItem } from "@/types/api";
 
 export const localCityPages = {
   "ac-service-chennai": {
@@ -60,5 +61,35 @@ export function buildLocalCityPage(slug: string, availableServices: ServiceListI
     h1: `${config.name} in Chennai`, intro_content: config.intro, pricing_intro: config.pricing,
     services, coverage_areas: ["Chennai"], faqs: [], canonical_override: "", parent_page: null,
     area_pages: [], nearby_pages: [], related_pages: [],
+  };
+}
+
+// Coimbatore pages use live area/PIN and service availability. Keep them out of
+// the sitemap until each page receives reviewed, original local content.
+export function buildCoimbatorePage(slug: string, areas: ServiceArea[], availableServices: ServiceListItem[]): SeoLandingPage | null {
+  const [citySlug, areaSlug, extra] = slug.split("/");
+  if (extra || !citySlug?.endsWith("-coimbatore")) return null;
+  const chennaiSlug = citySlug.replace(/-coimbatore$/, "-chennai");
+  if (!Object.hasOwn(localCityPages, chennaiSlug)) return null;
+  if (areaSlug && !coimbatoreAreaSlugs.has(areaSlug)) return null;
+  const config = localCityPages[chennaiSlug as keyof typeof localCityPages];
+  const area = areaSlug ? areas.find((item) => item.city.toLowerCase() === "coimbatore" &&
+    (item.localities.some((locality) => locality.slug === areaSlug) || item.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") === areaSlug)) : null;
+  if (areaSlug && !area) return null;
+  const services = availableServices.filter(config.matches);
+  if (!services.length) return null;
+  const name = area?.localities.find((locality) => locality.slug === areaSlug)?.name || area?.name || "";
+  const locality = name ? `${name}, Coimbatore` : "Coimbatore";
+  return {
+    page_slug: slug, path: `/${slug}`, service_slug: citySlug, service_name: config.name,
+    city: "Coimbatore", area: name, area_slug: areaSlug || "", postal_code: area?.postal_code || "",
+    page_type: area ? "SERVICE_AREA" : "SERVICE_CITY", category_slug: services[0].category.slug,
+    is_indexable: false, updated_at: "", canonical_override: "",
+    meta_title: `${config.name} in ${locality} | Purple Squad`,
+    meta_description: `Compare available ${config.name.toLowerCase()} packages in ${locality} with Purple Squad. Check live pricing and confirm service at your exact address.`,
+    h1: `${config.name} in ${locality}`,
+    intro_content: `Purple Squad lists ${config.name.toLowerCase()} options for supported addresses in ${locality}${area ? ` ${area.postal_code}` : ""}. Compare the currently available packages, then confirm availability for your exact address before booking.`,
+    pricing_intro: config.pricing, services, coverage_areas: name ? [name] : ["Coimbatore"],
+    faqs: [], parent_page: null, area_pages: [], nearby_pages: [], related_pages: [],
   };
 }

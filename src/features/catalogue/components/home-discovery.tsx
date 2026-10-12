@@ -17,7 +17,7 @@ import { ErrorState } from "@/components/common/error-state";
 import { Button } from "@/components/ui/button";
 import { trustPromises } from "@/config/design";
 import { env } from "@/config/env";
-import { routes } from "@/constants/routes";
+import { routes, servicePathForLocation } from "@/constants/routes";
 import { AddToCartButton } from "@/features/cart/cart-controls";
 import { openApplianceSelector } from "@/features/catalogue/components/appliance-selector-dialog";
 import { ServiceImage } from "@/features/catalogue/components/service-image";
@@ -108,14 +108,14 @@ export function HomeDiscovery({ initialServices }: { initialServices?: Paginated
                 return item.opensApplianceSelector ? (
                   <button key={item.name} type="button" className={className} onClick={openApplianceSelector}>{content}</button>
                 ) : (
-                  <Link key={item.name} href={routes.localizedServiceCategory(item.slug, location.areaSlug)} className={className}>{content}</Link>
+                  <Link key={item.name} href={routes.localizedServiceCategory(item.slug, location.areaSlug, location.city)} className={className}>{content}</Link>
                 );
               })}
             </div>
             <Button asChild className="mt-6 lg:mt-[clamp(.6rem,1.5vh,1.25rem)]"><Link href={routes.services}>Book a Service <ArrowRight className="h-4 w-4" /></Link></Button>
           </div>
 
-          <HeroImageMosaic areaSlug={location.areaSlug} />
+          <HeroImageMosaic areaSlug={location.areaSlug} city={location.city} />
         </div>
       </section>
       <div className="relative z-10 mx-auto grid w-full max-w-7xl grid-cols-2 gap-px border-y border-border bg-border px-0 sm:grid-cols-4 lg:px-0">
@@ -132,9 +132,9 @@ export function HomeDiscovery({ initialServices }: { initialServices?: Paginated
           ))}
       </div>
 
-      <HomepageOfferBanner areaSlug={location.areaSlug} />
+      <HomepageOfferBanner areaSlug={location.areaSlug} city={location.city} />
 
-      <SpotlightCarousel areaSlug={location.areaSlug} />
+      <SpotlightCarousel areaSlug={location.areaSlug} city={location.city} />
 
       <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-5 flex items-center justify-between gap-4">
@@ -145,7 +145,7 @@ export function HomeDiscovery({ initialServices }: { initialServices?: Paginated
           {popularCategories.map((item) => {
             const content = <><Image src={item.image} alt="" width={88} height={88} className="h-12 w-12 object-contain transition group-hover:scale-105 sm:h-16 sm:w-16" /><h3 className="line-clamp-2 text-xs font-semibold leading-4 group-hover:text-primary sm:text-sm">{item.name}</h3></>;
 
-            return <Link key={item.name} href={routes.localizedServiceCategory(item.slug, location.areaSlug)} className="group flex aspect-square min-w-0 flex-col items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white p-2 text-center shadow-[0_2px_8px_rgba(24,24,27,0.04)] transition hover:border-primary/40 hover:bg-primary-soft sm:p-4">{content}</Link>;
+            return <Link key={item.name} href={routes.localizedServiceCategory(item.slug, location.areaSlug, location.city)} className="group flex aspect-square min-w-0 flex-col items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white p-2 text-center shadow-[0_2px_8px_rgba(24,24,27,0.04)] transition hover:border-primary/40 hover:bg-primary-soft sm:p-4">{content}</Link>;
           })}
         </div>
       </section>
@@ -199,7 +199,7 @@ export function HomeDiscovery({ initialServices }: { initialServices?: Paginated
   );
 }
 
-function HomepageOfferBanner({ areaSlug }: { areaSlug: string }) {
+function HomepageOfferBanner({ areaSlug, city }: { areaSlug: string; city: string }) {
   const banners = useHomepageBanners("MAIN");
   const banner = banners.data?.[0];
   const desktopImage = banner?.desktop_image_url || banner?.desktop_image || "/images/hero/ac-service.webp";
@@ -207,8 +207,8 @@ function HomepageOfferBanner({ areaSlug }: { areaSlug: string }) {
   const configuredHref = banner?.button_link;
   const configuredCategory = configuredHref?.match(/^\/services\/([^/?#]+)\/?$/)?.[1];
   const href = configuredCategory
-    ? routes.localizedServiceCategory(decodeURIComponent(configuredCategory), areaSlug)
-    : configuredHref || routes.localizedServiceCategory("ac-services", areaSlug);
+    ? routes.localizedServiceCategory(decodeURIComponent(configuredCategory), areaSlug, city)
+    : (configuredHref && servicePathForLocation(configuredHref, areaSlug, city)) || configuredHref || routes.localizedServiceCategory("ac-services", areaSlug, city);
 
   return (
     <section aria-label={banner?.image_alt_text || "AC service"} className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 lg:px-8">
@@ -244,7 +244,7 @@ function HomepageOfferBanner({ areaSlug }: { areaSlug: string }) {
   );
 }
 
-function SpotlightCarousel({ areaSlug }: { areaSlug: string }) {
+function SpotlightCarousel({ areaSlug, city }: { areaSlug: string; city: string }) {
   const row = useRef<HTMLDivElement>(null);
   const [start, setStart] = useState(0);
   const [last, setLast] = useState(5);
@@ -299,7 +299,7 @@ function SpotlightCarousel({ areaSlug }: { areaSlug: string }) {
           return item.opensApplianceSelector ? (
             <button key={item.slug} type="button" onClick={openApplianceSelector} className={className}>{content}</button>
           ) : (
-            <Link key={item.slug} href={routes.localizedServiceCategory(item.slug, areaSlug)} className={className}>{content}</Link>
+            <Link key={item.slug} href={routes.localizedServiceCategory(item.slug, areaSlug, city)} className={className}>{content}</Link>
           );
         })}
       </div>
@@ -308,7 +308,7 @@ function SpotlightCarousel({ areaSlug }: { areaSlug: string }) {
   );
 }
 
-function HeroImageMosaic({ areaSlug }: { areaSlug: string }) {
+function HeroImageMosaic({ areaSlug, city }: { areaSlug: string; city: string }) {
   const cards = [
     { image: "/images/hero/ac-service.webp", title: "AC Service", slug: "ac-services" },
     { image: "/images/hero/washing-machine-service.webp", title: "Appliance Repair", slug: "home-appliances-repair", opensApplianceSelector: true },
@@ -319,7 +319,7 @@ function HeroImageMosaic({ areaSlug }: { areaSlug: string }) {
     const className = "group relative aspect-[4/3] min-h-0 overflow-hidden rounded-md text-left focus-visible:outline-2 focus-visible:outline-primary";
     const content = <><Image src={card.image} alt={`Purple Squad ${card.title}`} fill priority={index === 0} sizes="(min-width: 1024px) 28vw, 46vw" className="object-cover object-center transition duration-300 group-hover:scale-[1.02]" /><span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent px-3 pb-3 pt-8 text-xs font-bold text-white sm:text-sm">{card.title}</span></>;
 
-    return card.opensApplianceSelector ? <button key={card.image} type="button" onClick={openApplianceSelector} className={className}>{content}</button> : <Link key={card.image} href={routes.localizedServiceCategory(card.slug, areaSlug)} className={className}>{content}</Link>;
+    return card.opensApplianceSelector ? <button key={card.image} type="button" onClick={openApplianceSelector} className={className}>{content}</button> : <Link key={card.image} href={routes.localizedServiceCategory(card.slug, areaSlug, city)} className={className}>{content}</Link>;
   })}</div>;
 }
 

@@ -128,7 +128,7 @@ export function ServiceDetailView({
               <ServiceImage
                 src={landingImage(detail)}
                 fallbackLabel={detail.name}
-                alt={`${pageTitle} by Purple Squad in ${location.city}`}
+                alt={`${pageTitle} by Purple Squad in ${seoContent?.city || location.city}`}
                 priority
                 sizes="(min-width: 1280px) 800px, (min-width: 1024px) 65vw, 100vw"
                 className="aspect-[16/10] h-auto w-full rounded-lg bg-white sm:aspect-[16/7]"

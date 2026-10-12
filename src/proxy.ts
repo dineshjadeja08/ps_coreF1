@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+import { coimbatoreAreaSlugs } from "@/constants/routes";
 import { getSeoLandingPageForSeo, getServiceCategoriesForSeo, getServiceDetailForSeo } from "@/features/catalogue/server";
 
 function unavailable(status: 404 | 503) {
@@ -23,8 +24,13 @@ export async function proxy(request: NextRequest) {
       if (slug === "ac-services" || categories.some((category) => category.slug === slug)) return NextResponse.next();
       return await getServiceDetailForSeo(slug) ? NextResponse.next() : unavailable(404);
     }
-    if (segments[0]?.endsWith("-chennai")) {
+    if (/(?:-chennai|-coimbatore)$/.test(segments[0] ?? "")) {
       if (segments.length > 2) return unavailable(404);
+      if (segments[0].endsWith("-chennai") && coimbatoreAreaSlugs.has(segments[1] ?? "")) {
+        const destination = request.nextUrl.clone();
+        destination.pathname = `/${segments[0].replace(/-chennai$/, "-coimbatore")}/${segments[1]}`;
+        return NextResponse.redirect(destination, 308);
+      }
       const slug = segments.map(decodeURIComponent).join("/");
       if (!slug.split("/").every((segment) => /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(segment))) return unavailable(404);
       const page = await getSeoLandingPageForSeo(slug);
@@ -37,4 +43,4 @@ export async function proxy(request: NextRequest) {
   }
 }
 
-export const config = { matcher: ["/services/:slug/:rest*", "/:serviceSlug([a-z0-9-]+-chennai)/:areaSlug*"] };
+export const config = { matcher: ["/services/:slug/:rest*", "/:serviceSlug([a-z0-9-]+-(?:chennai|coimbatore))/:areaSlug*"] };

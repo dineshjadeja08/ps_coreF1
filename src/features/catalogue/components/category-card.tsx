@@ -11,7 +11,7 @@ export function CategoryCard({ category }: { category: ServiceCategory }) {
   const location = useSelectedLocation();
   return (
     <Link
-      href={routes.localizedServiceCategory(category.slug, location.areaSlug)}
+      href={routes.localizedServiceCategory(category.slug, location.areaSlug, location.city)}
       className="group rounded-md border border-border bg-surface p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[var(--shadow-card)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
     >
       <div className="grid gap-3">
