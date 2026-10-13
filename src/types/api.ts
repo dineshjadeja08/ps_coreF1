@@ -11,6 +11,26 @@ export type PaginatedResponse<T> = {
   results: T[];
 };
 
+export type BlogPostSummary = {
+  id: UUID;
+  title: string;
+  slug: string;
+  excerpt: string;
+  author_name: string;
+  cover_image_url: string;
+  related_service_slug: string | null;
+  published_at: ISODateTime | null;
+  updated_at: ISODateTime;
+};
+
+export type BlogPost = BlogPostSummary & { body: string };
+export type AdminBlogPost = BlogPost & {
+  related_service: UUID | null;
+  is_published: boolean;
+  created_at: ISODateTime;
+};
+export type BlogPostWriteRequest = Pick<AdminBlogPost, "title" | "slug" | "excerpt" | "body" | "author_name" | "cover_image_url" | "related_service" | "is_published">;
+
 export type ServiceCategory = {
   id: UUID;
   name: string;
