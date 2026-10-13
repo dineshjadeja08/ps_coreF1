@@ -11,6 +11,15 @@ describe("blog content", () => {
     ]);
   });
 
+  it("supports nested headings and ordered or unordered lists as semantic blocks", () => {
+    expect(parseBlogBody("## Steps\n### First\n- Clean the filter\n- Check airflow\n\n1. Turn it off\n2. Call a technician")).toEqual([
+      { kind: "heading", text: "Steps" },
+      { kind: "subheading", text: "First" },
+      { kind: "list", ordered: false, items: ["Clean the filter", "Check airflow"] },
+      { kind: "list", ordered: true, items: ["Turn it off", "Call a technician"] },
+    ]);
+  });
+
   it("creates safe URL slugs from titles", () => {
     expect(blogSlug("Why Isn’t My AC Cooling? ")).toBe("why-isn-t-my-ac-cooling");
   });

@@ -25,6 +25,6 @@ describe("professional review card", () => {
     const html = renderToStaticMarkup(<ReviewCard review={{ ...review, reviewer_name: "Sanjay", booking: "booking-1", is_booking_review: true }} />);
     expect(html).toContain("Sanjay");
     expect(html).toContain("Completed booking review");
-    expect(html).toContain("<time");
+    expect(html).not.toContain("<time");
   });
 });

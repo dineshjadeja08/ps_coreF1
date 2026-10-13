@@ -5,6 +5,8 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight, BookOpen, CalendarDays, Clock3 } from "lucide-react";
 
 import { JsonLd } from "@/components/seo/json-ld";
+import { ReadingProgress } from "@/features/blog/components/reading-progress";
+import { categoryForPost } from "@/features/blog/category";
 import { parseBlogBody } from "@/features/blog/body";
 import { getPublishedBlogPost, getPublishedBlogPosts } from "@/features/blog/server";
 import { publicPageMetadata } from "@/lib/page-metadata";
@@ -40,10 +42,11 @@ export default async function BlogPostPage({ params }: Props) {
   const post = await getPublishedBlogPost(slug);
   if (!post) notFound();
   const blocks = parseBlogBody(post.body);
-  const headings = blocks.filter((block) => block.kind === "heading");
+  const headings = blocks.filter((block): block is Extract<typeof block, { kind: "heading" | "subheading" }> => block.kind === "heading" || block.kind === "subheading");
   const words = post.body.trim().split(/\s+/).filter(Boolean).length;
   const readingMinutes = Math.max(1, Math.ceil(words / 210));
   const date = post.published_at ? new Date(post.published_at).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }) : null;
+  const updatedDate = new Date(post.updated_at).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
   const url = absoluteUrl(`/blog/${post.slug}`);
   const articleSchema = {
     "@context": "https://schema.org",
@@ -60,13 +63,16 @@ export default async function BlogPostPage({ params }: Props) {
   };
   let morePosts: Awaited<ReturnType<typeof getPublishedBlogPosts>> = [];
   try {
-    morePosts = (await getPublishedBlogPosts()).filter((item) => item.slug !== post.slug).slice(0, 2);
+    const candidates = (await getPublishedBlogPosts()).filter((item) => item.slug !== post.slug);
+    const sameCategory = candidates.filter((item) => categoryForPost(item).slug === categoryForPost(post).slug);
+    morePosts = [...sameCategory, ...candidates.filter((item) => !sameCategory.some((related) => related.id === item.id))].slice(0, 2);
   } catch {
     // The article remains readable even if the optional recommendations request fails.
   }
 
   return (
     <main className="min-h-screen bg-[#fbfaf8] pb-16">
+      <ReadingProgress />
       <JsonLd data={[articleSchema, breadcrumbJsonLd([
         { name: "Home", path: "/" }, { name: "Home Care Journal", path: "/blog" }, { name: post.title, path: `/blog/${post.slug}` },
       ])]} />
@@ -74,26 +80,32 @@ export default async function BlogPostPage({ params }: Props) {
         <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-sm text-[#817987]"><Link href="/blog" className="inline-flex items-center gap-2 font-semibold text-primary hover:underline"><ArrowLeft size={15} /> Home Care Journal</Link><span aria-hidden="true">/</span><span className="max-w-[55vw] truncate">{post.title}</span></nav>
         <article className="mx-auto mt-8 max-w-5xl overflow-hidden rounded-3xl border border-[#ece8e2] bg-white shadow-[0_18px_50px_rgba(38,25,57,0.07)]">
           <header className="mx-auto max-w-4xl px-6 pb-8 pt-8 sm:px-12 sm:pb-10 sm:pt-14">
-            <span className="inline-flex items-center gap-2 rounded-full bg-primary-soft px-3 py-1.5 text-xs font-bold uppercase tracking-[0.12em] text-primary"><BookOpen size={14} /> Home care & appliance advice</span>
+            <span className="inline-flex items-center gap-2 rounded-full bg-primary-soft px-3 py-1.5 text-xs font-bold uppercase tracking-[0.12em] text-primary"><BookOpen size={14} /> {categoryForPost(post).label}</span>
             <h1 className="mt-6 text-3xl font-extrabold leading-[1.12] tracking-tight text-[#20192b] sm:text-5xl">{post.title}</h1>
             <p className="mt-5 max-w-3xl text-lg leading-8 text-[#716b77] sm:text-xl">{post.excerpt}</p>
             <div className="mt-7 flex flex-wrap items-center gap-x-5 gap-y-3 border-t border-[#eeeaf0] pt-5 text-sm text-[#817987]">
               <span className="font-semibold text-[#393142]">By {post.author_name}</span>
               {date && <span className="inline-flex items-center gap-2"><CalendarDays size={15} />{date}</span>}
+              {post.updated_at.slice(0, 10) !== post.published_at?.slice(0, 10) && <span>Updated {updatedDate}</span>}
               <span className="inline-flex items-center gap-2"><Clock3 size={15} />{readingMinutes} min read</span>
             </div>
           </header>
-          {post.cover_image_url ? <div className="relative aspect-[16/8] w-full overflow-hidden bg-violet-50"><Image src={post.cover_image_url} alt={post.title} width={1440} height={720} unoptimized priority className="h-full w-full object-cover" /></div> : <div className="mx-6 flex aspect-[16/6] items-center justify-center rounded-2xl bg-gradient-to-br from-violet-100 via-fuchsia-50 to-amber-50 text-primary sm:mx-12"><BookOpen size={46} strokeWidth={1.3} aria-hidden="true" /></div>}
+          {post.cover_image_url ? <div className="relative aspect-[16/8] w-full overflow-hidden bg-violet-50"><Image src={post.cover_image_url} alt={post.title} width={1440} height={720} sizes="(min-width: 1024px) 960px, 100vw" priority className="h-full w-full object-cover" /></div> : <div className="mx-6 flex aspect-[16/6] items-center justify-center rounded-2xl bg-gradient-to-br from-violet-100 via-fuchsia-50 to-amber-50 text-primary sm:mx-12"><BookOpen size={46} strokeWidth={1.3} aria-hidden="true" /></div>}
           <div className="grid gap-10 px-6 py-9 sm:px-12 sm:py-12 lg:grid-cols-[minmax(0,1fr)_220px] lg:gap-14">
             <div className="min-w-0">
+              {headings.length > 1 && <details className="mb-7 rounded-xl border border-[#eeeaf0] bg-[#fcfbfd] p-4 lg:hidden"><summary className="cursor-pointer list-none font-bold text-[#393142] [&::-webkit-details-marker]:hidden">In this article <span aria-hidden="true" className="float-right text-primary">⌄</span></summary><nav aria-label="Article contents" className="mt-4 space-y-3">{headings.map((heading, index) => <a key={index} href={`#${headingId(heading.text)}`} className={`block text-sm leading-5 text-[#514b58] hover:text-primary ${heading.kind === "subheading" ? "pl-3" : ""}`}>{heading.text}</a>)}</nav></details>}
               <div className="space-y-6 text-[1.0625rem] leading-8 text-[#514b58]">
                 {blocks.map((block, index) => block.kind === "heading"
                   ? <h2 id={headingId(block.text)} key={index} className="scroll-mt-24 pt-4 text-2xl font-extrabold leading-tight tracking-tight text-[#251d30] sm:text-3xl">{block.text}</h2>
-                  : <p key={index}>{block.text}</p>)}
+                  : block.kind === "subheading"
+                    ? <h3 id={headingId(block.text)} key={index} className="scroll-mt-24 pt-2 text-xl font-bold leading-tight text-[#251d30]">{block.text}</h3>
+                    : block.kind === "list"
+                      ? block.ordered ? <ol key={index} className="list-decimal space-y-2 pl-6 marker:font-semibold marker:text-primary">{block.items.map((item, itemIndex) => <li key={itemIndex} className="pl-1">{item}</li>)}</ol> : <ul key={index} className="list-disc space-y-2 pl-6 marker:text-primary">{block.items.map((item, itemIndex) => <li key={itemIndex} className="pl-1">{item}</li>)}</ul>
+                      : <p key={index}>{block.text}</p>)}
               </div>
               {post.related_service_slug ? <section className="mt-10 rounded-2xl border border-violet-100 bg-gradient-to-br from-violet-50 to-white p-6 sm:p-7"><p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">Purple Squad service</p><h2 className="mt-2 text-xl font-bold text-[#251d30]">Want an expert to take a look?</h2><p className="mt-2 leading-7 text-[#716b77]">Explore the related service, check what’s included and find a convenient booking slot.</p><Link href={`/services/${post.related_service_slug}`} className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-xl bg-primary px-5 font-bold text-white transition hover:bg-primary-hover">View service <ArrowRight size={16} /></Link></section> : null}
             </div>
-            {headings.length > 1 && <aside className="h-fit rounded-2xl border border-[#eeeaf0] bg-[#fcfbfd] p-5 lg:sticky lg:top-24"><p className="text-xs font-bold uppercase tracking-[0.12em] text-[#817987]">In this article</p><nav aria-label="Article contents" className="mt-4 space-y-3">{headings.map((heading) => <a key={heading.text} href={`#${headingId(heading.text)}`} className="block text-sm leading-5 text-[#514b58] transition hover:text-primary">{heading.text}</a>)}</nav></aside>}
+            {headings.length > 1 && <aside className="hidden h-fit rounded-2xl border border-[#eeeaf0] bg-[#fcfbfd] p-5 lg:sticky lg:top-24 lg:block"><p className="text-xs font-bold uppercase tracking-[0.12em] text-[#817987]">In this article</p><nav aria-label="Article contents" className="mt-4 space-y-3">{headings.map((heading, index) => <a key={index} href={`#${headingId(heading.text)}`} className={`block text-sm leading-5 text-[#514b58] transition hover:text-primary ${heading.kind === "subheading" ? "pl-3" : ""}`}>{heading.text}</a>)}</nav></aside>}
           </div>
         </article>
 

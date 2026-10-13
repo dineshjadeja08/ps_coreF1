@@ -35,8 +35,7 @@ export function ReviewList({ reviews, showAll = false, serviceName }: { reviews:
             </span>
           </div>
           <p className="mt-1.5 text-xs leading-5 text-slate-500">
-            {new Intl.DateTimeFormat("en-IN", { dateStyle: "medium" }).format(new Date(review.created_at))}
-            {review.is_booking_review ? " · Completed booking review" : " · Customer feedback"}
+            {review.is_booking_review ? "Completed booking review" : "Customer feedback"}
             {serviceName ? ` · ${serviceName}` : ""}
           </p>
           <p className="mt-3 whitespace-pre-line break-words text-sm leading-6 text-slate-800">{review.comment}</p>

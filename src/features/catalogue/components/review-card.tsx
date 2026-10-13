@@ -17,7 +17,7 @@ export function ReviewCard({ review }: { review: Review }) {
         <span aria-hidden="true" className="ml-2 text-xs font-semibold text-secondary">{review.rating}/5</span>
       </div>
       <p className="mb-5 mt-4 flex-1 whitespace-pre-line break-words border-l-2 border-violet-200 pl-4 text-sm leading-7 text-slate-700">{review.comment}</p>
-      {review.is_booking_review ? <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-4 text-xs text-secondary"><span className="inline-flex items-center gap-1.5 text-emerald-700"><BadgeCheck aria-hidden="true" className="h-4 w-4" />Completed booking review</span><time dateTime={review.created_at}>{new Intl.DateTimeFormat("en-IN", { dateStyle: "medium" }).format(new Date(review.created_at))}</time></div> : <p className="border-t border-slate-100 pt-4 text-xs text-secondary">Shared customer experience</p>}
+      {review.is_booking_review ? <div className="border-t border-slate-100 pt-4 text-xs text-secondary"><span className="inline-flex items-center gap-1.5 text-emerald-700"><BadgeCheck aria-hidden="true" className="h-4 w-4" />Completed booking review</span></div> : <p className="border-t border-slate-100 pt-4 text-xs text-secondary">Shared customer experience</p>}
     </article>
   );
 }
