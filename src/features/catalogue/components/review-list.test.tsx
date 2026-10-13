@@ -2,6 +2,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import { FaqItem } from "./faq-item";
+import { OverallReviewSummary } from "./overall-review-summary";
 import { ReviewList } from "./review-list";
 import type { Review } from "@/features/catalogue/types";
 
@@ -35,5 +36,23 @@ describe("popup FAQs and review expansion", () => {
     expect(html).not.toContain("Read more reviews");
     expect(html).not.toContain("Feedback 2");
     expect(html.split("<article")).toHaveLength(3);
+  });
+  it("summarizes only published reviews and shows the rating distribution", () => {
+    const html = renderToStaticMarkup(<OverallReviewSummary reviews={reviews.map((review, index) => ({ ...review, rating: index === 0 ? 5 : 4, is_visible: index < 3 }))} />);
+    expect(html).toContain("Overall customer rating");
+    expect(html).toContain("4.3");
+    expect(html).toContain("3 reviews");
+    expect(html).toContain('aria-valuenow="1"');
+    expect(html).toContain('aria-valuenow="2"');
+  });
+  it("shows every review and the available sorting controls in the all reviews popup", () => {
+    const html = renderToStaticMarkup(<ReviewList reviews={reviews} showAll serviceName="AC Service" />);
+    expect(html).toContain("All reviews");
+    expect(html).toContain("Most detailed");
+    expect(html).toContain("Highest rated");
+    expect(html).toContain("Newest");
+    expect(html).toContain("AC Service");
+    expect(html.split("<article")).toHaveLength(6);
+    expect(html).not.toContain("Read more reviews");
   });
 });

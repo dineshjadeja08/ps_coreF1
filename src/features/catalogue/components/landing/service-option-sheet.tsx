@@ -7,6 +7,7 @@ import { useRef } from "react";
 
 import { AddToCartButton } from "@/features/cart/cart-controls";
 import { CartStickyBar } from "@/features/catalogue/components/landing/cart-sticky-bar";
+import { OverallReviewSummary } from "@/features/catalogue/components/overall-review-summary";
 import { ServiceImage } from "@/features/catalogue/components/service-image";
 import { ReviewList } from "@/features/catalogue/components/review-list";
 import { FaqItem } from "@/features/catalogue/components/faq-item";
@@ -19,7 +20,7 @@ export function ServiceOptionSheet({ group, onClose }: { group: ServiceLandingGr
   const representative = group.options[0];
   const detailQuery = useServiceDetail(representative.slug);
   const faqQuery = useServiceFaqs(representative.id);
-  const reviews = useServiceReviews(representative.id);
+  const reviews = useServiceReviews(representative.id, undefined, 100);
   const pointerStart = useRef<number | null>(null);
   const detail = detailQuery.data as ServiceDetail | undefined;
   const averageRating = reviews.data?.results.length
@@ -113,7 +114,8 @@ export function ServiceOptionSheet({ group, onClose }: { group: ServiceLandingGr
                 </section>
                 <section className="py-6">
                   <h2 className="text-base font-extrabold text-foreground">Customer Reviews</h2>
-                  {reviews.data?.results.length ? <ReviewList reviews={reviews.data.results} /> : <p className="mt-2 text-sm text-secondary">No customer reviews have been published yet.</p>}
+                  <OverallReviewSummary reviews={reviews.data?.results ?? []} />
+                  {reviews.data?.results.length ? <ReviewList reviews={reviews.data.results} showAll serviceName={representative.name} /> : null}
                 </section>
               </div>
             </div>

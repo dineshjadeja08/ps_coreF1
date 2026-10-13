@@ -12,6 +12,7 @@ import { SectionHeading } from "@/components/common/section-heading";
 import { routes } from "@/constants/routes";
 import { AddToCartButton, CartSummary } from "@/features/cart/cart-controls";
 import { CartStickyBar } from "@/features/catalogue/components/landing/cart-sticky-bar";
+import { OverallReviewSummary } from "@/features/catalogue/components/overall-review-summary";
 import { ServiceImage } from "@/features/catalogue/components/service-image";
 import { ReviewCard } from "@/features/catalogue/components/review-card";
 import { ReviewList } from "@/features/catalogue/components/review-list";
@@ -378,7 +379,8 @@ function PackageDetailsDialog({
               </section>
               <section className="py-6">
                 <h3 className="text-lg font-bold text-foreground">Customer Reviews</h3>
-                {reviews.length ? <ReviewList reviews={reviews} /> : <p className="mt-2 text-sm text-secondary">No customer reviews have been published yet.</p>}
+                <div className="mt-3"><OverallReviewSummary reviews={reviews} /></div>
+                {reviews.length ? <ReviewList reviews={reviews} showAll serviceName={detail.name} /> : null}
               </section>
             </div>
           ) : null}

@@ -68,8 +68,8 @@ export function useServiceReviewsAggregate(serviceIds: string[]) {
   const uniqueIds = Array.from(new Set(serviceIds.filter(Boolean)));
   const queries = useQueries({
     queries: uniqueIds.map((serviceId) => ({
-      queryKey: queryKeys.serviceReviews(serviceId),
-      queryFn: () => publicCatalogueApi.listServiceReviews(serviceId),
+      queryKey: [...queryKeys.serviceReviews(serviceId), 100],
+      queryFn: () => publicCatalogueApi.listServiceReviews(serviceId, 100),
       staleTime: 2 * 60_000,
     })),
   });
