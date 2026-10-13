@@ -55,10 +55,10 @@ export function useServiceDetail(slug: string, initialData?: ServiceDetail) {
   });
 }
 
-export function useServiceReviews(serviceId?: string, initialData?: PaginatedResponse<Review>) {
+export function useServiceReviews(serviceId?: string, initialData?: PaginatedResponse<Review>, pageSize = 3) {
   return useQuery({
-    queryKey: serviceId ? queryKeys.serviceReviews(serviceId) : ["catalogue", "reviews", "missing"],
-    queryFn: () => publicCatalogueApi.listServiceReviews(serviceId ?? ""),
+    queryKey: serviceId ? [...queryKeys.serviceReviews(serviceId), pageSize] : ["catalogue", "reviews", "missing", pageSize],
+    queryFn: () => publicCatalogueApi.listServiceReviews(serviceId ?? "", pageSize),
     enabled: Boolean(serviceId),
     initialData,
   });

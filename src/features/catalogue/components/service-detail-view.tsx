@@ -1,7 +1,7 @@
 "use client";
 
 import * as Dialog from "@radix-ui/react-dialog";
-import { Check, ChevronRight, Clock, Percent, ShieldCheck, Star, X } from "lucide-react";
+import { Check, ChevronDown, ChevronRight, Clock, Percent, ShieldCheck, Star, X } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState } from "react";
@@ -70,11 +70,11 @@ export function ServiceDetailView({
     page_size: 80,
     ...locationFilter,
   }, location.city === "Chennai" && !location.pincode ? initialServices : undefined);
-  const reviews = useServiceReviews(service.data?.id, service.data?.id === initialService?.id ? initialReviews : undefined);
+  const reviews = useServiceReviews(service.data?.id, service.data?.id === initialService?.id ? initialReviews : undefined, 100);
   const [selectedPackage, setSelectedPackage] = useState<ServiceListItem | null>(null);
   const selectedPackageDetail = useServiceDetail(selectedPackage?.slug ?? "");
   const selectedPackageFaqs = useServiceFaqs(selectedPackage?.id);
-  const selectedPackageReviews = useServiceReviews(selectedPackage?.id);
+  const selectedPackageReviews = useServiceReviews(selectedPackage?.id, undefined, 100);
 
   if (service.isLoading) {
     return <ServiceDetailSkeleton />;
@@ -104,8 +104,10 @@ export function ServiceDetailView({
   const familyPopupContentImage = packageServices.map((item) => item.popup_content_image).find(Boolean) ?? detail.popup_content_image;
   const pageTitle = landingTitle ?? detail.name;
   const heading = pageTitle.toLowerCase().endsWith(` in ${location.city.toLowerCase()}`) ? pageTitle : `${pageTitle} in ${location.city}`;
-  const displayedReviews = (reviews.data?.results ?? []).filter((review) => review.is_visible).slice(0, 5);
-  const averageRating = displayedReviews.length ? displayedReviews.reduce((total, review) => total + review.rating, 0) / displayedReviews.length : null;
+  const visibleReviews = (reviews.data?.results ?? []).filter((review) => review.is_visible);
+  const displayedReviews = visibleReviews.slice(0, 5);
+  const remainingReviews = visibleReviews.slice(5);
+  const averageRating = visibleReviews.length ? visibleReviews.reduce((total, review) => total + review.rating, 0) / visibleReviews.length : null;
 
   return (
     <div className="overflow-x-clip bg-[#f7f7f7]">
@@ -138,7 +140,7 @@ export function ServiceDetailView({
                 <h1 className="text-2xl font-bold leading-tight text-foreground sm:text-3xl">{seoContent?.h1 || heading}</h1>
                 {averageRating !== null ? <p className="mt-2 flex items-center gap-2 text-sm font-semibold text-secondary">
                   <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-                  {averageRating.toFixed(1)} ({displayedReviews.length} customer reviews)
+                  {averageRating.toFixed(1)} ({visibleReviews.length} customer reviews)
                 </p> : null}
                 {detail.description || detail.short_description ? <p className="mt-3 text-sm leading-6 text-secondary">{detail.description || detail.short_description}</p> : null}
               </div>
@@ -222,6 +224,16 @@ export function ServiceDetailView({
           <div className="grid items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {displayedReviews.map((review) => <ReviewCard key={review.id} review={review} />)}
           </div>
+          {remainingReviews.length ? <details className="group/reviews rounded-xl border border-violet-200 bg-white p-4">
+            <summary className="flex min-h-11 cursor-pointer list-none items-center justify-center gap-2 font-semibold text-primary [&::-webkit-details-marker]:hidden">
+              <span className="group-open/reviews:hidden">Read more reviews ({remainingReviews.length})</span>
+              <span className="hidden group-open/reviews:inline">Show fewer reviews</span>
+              <ChevronDown aria-hidden="true" className="h-4 w-4 transition-transform group-open/reviews:rotate-180" />
+            </summary>
+            <div className="mt-4 grid items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {remainingReviews.map((review) => <ReviewCard key={review.id} review={review} />)}
+            </div>
+          </details> : null}
         </section>
       ) : null}
 

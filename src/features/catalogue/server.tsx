@@ -82,7 +82,7 @@ export const getServiceDetailForSeo = cache(async (slug: string) => {
 
 export async function getServiceReviewsForSeo(serviceId: string) {
   try {
-    return await fetchJson<PaginatedResponse<Review>>(apiPaths.serviceReviews(serviceId), { page_size: 20 });
+    return await fetchJson<PaginatedResponse<Review>>(apiPaths.serviceReviews(serviceId), { page_size: 100 });
   } catch {
     return { count: 0, next: null, previous: null, results: [] };
   }

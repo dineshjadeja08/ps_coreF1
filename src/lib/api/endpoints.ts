@@ -16,6 +16,8 @@ import type {
   BalanceCollectionRequest,
   Booking,
   AuthLoginResponse,
+  AdminBlogPost,
+  BlogPostWriteRequest,
   PasswordLoginResponse,
   PaginatedResponse,
   PasswordLoginRequest,
@@ -77,6 +79,10 @@ export const apiPaths = {
   deviceRegister: "/api/v1/devices/register/",
   serviceCategories: "/api/v1/service-categories/",
   services: "/api/v1/services/",
+  blogPosts: "/api/v1/blog-posts/",
+  blogPostDetail: (slug: string) => `/api/v1/blog-posts/${encodeURIComponent(slug)}/`,
+  adminBlogPosts: "/api/v1/admin/blog-posts/",
+  adminBlogPostDetail: (id: UUID) => `/api/v1/admin/blog-posts/${id}/`,
   serviceDetail: (slug: string) => `/api/v1/services/${slug}/`,
   seoPages: "/api/v1/seo-pages/",
   seoPageDetail: (pageSlug: string) => `/api/v1/seo-pages/${pageSlug}/`,
@@ -167,8 +173,8 @@ export const catalogueApi = {
   listServices: (query?: { category?: string; search?: string; featured?: boolean; city?: string; postal_code?: string; page?: number; page_size?: number }) =>
     apiRequest<PaginatedResponse<ServiceListItem>>(apiPaths.services, { query, cache: "no-store" }),
   getService: (slug: string) => apiRequest<ServiceDetail>(apiPaths.serviceDetail(slug), { cache: "no-store" }),
-  listServiceReviews: (serviceId: UUID) =>
-    apiRequest<PaginatedResponse<Review>>(apiPaths.serviceReviews(serviceId), { query: { page_size: 3 } }),
+  listServiceReviews: (serviceId: UUID, pageSize = 3) =>
+    apiRequest<PaginatedResponse<Review>>(apiPaths.serviceReviews(serviceId), { query: { page_size: pageSize } }),
   listServiceFaqs: (serviceId: UUID) => apiRequest<FAQ[]>(apiPaths.faqs, { query: { service_id: serviceId } }),
   listHomepageBanners: (placement: HomepageBanner["placement"] = "MAIN") =>
     apiRequest<HomepageBanner[]>(apiPaths.homepageBanners, { query: { placement }, cache: "no-store" }),
@@ -317,6 +323,12 @@ export const technicianApi = {
 };
 
 export const adminApi = {
+  listBlogPosts: (query?: { page?: number; page_size?: number; search?: string }) =>
+    apiRequest<PaginatedResponse<AdminBlogPost>>(apiPaths.adminBlogPosts, { auth: true, query }),
+  createBlogPost: (body: BlogPostWriteRequest) =>
+    apiRequest<AdminBlogPost>(apiPaths.adminBlogPosts, { method: "POST", body, auth: true }),
+  updateBlogPost: (id: UUID, body: Partial<BlogPostWriteRequest>) =>
+    apiRequest<AdminBlogPost>(apiPaths.adminBlogPostDetail(id), { method: "PATCH", body, auth: true }),
   getBooking: (id: UUID) => apiRequest<Booking>(apiPaths.adminBookingDetail(id), { auth: true }),
   listBookingActivities: (id: UUID) => apiRequest<import("@/types/api").BookingActivity[]>(`${apiPaths.adminBookingDetail(id)}activities/`, { auth: true }),
   listTimeSlots: (query?: { service_area?: string; date?: string; page_size?: number }) =>
