@@ -35,7 +35,9 @@ describe("visible server-rendered service content", () => {
     const reviews = Array.from({ length: 7 }, (_, index) => ({
       id: String(index), rating: index % 2 ? 4 : 5, comment: `Review text ${index}`,
       is_visible: index !== 6, customer: { name: `Customer ${index}` },
-    })) as Review[];
+      booking: null, technician: null,
+      created_at: "2026-10-13T00:00:00Z", updated_at: "2026-10-13T00:00:00Z",
+    })) satisfies Review[];
     const html = renderToStaticMarkup(<ServiceDetailView initialService={service} serviceSlug={service.slug} initialReviews={{ count: 7, next: null, previous: null, results: reviews }} />);
     expect(html).toContain("Read more reviews (1)");
     expect(html.indexOf("Review text 5")).toBeGreaterThan(html.indexOf("<details"));
