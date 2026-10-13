@@ -28,6 +28,7 @@ export function Footer() {
         { href: "/services", label: "Categories near you" },
         { href: "/faq", label: "FAQs" },
         { href: "/guides", label: "Appliance care guides" },
+        { href: "/blog", label: "Home Care Guides" },
         { href: "/support", label: "Help centre" },
       ],
     },

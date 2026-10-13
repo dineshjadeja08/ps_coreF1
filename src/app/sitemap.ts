@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 
 import { getSitemapCatalogue } from "@/features/catalogue/server";
+import { getPublishedBlogPosts } from "@/features/blog/server";
 import { maintenanceGuides } from "@/features/catalogue/maintenance-guides";
 import { absoluteUrl, canonicalFor } from "@/lib/seo";
 import { getCategoryVisualSrc, resolveServiceImage, serviceHeroImage, serviceListImage, servicePageImages } from "@/lib/service-images";
@@ -30,9 +31,16 @@ function imageUrls(sources: Array<string | null | undefined>) {
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const { services, categories, categoryServices = services, pages } = await getSitemapCatalogue();
+  const [{ services, categories, categoryServices = services, pages }, blogPosts] = await Promise.all([
+    getSitemapCatalogue(), getPublishedBlogPosts(),
+  ]);
   const entries: MetadataRoute.Sitemap = publicRoutes.map((path) => ({ url: canonicalFor(path) }));
   entries.push({ url: canonicalFor("/guides") }, ...Object.keys(maintenanceGuides).map((slug) => ({ url: canonicalFor(`/guides/${slug}`) })));
+  if (blogPosts.length) entries.push({ url: canonicalFor("/blog") });
+  for (const post of blogPosts) {
+    if (!validSlug.test(post.slug)) continue;
+    entries.push({ url: canonicalFor(`/blog/${post.slug}`), lastModified: genuineDate(post.updated_at), images: imageUrls([post.cover_image_url]) });
+  }
   entries.push({ url: canonicalFor("/services"), images: imageUrls([
     ...categories.map(getCategoryVisualSrc),
     ...categoryServices.slice(0, 40).map((service) => resolveServiceImage(service.cover_image, service.name).src),

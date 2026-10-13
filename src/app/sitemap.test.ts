@@ -1,11 +1,14 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { resolveSitemap } from "next/dist/build/webpack/loaders/metadata/resolve-route-data";
 
 const { catalogue } = vi.hoisted(() => ({ catalogue: vi.fn() }));
 vi.mock("@/features/catalogue/server", () => ({ getSitemapCatalogue: catalogue }));
+const { blogPosts } = vi.hoisted(() => ({ blogPosts: vi.fn() }));
+vi.mock("@/features/blog/server", () => ({ getPublishedBlogPosts: blogPosts }));
 import sitemap from "./sitemap";
 
 describe("production sitemap", () => {
+  beforeEach(() => blogPosts.mockResolvedValue([]));
   it("includes valid categories/services and published landing pages without fabricated dates", async () => {
     catalogue.mockResolvedValue({
       categories: [{ slug: "ac-services" }],
@@ -21,6 +24,7 @@ describe("production sitemap", () => {
     const urls = entries.map((entry) => entry.url);
     expect(new Set(urls).size).toBe(urls.length);
     expect(urls).toContain("https://purplesquad.in/services/ac-services");
+    expect(urls).not.toContain("https://purplesquad.in/blog");
     expect(urls).toContain("https://purplesquad.in/ac-service-chennai/velachery");
     expect(urls.some((url) => /hidden|evil|admin|\?/.test(url))).toBe(false);
     expect(entries.find((entry) => entry.url === "https://purplesquad.in/")?.lastModified).toBeUndefined();
@@ -29,6 +33,19 @@ describe("production sitemap", () => {
   it("surfaces catalogue errors instead of returning a successful truncated sitemap", async () => {
     catalogue.mockRejectedValue(new Error("Catalogue unavailable"));
     await expect(sitemap()).rejects.toThrow("Catalogue unavailable");
+  });
+  it("includes only valid published blog URLs and fails closed on blog API errors", async () => {
+    catalogue.mockResolvedValue({ categories: [], services: [], pages: [] });
+    blogPosts.mockResolvedValue([
+      { slug: "ac-not-cooling", updated_at: "2026-10-13T00:00:00Z", cover_image_url: "https://res.cloudinary.com/demo/image/upload/ac.jpg" },
+      { slug: "../bad", cover_image_url: "https://example.com/bad.jpg" },
+    ]);
+    const entries = await sitemap();
+    expect(entries.some((entry) => entry.url.endsWith("/blog"))).toBe(true);
+    expect(entries.find((entry) => entry.url.endsWith("/blog/ac-not-cooling"))?.images).toEqual(["https://res.cloudinary.com/demo/image/upload/ac.jpg"]);
+    expect(entries.some((entry) => entry.url.includes("bad"))).toBe(false);
+    blogPosts.mockRejectedValueOnce(new Error("Blog unavailable"));
+    await expect(sitemap()).rejects.toThrow("Blog unavailable");
   });
   it("discovers rendered local, uploaded, category and localized images and merges colliding URLs", async () => {
     const service = { name: "AC Inspection", slug: "ac-service", category: { slug: "ac-services" }, landing_thumbnail: "https://res.cloudinary.com/demo/image/upload/hero.png", list_image: "https://res.cloudinary.com/demo/image/upload/list.png", cover_image: null };

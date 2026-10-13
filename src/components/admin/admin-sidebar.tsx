@@ -66,6 +66,7 @@ export const adminNavigationSections = [
   {
     title: "Website",
     items: [
+      { label: "Home Care Guides", href: "/admin/content/blog", icon: BookOpen },
       { label: "Homepage Banners", href: "/admin/content/banners", icon: Image },
       { label: "Carousel", href: "/admin/content/carousel", icon: Image },
     ],
