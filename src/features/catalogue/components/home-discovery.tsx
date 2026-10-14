@@ -28,7 +28,7 @@ import { formatPrice, getCurrentPrice, hasOfferPrice } from "@/features/catalogu
 import { useSelectedLocation } from "@/features/location/selected-location";
 
 const homeCategories = [
-  { name: "Home Appliances", slug: "home-appliances-repair", description: "Repair and appliance care", image: "/images/categories/home-appliances-repair.png", opensApplianceSelector: true },
+  { name: "Home Appliances", slug: "home-appliances-repair", description: "Repair and appliance care", image: "/images/categories/home-appliances.jpeg", opensApplianceSelector: true },
   { name: "Water Tank Cleaning", slug: "water-tank-cleaning", description: "Cleaner, safer water storage", image: "/images/service-icons/water-tank.png" },
   { name: "Sofa Repair", slug: "sofa-repair-inspection-charge", description: "Upholstery and frame fixes", image: "/images/service-icons/sofa-repair.png" },
   { name: "Mosquito Net", slug: "mosquito-net-inspection-charge", description: "Custom-fit home protection", image: "/images/service-icons/mosquito-net.png" },
@@ -52,7 +52,7 @@ const popularCategories = [
 const spotlights = [
   { title: "Give your sofa a fresh start", label: "Sofa repair", description: "Comfort worth coming home to.", slug: "sofa-repair-inspection-charge", image: "/images/hero/sofa-repair.webp" },
   { title: "Cleaner tanks. Fresher homes.", label: "Water tank cleaning", description: "Care for your home's water storage.", slug: "water-tank-cleaning", image: "/images/hero/water-tank-cleaning.webp" },
-  { title: "Everyday appliances, expert care", label: "Home appliances", description: "Keep your home running smoothly.", slug: "home-appliances-repair", image: "/images/hero/washing-machine-service.webp", opensApplianceSelector: true },
+  { title: "Everyday appliances, expert care", label: "Home appliances", description: "Keep your home running smoothly.", slug: "home-appliances-repair", image: "/images/categories/home-appliances.jpeg", opensApplianceSelector: true },
   { title: "Stay cool, all year", label: "AC service", description: "Give your cooling the care it deserves.", slug: "ac-services", image: "/images/hero/ac-service.webp" },
   { title: "Fresh air. Peaceful evenings.", label: "Mosquito net", description: "Find the right net for your home.", slug: "mosquito-net-inspection-charge", image: "/images/services/mosquito-net.png" },
   { title: "Keep the freshness going", label: "Refrigerator repair", description: "Expert care for your kitchen essential.", slug: "refrigerator-repair-services", image: "/images/services/refrigerator.png" },
@@ -311,7 +311,7 @@ function SpotlightCarousel({ areaSlug, city }: { areaSlug: string; city: string 
 function HeroImageMosaic({ areaSlug, city }: { areaSlug: string; city: string }) {
   const cards = [
     { image: "/images/hero/ac-service.webp", title: "AC Service", slug: "ac-services" },
-    { image: "/images/hero/washing-machine-service.webp", title: "Appliance Repair", slug: "home-appliances-repair", opensApplianceSelector: true },
+    { image: "/images/categories/home-appliances.jpeg", title: "Appliance Repair", slug: "home-appliances-repair", opensApplianceSelector: true },
     { image: "/images/hero/water-tank-cleaning.webp", title: "Water Tank Cleaning", slug: "water-tank-cleaning" },
     { image: "/images/hero/sofa-repair.webp", title: "Sofa Repair", slug: "sofa-repair-inspection-charge" },
   ];
