@@ -61,7 +61,7 @@ export function ServiceOptionSheet({ group, onClose }: { group: ServiceLandingGr
 
               <div className="px-4 pb-5 pt-5 sm:px-6">
                 <Dialog.Title className="text-[22px] font-extrabold leading-7 text-foreground">{group.title}</Dialog.Title>
-                <Dialog.Description className="sr-only">Choose the tank size that matches your service requirement.</Dialog.Description>
+                <Dialog.Description className="sr-only">{group.optionDescription || "Choose the service option that best matches your requirement."}</Dialog.Description>
                 {averageRating ? <p className="mt-2 flex items-center gap-1.5 text-sm font-semibold text-secondary"><Star className="h-4 w-4 fill-warning text-warning" />{averageRating.toFixed(1)} ({reviews.data?.results.length} reviews)</p> : null}
               </div>
 

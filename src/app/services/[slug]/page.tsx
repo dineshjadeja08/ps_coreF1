@@ -6,7 +6,8 @@ import { JsonLd } from "@/components/seo/json-ld";
 import { ServiceDetailView } from "@/features/catalogue/components/service-detail-view";
 import { ServicesListing } from "@/features/catalogue/components/services-listing";
 import { WaterTankLanding } from "@/features/catalogue/components/landing/water-tank-landing";
-import { isWaterTankService } from "@/features/catalogue/group-services";
+import { TvLanding } from "@/features/catalogue/components/landing/tv-landing";
+import { isTvService, isWaterTankService } from "@/features/catalogue/group-services";
 import { ServiceCardSkeletonGrid } from "@/features/catalogue/components/skeletons";
 import { getServiceCategoriesForSeo, getServiceDetailForSeo, getServiceReviewsForSeo, getServicesForSeo } from "@/features/catalogue/server";
 import { breadcrumbJsonLd, compactDescription, defaultOgImagePath, localBusinessJsonLd, serviceJsonLd, servicesJsonLd } from "@/lib/seo";
@@ -19,6 +20,7 @@ type ServiceDetailPageProps = {
 
 const knownCategoryLandings: Record<string, string> = {
   "ac-services": "AC Services",
+  "tv-repair-services": "TV Repair & Services",
 };
 
 export async function generateMetadata({ params }: ServiceDetailPageProps): Promise<Metadata> {
@@ -30,9 +32,14 @@ export async function generateMetadata({ params }: ServiceDetailPageProps): Prom
   if (category || fallbackCategoryName) {
     const categoryName = category?.name ?? fallbackCategoryName;
     const description = compactDescription(category?.description ?? "", `Book ${categoryName} services with Purple Squad.`);
-    const services = await getServicesForSeo({ category: slug, page_size: 40, city: "Chennai" });
+    const sourceCategory = slug === "tv-repair-services"
+      ? categories.find((item) => item.slug === "home-appliances-repair")?.slug ?? "home-appliances-repair"
+      : slug;
+    const services = await getServicesForSeo({ category: sourceCategory, page_size: 40, city: "Chennai" });
     const primary = services.results.find((service) => service.landing_thumbnail || service.cover_image) ?? services.results[0];
-    const image = slug === "ac-services" && primary ? serviceHeroImage(primary) : (category && getCategoryVisualSrc(category)) || (primary ? serviceHeroImage(primary) : defaultOgImagePath);
+    const image = slug === "tv-repair-services"
+      ? "/images/services/tv.png"
+      : slug === "ac-services" && primary ? serviceHeroImage(primary) : (category && getCategoryVisualSrc(category)) || (primary ? serviceHeroImage(primary) : defaultOgImagePath);
     return publicPageMetadata(`/services/${slug}`, `${categoryName} in Chennai`, description, image);
   }
 
@@ -64,6 +71,20 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
         <JsonLd data={servicesJsonLd(waterServices, "/services/water-tank-cleaning")} />
         <Suspense fallback={<div className="mx-auto max-w-3xl px-4 py-8"><ServiceCardSkeletonGrid count={3} /></div>}>
           <WaterTankLanding initialServices={initialServices} sourceCategorySlug={sourceCategory?.slug ?? "cleaning"} />
+        </Suspense>
+      </>
+    );
+  }
+
+  if (categoryLandingSlug === "tv-repair-services") {
+    const sourceCategorySlug = categories.find((item) => item.slug === "home-appliances-repair")?.slug ?? "home-appliances-repair";
+    const services = await getServicesForSeo({ category: sourceCategorySlug, page_size: 100, city: "Chennai" });
+    const tvServices = services.results.filter(isTvService);
+    return (
+      <>
+        <JsonLd data={servicesJsonLd(tvServices, "/services/tv-repair-services")} />
+        <Suspense fallback={<div className="mx-auto max-w-3xl px-4 py-8"><ServiceCardSkeletonGrid count={3} /></div>}>
+          <TvLanding initialServices={{ ...services, count: tvServices.length, results: tvServices, next: null, previous: null }} sourceCategorySlug={sourceCategorySlug} />
         </Suspense>
       </>
     );

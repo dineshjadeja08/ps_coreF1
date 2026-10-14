@@ -63,7 +63,7 @@ export function ServiceGroupRow({ group, eager, onOpen }: { group: ServiceLandin
           <ServiceImage src={group.image} alt={group.title} priority={eager} className="aspect-square w-full rounded-lg border border-border bg-white" imageClassName="object-cover" />
         </button>
         <div className="mx-auto mt-3 w-[84px] sm:w-[96px]">
-          {group.options.length === 1 ? (
+          {group.options.length === 1 && !group.alwaysOpenOptions ? (
             <AddToCartButton service={group.options[0]} className="min-h-10 w-full rounded-lg bg-white px-2 text-xs sm:min-h-11 sm:text-sm" />
           ) : (
             <Button type="button" size="sm" variant="outline" onClick={onOpen} className={`min-h-10 w-full rounded-lg border-primary px-2 text-xs font-extrabold text-primary sm:min-h-11 sm:text-sm ${groupQuantity ? "bg-primary-soft" : "bg-white"}`}>

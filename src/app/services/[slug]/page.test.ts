@@ -1,13 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { categories, detail, notFound } = vi.hoisted(() => ({ categories: vi.fn(), detail: vi.fn(), notFound: vi.fn(() => { throw new Error("HTTP 404"); }) }));
-vi.mock("@/features/catalogue/server", () => ({ getServiceCategoriesForSeo: categories, getServiceDetailForSeo: detail, getServiceReviewsForSeo: vi.fn(), getServicesForSeo: vi.fn() }));
+const { categories, detail, services, notFound } = vi.hoisted(() => ({ categories: vi.fn(), detail: vi.fn(), services: vi.fn(), notFound: vi.fn(() => { throw new Error("HTTP 404"); }) }));
+vi.mock("@/features/catalogue/server", () => ({ getServiceCategoriesForSeo: categories, getServiceDetailForSeo: detail, getServiceReviewsForSeo: vi.fn(), getServicesForSeo: services }));
 vi.mock("next/navigation", async (original) => ({ ...await original<object>(), notFound }));
 
 import Page, { generateMetadata } from "./page";
 
 describe("service route resource validation", () => {
-  beforeEach(() => { categories.mockResolvedValue([]); detail.mockReset(); notFound.mockClear(); });
+  beforeEach(() => { categories.mockResolvedValue([]); detail.mockReset(); services.mockReset().mockResolvedValue({ count: 0, next: null, previous: null, results: [] }); notFound.mockClear(); });
   it("rejects unknown slugs during metadata and page rendering", async () => {
     detail.mockResolvedValue(null);
     const props = { params: Promise.resolve({ slug: "not-a-service" }) };
@@ -24,5 +24,11 @@ describe("service route resource validation", () => {
     const metadata = await generateMetadata({ params: Promise.resolve({ slug: "tv-repair" }) });
     expect(metadata.openGraph).toMatchObject({ images: ["/images/services/tv.png"] });
     expect(metadata.twitter).toMatchObject({ images: ["/images/services/tv.png"] });
+  });
+
+  it("loads TV landing packages from the appliance category before filtering out unrelated services", async () => {
+    await Page({ params: Promise.resolve({ slug: "tv-repair-services" }) });
+
+    expect(services).toHaveBeenCalledWith({ category: "home-appliances-repair", page_size: 100, city: "Chennai" });
   });
 });
