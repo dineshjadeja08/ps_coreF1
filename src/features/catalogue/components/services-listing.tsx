@@ -17,6 +17,7 @@ import { routes } from "@/constants/routes";
 import { AddToCartButton } from "@/features/cart/cart-controls";
 import { ServiceIcon } from "@/features/catalogue/components/service-icon";
 import { ServiceImage } from "@/features/catalogue/components/service-image";
+import { PopularServiceCategories } from "@/features/catalogue/components/popular-service-categories";
 import { getCategoryVisualSrc } from "@/lib/service-images";
 import { CategorySkeletonGrid, ServiceCardSkeletonGrid } from "@/features/catalogue/components/skeletons";
 import { useServiceCategories, useServices } from "@/features/catalogue/queries";
@@ -72,6 +73,14 @@ export function ServicesListing({ mode = "browse", categorySlug, initialServices
     const basePath = mode === "search" ? routes.search : categorySlug ? routes.serviceCategory(categorySlug) : routes.services;
     if (category && !categorySlug) params.set("category", category);
     router.push(params.toString() ? `${basePath}?${params.toString()}` : basePath);
+  }
+
+  if (mode === "browse" && !category && !query) {
+    return (
+      <main className="min-h-[calc(100svh-5.5rem)] bg-white">
+        <PopularServiceCategories areaSlug={location.areaSlug} city={location.city} />
+      </main>
+    );
   }
 
   return (
