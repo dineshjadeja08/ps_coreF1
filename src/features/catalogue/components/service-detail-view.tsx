@@ -14,6 +14,7 @@ import { AddToCartButton, CartSummary } from "@/features/cart/cart-controls";
 import { CartStickyBar } from "@/features/catalogue/components/landing/cart-sticky-bar";
 import { OverallReviewSummary } from "@/features/catalogue/components/overall-review-summary";
 import { ServiceImage } from "@/features/catalogue/components/service-image";
+import { CustomerFeedbackMarquee } from "@/features/catalogue/components/customer-feedback-marquee";
 import { ReviewCard } from "@/features/catalogue/components/review-card";
 import { ReviewList } from "@/features/catalogue/components/review-list";
 import { FaqItem } from "@/features/catalogue/components/faq-item";
@@ -222,9 +223,7 @@ export function ServiceDetailView({
         <section className="mx-auto max-w-7xl space-y-5 px-4 py-8 sm:px-6 lg:px-8">
           <SectionHeading eyebrow="Reviews" title="Customer feedback" />
           <p className="text-sm text-secondary">Experiences shared by our customers, including what went well and what could be better.</p>
-          <div className="grid items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {displayedReviews.map((review) => <ReviewCard key={review.id} review={review} />)}
-          </div>
+          <CustomerFeedbackMarquee reviews={displayedReviews} />
           {remainingReviews.length ? <details className="group/reviews rounded-xl border border-violet-200 bg-white p-4">
             <summary className="flex min-h-11 cursor-pointer list-none items-center justify-center gap-2 font-semibold text-primary [&::-webkit-details-marker]:hidden">
               <span className="group-open/reviews:hidden">Read more reviews ({remainingReviews.length})</span>

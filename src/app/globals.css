@@ -109,6 +109,47 @@ a {
   padding-bottom: max(1rem, env(safe-area-inset-bottom));
 }
 
+@keyframes feedback-marquee-left {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@keyframes feedback-marquee-right {
+  from { transform: translateX(-50%); }
+  to { transform: translateX(0); }
+}
+
+.feedback-marquee-track {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+}
+
+.feedback-marquee-track-left { animation: feedback-marquee-left 42s linear infinite; }
+.feedback-marquee-track-right { animation: feedback-marquee-right 46s linear infinite; }
+.feedback-marquee:hover .feedback-marquee-track,
+.feedback-marquee:focus-within .feedback-marquee-track { animation-play-state: paused; }
+
+.feedback-marquee-card::after {
+  position: absolute;
+  right: 0.6rem;
+  bottom: 0.55rem;
+  width: 5.5rem;
+  height: 4rem;
+  background-image: radial-gradient(circle, rgb(16 185 129 / 14%) 1.4px, transparent 1.5px);
+  background-position: 0 0;
+  background-size: 12px 12px;
+  content: "";
+  mask-image: linear-gradient(135deg, transparent 8%, #000 100%);
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .feedback-marquee-track-left,
+  .feedback-marquee-track-right { animation: none; }
+  .feedback-marquee { overflow-x: auto; }
+}
+
 @media (min-width: 640px) {
   :root {
     --space-page-x: 1.5rem;
