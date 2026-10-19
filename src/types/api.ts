@@ -196,8 +196,25 @@ export type ServiceListItem = {
   list_image?: string | null;
   is_featured: boolean;
   is_popular: boolean;
+  show_in_app?: boolean;
+  app_category?: MobileAppCategory | "";
   display_order: number;
 };
+
+export type MobileAppCategory =
+  | "water-tank"
+  | "sofa"
+  | "mosquito-net"
+  | "ac"
+  | "washing-machine"
+  | "refrigerator"
+  | "water-purifier"
+  | "tv"
+  | "geyser"
+  | "microwave"
+  | "dishwasher"
+  | "chimney"
+  | "cctv";
 
 export type ServiceDetail = ServiceListItem & {
   description?: string;
