@@ -1,7 +1,7 @@
 "use client";
 
 import * as Dialog from "@radix-ui/react-dialog";
-import { Check, ChevronDown, ChevronRight, Clock, Percent, ShieldCheck, Star, X } from "lucide-react";
+import { Check, ChevronRight, Clock, Percent, ShieldCheck, Star, X } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState } from "react";
@@ -15,7 +15,6 @@ import { CartStickyBar } from "@/features/catalogue/components/landing/cart-stic
 import { OverallReviewSummary } from "@/features/catalogue/components/overall-review-summary";
 import { ServiceImage } from "@/features/catalogue/components/service-image";
 import { CustomerFeedbackMarquee } from "@/features/catalogue/components/customer-feedback-marquee";
-import { ReviewCard } from "@/features/catalogue/components/review-card";
 import { ReviewList } from "@/features/catalogue/components/review-list";
 import { FaqItem } from "@/features/catalogue/components/faq-item";
 import { ServiceDetailSkeleton } from "@/features/catalogue/components/skeletons";
@@ -107,8 +106,6 @@ export function ServiceDetailView({
   const pageTitle = landingTitle ?? detail.name;
   const heading = pageTitle.toLowerCase().endsWith(` in ${location.city.toLowerCase()}`) ? pageTitle : `${pageTitle} in ${location.city}`;
   const visibleReviews = (reviews.data?.results ?? []).filter((review) => review.is_visible);
-  const displayedReviews = visibleReviews.slice(0, 5);
-  const remainingReviews = visibleReviews.slice(5);
   const averageRating = visibleReviews.length ? visibleReviews.reduce((total, review) => total + review.rating, 0) / visibleReviews.length : null;
 
   return (
@@ -219,21 +216,11 @@ export function ServiceDetailView({
         {seoContent.related_pages.length ? <nav aria-label="Related services"><h2 className="text-xl font-bold">Related services</h2><ul className="mt-3 flex flex-wrap gap-3">{seoContent.related_pages.map((page) => <li key={page.path}><Link href={page.path} className="text-sm text-primary underline">{page.name}</Link></li>)}</ul></nav> : null}
       </section> : null}
 
-      {displayedReviews.length ? (
+      {visibleReviews.length ? (
         <section className="mx-auto max-w-7xl space-y-5 px-4 py-8 sm:px-6 lg:px-8">
           <SectionHeading eyebrow="Reviews" title="Customer feedback" />
           <p className="text-sm text-secondary">Experiences shared by our customers, including what went well and what could be better.</p>
-          <CustomerFeedbackMarquee reviews={displayedReviews} />
-          {remainingReviews.length ? <details className="group/reviews rounded-xl border border-violet-200 bg-white p-4">
-            <summary className="flex min-h-11 cursor-pointer list-none items-center justify-center gap-2 font-semibold text-primary [&::-webkit-details-marker]:hidden">
-              <span className="group-open/reviews:hidden">Read more reviews ({remainingReviews.length})</span>
-              <span className="hidden group-open/reviews:inline">Show fewer reviews</span>
-              <ChevronDown aria-hidden="true" className="h-4 w-4 transition-transform group-open/reviews:rotate-180" />
-            </summary>
-            <div className="mt-4 grid items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {remainingReviews.map((review) => <ReviewCard key={review.id} review={review} />)}
-            </div>
-          </details> : null}
+          <CustomerFeedbackMarquee reviews={visibleReviews} />
         </section>
       ) : null}
 
