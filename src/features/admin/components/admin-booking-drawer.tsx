@@ -9,6 +9,7 @@ import { AdminErrorState } from "@/components/admin/admin-error-state";
 import { AdminStatusBadge } from "@/components/admin/admin-status-badge";
 import { Button } from "@/components/ui/button";
 import { AdminBookingOperations } from "@/features/admin/components/admin-booking-operations";
+import { BookingJourney, CompletionProof } from "@/features/bookings/components/booking-tracking";
 import { downloadAuthenticatedFile } from "@/lib/api/client";
 import { adminApi, apiPaths } from "@/lib/api/endpoints";
 
@@ -26,8 +27,9 @@ export function AdminBookingDrawer({ bookingId, onClose }: { bookingId: string; 
   const [downloading, setDownloading] = useState(false);
   const returnFocus = useRef<HTMLElement | null>(null);
   const booking = useQuery({ queryKey: ["admin", "bookings", "detail", bookingId], queryFn: () => adminApi.getBooking(bookingId), refetchInterval: 15_000 });
-  const activities = useQuery({ queryKey: ["admin", "bookings", "activities", bookingId], queryFn: () => adminApi.listBookingActivities(bookingId), enabled: tab === "activity", refetchInterval: 15_000 });
   const data = booking.data;
+  const activities = useQuery({ queryKey: ["admin", "bookings", "activities", bookingId], queryFn: () => adminApi.listBookingActivities(bookingId), enabled: tab === "activity", refetchInterval: 15_000 });
+  const proof = useQuery({ queryKey: ["admin", "bookings", bookingId, "completion-proof"], queryFn: () => adminApi.listBookingPhotos(bookingId), enabled: Boolean(data && ["TECHNICIAN_ARRIVED", "IN_PROGRESS", "COMPLETED", "CLOSED"].includes(data.booking_status)) });
   const address = data?.address_snapshot && typeof data.address_snapshot === "object" ? data.address_snapshot as Record<string, unknown> : {};
   const formattedAddress = value(address.formatted_address) || ["address_line_1", "address_line_2", "area", "city", "state", "postal_code"].map((key) => value(address[key])).filter(Boolean).join(", ");
   async function downloadInvoice() {
@@ -64,6 +66,9 @@ export function AdminBookingDrawer({ bookingId, onClose }: { bookingId: string; 
                   <Detail label="Problem">{data.problem_description}</Detail><Detail label="Customer notes">{data.customer_notes}</Detail>
                   <Detail label="Admin notes">{data.admin_notes}</Detail>
                 </dl>
+                <div className="mt-4"><BookingJourney booking={data} compact /></div>
+                {proof.data?.length ? <div className="mt-4"><CompletionProof photos={proof.data} /></div> : null}
+                {proof.isError ? <p className="mt-3 text-sm text-amber-700">Completion proof could not be loaded.</p> : null}
                 {data.payment_status === "PAID" || data.booking_status === "COMPLETED" ? <Button type="button" variant="outline" className="mt-4" disabled={downloading} onClick={() => void downloadInvoice()}><Download className="h-4 w-4" />{downloading ? "Downloading…" : "Download invoice"}</Button> : null}
                 {invoiceError ? <p role="alert" className="mt-2 text-sm text-red-600">{invoiceError}</p> : null}
               </>

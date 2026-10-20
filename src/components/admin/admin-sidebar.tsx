@@ -24,10 +24,12 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 
 import { AdminBrand } from "@/components/admin/admin-brand";
 import { canAccessAdminPath } from "@/components/admin/admin-access";
 import { useAuth } from "@/features/auth/hooks";
+import { adminApi } from "@/lib/api/endpoints";
 
 export const adminNavigationSections = [
   {
@@ -42,6 +44,7 @@ export const adminNavigationSections = [
       { label: "Work Orders", href: "/admin/work-orders", icon: ListChecks },
       { label: "Payments", href: "/admin/payments", icon: CreditCard },
       { label: "Technicians", href: "/admin/technicians", icon: Wrench },
+      { label: "Partner KYC", href: "/admin/technicians/kyc", icon: Shield, child: true },
       { label: "Assignments", href: "/admin/assignments", icon: ListChecks },
       { label: "Service Areas", href: "/admin/service-areas", icon: MapPin },
       { label: "Scheduling", href: "/admin/scheduling", icon: CalendarCheck },
@@ -88,6 +91,12 @@ export const adminNavigationSections = [
 export function AdminSidebar() {
   const pathname = usePathname();
   const { user } = useAuth();
+  const pendingKyc = useQuery({
+    queryKey: ["admin", "technicians", "kyc", "UNDER_REVIEW"],
+    queryFn: () => adminApi.listTechniciansForKyc("UNDER_REVIEW"),
+    enabled: Boolean(user && (user.role === "ADMIN" || user.role === "SUPER_ADMIN")),
+    refetchInterval: 30_000,
+  });
 
   return (
     <aside className="fixed inset-y-0 left-0 z-40 hidden h-screen w-72 border-r border-slate-200 bg-white text-slate-950 lg:block">
@@ -114,6 +123,7 @@ export function AdminSidebar() {
                     >
                       <Icon className="h-4 w-4" />
                       <span className="flex-1">{item.label}</span>
+                      {item.href === "/admin/technicians/kyc" && (pendingKyc.data?.length ?? 0) > 0 ? <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-bold text-violet-800">{pendingKyc.data!.length}</span> : null}
                     </Link>
                   );
                 })}

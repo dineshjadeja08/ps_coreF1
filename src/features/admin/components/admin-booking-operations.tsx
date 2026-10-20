@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { AdminStatusBadge } from "@/components/admin/admin-status-badge";
+import { BookingJourney, CompletionProof } from "@/features/bookings/components/booking-tracking";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { adminApi } from "@/lib/api/endpoints";
@@ -22,6 +23,11 @@ export function AdminBookingOperations({ booking, onChanged, showHistory = true 
   const technicians = useQuery({
     queryKey: ["admin", "technicians", "eligible", booking.id],
     queryFn: () => adminApi.listTechnicians({ booking_id: booking.id, include_ineligible: true }),
+  });
+  const proof = useQuery({
+    queryKey: ["admin", "bookings", booking.id, "completion-proof"],
+    queryFn: () => adminApi.listBookingPhotos(booking.id),
+    enabled: ["TECHNICIAN_ARRIVED", "IN_PROGRESS", "COMPLETED", "CLOSED"].includes(booking.booking_status),
   });
 
   async function refresh(messageText: string) {
@@ -123,6 +129,10 @@ export function AdminBookingOperations({ booking, onChanged, showHistory = true 
           <Button type="button" onClick={() => balance.mutate()} disabled={balance.isPending || Number(balanceAmount) <= 0}>Record balance</Button>
         </div>
       </section>
+
+      <BookingJourney booking={booking} compact />
+      {proof.data?.length ? <CompletionProof photos={proof.data} /> : null}
+      {proof.isError ? <p role="status" className="text-sm text-amber-700">Completion proof is unavailable right now.</p> : null}
 
       {showHistory ? <section>
         <h3 className="font-bold text-slate-950">Status history</h3>

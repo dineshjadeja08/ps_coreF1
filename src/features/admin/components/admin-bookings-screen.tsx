@@ -12,6 +12,7 @@ import { AdminStatusBadge } from "@/components/admin/admin-status-badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AdminBookingDrawer } from "@/features/admin/components/admin-booking-drawer";
+import { getBookingStepLabel } from "@/features/bookings/components/booking-tracking";
 import { adminApi } from "@/lib/api/endpoints";
 import type { Booking } from "@/types/api";
 
@@ -26,7 +27,16 @@ export function AdminBookingsScreen() {
   const [page, setPage] = useState(1);
   const query = useQuery({
     queryKey: ["admin", "bookings", search, status, page],
-    queryFn: () => adminApi.listBookings({ page, page_size: 25, search: search || undefined, status: status || undefined }),
+    queryFn: async () => {
+      if (status !== "ACTIVE_NOW") return adminApi.listBookings({ page, page_size: 25, search: search || undefined, status: status || undefined });
+      const statuses = ["TECHNICIAN_ASSIGNED", "TECHNICIAN_EN_ROUTE", "IN_PROGRESS"];
+      const pages = await Promise.all(statuses.map((activeStatus) => adminApi.listBookings({ page: 1, page_size: 100, search: search || undefined, status: activeStatus })));
+      const results = pages.flatMap((result) => result.results).sort((a, b) => b.updated_at.localeCompare(a.updated_at));
+      const start = (page - 1) * 25;
+      return { count: results.length, next: start + 25 < results.length ? "active" : null, previous: page > 1 ? "active" : null, results: results.slice(start, start + 25) };
+    },
+    refetchInterval: 30_000,
+    refetchOnWindowFocus: "always",
   });
 
   return (
@@ -39,10 +49,12 @@ export function AdminBookingsScreen() {
         </div>
         <select className="h-11 rounded-md border border-slate-200 bg-white px-3 text-sm" value={status} onChange={(event) => { setStatus(event.target.value); setPage(1); }}>
           <option value="">All booking statuses</option>
+          <option value="ACTIVE_NOW">Active now</option>
           {["PENDING_PAYMENT", "PAYMENT_FAILED", "CONFIRMED", "TECHNICIAN_ASSIGNED", "TECHNICIAN_EN_ROUTE", "TECHNICIAN_ARRIVED", "IN_PROGRESS", "COMPLETED", "CLOSED", "CANCELLED", "REFUND_PENDING", "REFUNDED"].map((value) => <option key={value} value={value}>{value.replaceAll("_", " ")}</option>)}
         </select>
         <Button type="button" variant="outline" onClick={() => { setSearch(""); setStatus(""); setPage(1); }}>Clear</Button>
       </div>
+      {query.dataUpdatedAt ? <p className="-mt-2 mb-3 text-xs text-slate-500">Live updates every 30 seconds · Last updated {new Date(query.dataUpdatedAt).toLocaleTimeString("en-IN")}</p> : null}
       {selectedId ? <AdminBookingDrawer key={selectedId} bookingId={selectedId} onClose={() => setSelectedId("")} /> : null}
       {query.isLoading ? (
         <div className="grid min-h-64 place-items-center">
@@ -78,7 +90,7 @@ export function AdminBookingsScreen() {
             },
             { key: "service", header: "Service", render: serviceName },
             { key: "date", header: "Date", render: (booking) => booking.service_date },
-            { key: "status", header: "Status / payment", render: (booking) => <div className="grid justify-items-start gap-1"><AdminStatusBadge status={booking.booking_status} /><AdminStatusBadge status={booking.payment_status} /></div> },
+            { key: "status", header: status === "ACTIVE_NOW" ? "Current step" : "Status / payment", render: (booking) => <div className="grid justify-items-start gap-1"><AdminStatusBadge status={booking.booking_status} />{status === "ACTIVE_NOW" ? <span className="text-xs font-semibold text-violet-700">{getBookingStepLabel(booking)}</span> : <AdminStatusBadge status={booking.payment_status} />}</div> },
           ]}
         />
       )}

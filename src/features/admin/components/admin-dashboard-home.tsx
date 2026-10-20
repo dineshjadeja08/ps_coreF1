@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertCircle, CalendarCheck, CreditCard, Loader2, Users, Wrench } from "lucide-react";
+import { AlertCircle, CalendarCheck, CheckCircle2, CreditCard, Loader2, Users, Wrench } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useState } from "react";
@@ -13,6 +13,7 @@ import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminStatusBadge } from "@/components/admin/admin-status-badge";
 import { Button } from "@/components/ui/button";
 import { getAdminDashboardSummary } from "@/lib/api/admin/dashboard";
+import { getBookingStepLabel } from "@/features/bookings/components/booking-tracking";
 import type { Booking } from "@/types/api";
 
 function serviceName(booking: Booking) {
@@ -25,10 +26,12 @@ function money(value: string | number | null | undefined) {
 
 export function AdminDashboardHome() {
   const [selectedId, setSelectedId] = useState("");
+  const [bookingView, setBookingView] = useState<"recent" | "active">("recent");
   const query = useQuery({
     queryKey: ["admin", "dashboard"],
     queryFn: getAdminDashboardSummary,
-    staleTime: 30_000,
+    refetchInterval: 30_000,
+    refetchOnWindowFocus: "always",
     gcTime: 5 * 60_000,
   });
 
@@ -51,7 +54,7 @@ export function AdminDashboardHome() {
       {selectedId ? <AdminBookingDrawer key={selectedId} bookingId={selectedId} onClose={() => setSelectedId("")} /> : null}
       <AdminPageHeader
         title="Dashboard"
-        description="Today’s operations snapshot from the current backend APIs."
+        description={`Today’s operations snapshot · Live updates every 30 seconds${query.dataUpdatedAt ? ` · Updated ${new Date(query.dataUpdatedAt).toLocaleTimeString("en-IN")}` : ""}`}
         action={
           <Button asChild className="bg-violet-700 hover:bg-violet-800">
             <Link href="/admin/bookings">Open bookings</Link>
@@ -60,6 +63,10 @@ export function AdminDashboardHome() {
       />
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <AdminMetricCard icon={CalendarCheck} label="Total bookings" value={data?.totalBookings ?? 0} href="/admin/bookings" />
+        <AdminMetricCard icon={CheckCircle2} label="Completed jobs" value={data?.completedJobs ?? 0} href="/admin/bookings?status=COMPLETED" />
+        <AdminMetricCard icon={Wrench} label="Active technicians" value={data?.activeTechnicians ?? 0} href="/admin/technicians" />
+        <AdminMetricCard icon={CreditCard} label="Revenue today" value={money(data?.totalRevenue)} href="/admin/payments" />
         <AdminMetricCard icon={Users} label="Leads today" value={data?.leadsToday ?? 0} href="/admin/leads" />
         <AdminMetricCard icon={CalendarCheck} label="Bookings today" value={data?.bookingsToday ?? 0} href="/admin/bookings" />
         <AdminMetricCard icon={CreditCard} label="Payment pending" value={data?.paymentPendingBookings ?? 0} href="/admin/bookings?payment_status=UNPAID" />
@@ -67,7 +74,6 @@ export function AdminDashboardHome() {
         <AdminMetricCard icon={CalendarCheck} label="Confirmed" value={data?.confirmedBookings ?? 0} href="/admin/bookings?status=CONFIRMED" />
         <AdminMetricCard icon={CalendarCheck} label="Upcoming services" value={data?.upcomingServices ?? 0} href="/admin/bookings" />
         <AdminMetricCard icon={Users} label="Follow-ups due" value={data?.followUpsDue ?? 0} href="/admin/leads" />
-        <AdminMetricCard icon={CreditCard} label="Revenue today" value={money(data?.revenueToday)} href="/admin/payments" />
       </div>
 
       {data?.missing.length ? (
@@ -84,19 +90,19 @@ export function AdminDashboardHome() {
 
       <div className="mt-6 grid gap-6 xl:grid-cols-2">
         <section>
-          <h2 className="mb-3 text-sm font-bold uppercase text-slate-500">Recent bookings</h2>
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-3"><h2 className="text-sm font-bold uppercase text-slate-500">{bookingView === "active" ? "Active now" : "Recent bookings"}</h2><div className="flex gap-2" aria-label="Dashboard booking filter"><Button type="button" size="sm" variant={bookingView === "recent" ? "default" : "outline"} onClick={() => setBookingView("recent")}>Recent</Button><Button type="button" size="sm" variant={bookingView === "active" ? "default" : "outline"} onClick={() => setBookingView("active")}>Active now</Button></div></div>
           <AdminDataTable
-            rows={data?.recentBookings ?? []}
+            rows={bookingView === "active" ? data?.activeNowBookings ?? [] : data?.recentBookings ?? []}
             getRowKey={(booking) => booking.id}
             onRowClick={(booking) => setSelectedId(booking.id)}
             emptyIcon={CalendarCheck}
-            emptyTitle="No bookings yet"
-            emptyMessage="Bookings will appear here once customers complete the flow."
+            emptyTitle={bookingView === "active" ? "No active jobs" : "No bookings yet"}
+            emptyMessage={bookingView === "active" ? "Assigned, en-route, and in-progress bookings will appear here." : "Bookings will appear here once customers complete the flow."}
             columns={[
               { key: "booking", header: "Booking", render: (booking) => <span className="font-semibold text-slate-950">{booking.booking_number}</span> },
               { key: "service", header: "Service", render: serviceName },
               { key: "date", header: "Date", render: (booking) => booking.service_date },
-              { key: "status", header: "Status", render: (booking) => <AdminStatusBadge status={booking.booking_status} /> },
+              { key: "status", header: bookingView === "active" ? "Current step" : "Status", render: (booking) => <div><AdminStatusBadge status={booking.booking_status} />{bookingView === "active" ? <p className="mt-1 text-xs font-semibold text-violet-700">{getBookingStepLabel(booking)}</p> : null}</div> },
             ]}
           />
         </section>

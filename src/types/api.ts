@@ -445,11 +445,22 @@ export type Booking = {
   admin_notes?: string;
   confirmed_at: ISODateTime | null;
   completed_at: ISODateTime | null;
+  accepted_at?: ISODateTime | null;
+  arrived_at?: ISODateTime | null;
+  start_otp_verified?: boolean;
   cancelled_at: ISODateTime | null;
   created_at: ISODateTime;
   updated_at: ISODateTime;
   service_category?: string;
   assigned_technician?: { id: UUID | null; user_id: UUID; name: string; phone: string } | null;
+  technician?: {
+    name: string;
+    phone: string;
+    photo_url: string | null;
+    average_rating: DecimalString | null;
+    completed_job_count: number;
+    is_verified: boolean;
+  } | null;
   paid_at?: ISODateTime | null;
   status_history: BookingStatusHistory[];
 };
@@ -564,6 +575,8 @@ export type TechnicianProfile = {
   experience_years?: DecimalString;
   languages?: string[];
   background_verification_status?: "PENDING" | "UNDER_REVIEW" | "VERIFIED" | "REJECTED" | "SUSPENDED";
+  kyc_submitted_at?: ISODateTime | null;
+  verification_note?: string;
   availability_status?: "AVAILABLE" | "BUSY" | "ON_LEAVE" | "OFFLINE" | "SUSPENDED";
   average_rating?: DecimalString;
   completed_job_count?: number;
@@ -582,6 +595,31 @@ export type TechnicianProfile = {
   approved_rating?: DecimalString | null;
   approved_review_count?: number;
   eligibility_errors?: string[];
+};
+
+export type TechnicianKycDocument = {
+  id: UUID;
+  doc_type: "AADHAAR_FRONT" | "AADHAAR_BACK" | "PAN" | "PHOTO" | "CERTIFICATE";
+  url: string;
+  created_at: ISODateTime;
+};
+
+export type TechnicianKycDetail = {
+  profile: TechnicianProfile;
+  documents: TechnicianKycDocument[];
+};
+
+export type BookingCompletionPhoto = {
+  id: UUID;
+  kind: "BEFORE" | "AFTER" | "RECEIPT";
+  url: string;
+  created_at: ISODateTime;
+};
+
+export type BookingStartOtp = {
+  otp: string;
+  verified: boolean;
+  verified_at: ISODateTime | null;
 };
 
 export type TechnicianWriteRequest = {
@@ -627,6 +665,11 @@ export type AdminDashboardSummary = {
   unassigned: Booking[];
   failedNotifications: number;
   missing: string[];
+  totalBookings: number;
+  completedJobs: number;
+  activeTechnicians: number;
+  totalRevenue: number;
+  activeNowBookings: Booking[];
 };
 
 export type AdminDashboardSummaryResponse = {
