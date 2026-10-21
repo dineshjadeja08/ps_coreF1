@@ -75,14 +75,13 @@ describe("server catalogue discovery", () => {
     const fetcher = vi.fn(async (input: URL) => {
       if (input.pathname === "/api/v1/services/") return Response.json({ results: [service], next: null });
       if (input.pathname === "/api/v1/service-categories/") return Response.json([]);
-      if (input.pathname === "/api/v1/service-areas/") return Response.json([]);
       if (input.pathname === "/api/v1/seo-pages/") return Response.json([page, { ...page, page_slug: "hidden-chennai", path: "/hidden-chennai", is_indexable: false }]);
-      if (input.pathname === "/api/v1/seo-pages/tv-repair-chennai/") return Response.json({ ...page, area_slug: "", postal_code: "", related_pages: [], services: [service] });
+      if (input.pathname === "/api/v1/seo-pages/tv-repair-chennai/") return Response.json({ ...page, services: [service] });
       return new Response(null, { status: 404 });
     });
     vi.stubGlobal("fetch", fetcher);
     const catalogue = await getSitemapCatalogue();
-    expect(catalogue.pages).toEqual([{ ...page, area_slug: "", postal_code: "", related_pages: [], services: [service] }]);
+    expect(catalogue.pages).toEqual([{ ...page, services: [service] }]);
     expect(fetcher.mock.calls.some(([url]) => url.pathname.includes("hidden-chennai"))).toBe(false);
   });
 });
