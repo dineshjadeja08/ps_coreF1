@@ -24,14 +24,18 @@ describe("localized service category routes", () => {
 
   it("uses the Chennai parent page until a locality is selected", () => {
     expect(routes.localizedServiceCategory("refrigerator-repair-services")).toBe("/refrigerator-repair-chennai");
+    expect(routes.localizedServiceCategory("washing-machine-services", "vadapalani")).toBe("/washing-machine-repair-chennai/vadapalani");
+    expect(routes.localizedServiceCategory("w", "rs-puram", "Coimbatore")).toBe("/water-purifier-service-coimbatore/rs-puram");
   });
 
-  it("keeps the existing route for services without a published SEO family", () => {
-    expect(routes.localizedServiceCategory("geyser-repair-services", "guindy")).toBe("/services/geyser-repair-services");
+  it("keeps broad service categories on their listing route", () => {
+    expect(routes.localizedServiceCategory("home-appliances-repair", "guindy")).toBe("/services/home-appliances-repair");
+    expect(routes.localizedServiceCategory("geyser-repair-services", "guindy")).toBe("/geyser-repair-chennai/guindy");
   });
   it("uses supported Coimbatore localities and falls back to its city page for unknown areas", () => {
     expect(routes.localizedServiceCategory("washing-machine-repair-service", "coimbatore-central", "Coimbatore")).toBe("/washing-machine-repair-coimbatore/coimbatore-central");
     expect(routes.localizedServiceCategory("ac-services", "unknown", "Coimbatore")).toBe("/ac-service-coimbatore");
+    expect(routes.localizedServiceCategory("refrigerator-services", "rs-puram", "Coimbatore")).toBe("/refrigerator-repair-coimbatore/rs-puram");
   });
 });
 
@@ -41,6 +45,7 @@ describe("current service URL after changing location", () => {
     expect(servicePathForLocation("/washing-machine-repair-chennai/guindy", "anna-nagar", "Chennai")).toBe("/washing-machine-repair-chennai/anna-nagar");
     expect(servicePathForLocation("/refrigerator-repair-chennai/guindy", "velachery", "Chennai")).toBe("/refrigerator-repair-chennai/velachery");
     expect(servicePathForLocation("/water-purifier-service-chennai/guindy", "velachery", "Chennai")).toBe("/water-purifier-service-chennai/velachery");
+    expect(servicePathForLocation("/tv-repair-chennai/vadapalani", "rs-puram", "Coimbatore")).toBe("/tv-repair-coimbatore/rs-puram");
   });
 
   it("localizes normal service pages and parent SEO pages", () => {
@@ -55,7 +60,7 @@ describe("current service URL after changing location", () => {
   });
 
   it("leaves non-service routes and services without locality pages alone", () => {
-    for (const path of ["/", "/login", "/book", "/profile", "/admin/bookings", "/services", "/services/geyser-repair-services", "/ac-service-chennai/guindy/extra"]) {
+    for (const path of ["/", "/login", "/book", "/profile", "/admin/bookings", "/services", "/services/home-appliances-repair", "/ac-service-chennai/guindy/extra"]) {
       expect(servicePathForLocation(path, "guindy", "Chennai")).toBeNull();
     }
   });
