@@ -26,6 +26,7 @@ export function AdminLeadsScreen() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState({ status: "OPEN", funnel_status: "", payment_status: "", source: "", assigned_to: "", service: "", service_search: "", city: "", mobile: "", request_id: "", created_from: "", created_to: "", follow_up_date: "", ordering: "-last_activity_at" });
+  const [showMoreFilters, setShowMoreFilters] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [createForm, setCreateForm] = useState({ customer_name: "", primary_mobile: "", required_service: "", source: "MANUAL", quoted_amount: "", advance_amount: "", city: "", pincode: "" });
   const [serviceOptionSearch, setServiceOptionSearch] = useState("");
@@ -114,34 +115,42 @@ export function AdminLeadsScreen() {
           </form>
         </section>
       ) : null}
-      <div className="mt-4 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-          <Input value={filters.service_search} onChange={(event) => setFilters({ ...filters, service_search: event.target.value })} placeholder="Search by service" />
-          <Input value={filters.city} onChange={(event) => setFilters({ ...filters, city: event.target.value })} placeholder="Search by city" />
-          <Input value={filters.mobile} onChange={(event) => setFilters({ ...filters, mobile: event.target.value })} placeholder="Mobile number" />
-          <Input value={filters.request_id} onChange={(event) => setFilters({ ...filters, request_id: event.target.value })} placeholder="Request ID / Job ID" />
-          <select
-            value={filters.status}
-            onChange={(event) => setFilters({ ...filters, status: event.target.value })}
-            className="h-11 rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-violet-600"
-          >
-            <option value="OPEN">OPEN</option>{["NEW", "CONTACTED", "INTERESTED", "FOLLOW_UP", "CONVERTED", "LOST", "CLOSED"].map((value) => <option key={value}>{value}</option>)}
-          </select>
-          <select value={filters.funnel_status} onChange={(event) => setFilters({ ...filters, funnel_status: event.target.value })} className="h-11 rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700">
-            <option value="">All funnel statuses</option>
-            {["VISITED", "CART_ADDED", "UNPAID", "PAID", "BOOKED", "CANCELLED", "LOST"].map((value) => <option key={value}>{value}</option>)}
-          </select>
-          <select value={filters.payment_status} onChange={(event) => setFilters({ ...filters, payment_status: event.target.value })} className="h-11 rounded-md border border-slate-200 bg-white px-3 text-sm"><option value="">All payment states</option>{["NOT_REQUIRED", "PENDING", "LINK_SENT", "FAILED", "PAID", "REFUNDED"].map((value) => <option key={value}>{value}</option>)}</select>
-          <select value={filters.source} onChange={(event) => setFilters({ ...filters, source: event.target.value })} className="h-11 rounded-md border border-slate-200 bg-white px-3 text-sm"><option value="">All sources</option>{["SERVICE_VIEW", "CART", "CHECKOUT", "ADMIN", "PHONE", "WHATSAPP", "WEBSITE", "CALLBACK_REQUEST", "CAMPAIGN", "MANUAL", "OTHER"].map((value) => <option key={value}>{value}</option>)}</select>
-          <AdminSearchSelect value={filters.assigned_to} options={(staff.data?.results ?? []).map((user) => ({ value: user.id, label: [user.first_name, user.last_name].filter(Boolean).join(" ") || user.phone_number }))} placeholder="All staff" onChange={(value) => setFilters({ ...filters, assigned_to: value })} onSearch={setStaffOptionSearch} loading={staff.isFetching} />
-          <AdminSearchSelect value={filters.service} options={(services.data?.results ?? []).map((service) => ({ value: service.id, label: service.name }))} placeholder="All services" onChange={(value) => setFilters({ ...filters, service: value })} onSearch={setServiceOptionSearch} loading={services.isFetching} />
-          <Input type="date" value={filters.created_from} onChange={(event) => setFilters({ ...filters, created_from: event.target.value })} aria-label="Created from" />
-          <Input type="date" value={filters.created_to} onChange={(event) => setFilters({ ...filters, created_to: event.target.value })} aria-label="Created to" />
-          <Input type="date" value={filters.follow_up_date} onChange={(event) => setFilters({ ...filters, follow_up_date: event.target.value })} aria-label="Follow-up date" />
-          <select value={filters.ordering} onChange={(event) => setFilters({ ...filters, ordering: event.target.value })} className="h-11 rounded-md border border-slate-200 bg-white px-3 text-sm"><option value="-last_activity_at">Recent activity</option><option value="follow_up_at">Follow-up first</option><option value="-created_at">Newest created</option><option value="customer_name">Customer name</option></select>
-          <Button type="button" variant="outline" onClick={clearFilters}>Clear filters</Button>
+      <div className="mt-4 rounded-lg border border-slate-200 bg-white p-4 shadow-sm" aria-label="Lead filters">
+        <div className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+          <Input className="min-w-0 px-2 text-xs sm:px-3 sm:text-sm" value={filters.service_search} onChange={(event) => setFilters({ ...filters, service_search: event.target.value })} placeholder="Search service" />
+          <Input className="min-w-0 px-2 text-xs sm:px-3 sm:text-sm" value={filters.city} onChange={(event) => setFilters({ ...filters, city: event.target.value })} placeholder="Search city" />
+          <Input className="min-w-0 px-2 text-xs sm:px-3 sm:text-sm" value={filters.mobile} onChange={(event) => setFilters({ ...filters, mobile: event.target.value })} placeholder="Mobile number" />
+          <div className="min-w-0">
+            <select value={filters.status} onChange={(event) => setFilters({ ...filters, status: event.target.value })} className="h-11 w-full min-w-0 rounded-md border border-slate-200 bg-white px-2 text-xs font-semibold text-slate-700 outline-none focus:border-violet-600 sm:px-3 sm:text-sm">
+              <option value="OPEN">OPEN</option>{["NEW", "CONTACTED", "INTERESTED", "FOLLOW_UP", "CONVERTED", "LOST", "CLOSED"].map((value) => <option key={value}>{value}</option>)}
+            </select>
+          </div>
+          <Button className="w-full min-w-0 px-2 text-xs sm:px-3 sm:text-sm" type="button" variant="outline" onClick={() => setShowMoreFilters(true)}>More filters</Button>
+          <Button className="w-full min-w-0 px-2 text-xs sm:px-3 sm:text-sm" type="button" variant="outline" onClick={clearFilters}>Clear filters</Button>
         </div>
       </div>
+      <Dialog.Root open={showMoreFilters} onOpenChange={setShowMoreFilters}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 z-50 bg-black/40" />
+          <Dialog.Content className="fixed left-1/2 top-1/2 z-50 max-h-[85vh] w-[min(760px,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl bg-white p-5 shadow-2xl sm:p-6">
+            <Dialog.Title className="text-lg font-bold text-slate-950">More lead filters</Dialog.Title>
+            <Dialog.Description className="mt-1 text-sm text-slate-500">Additional filters for funnel, payment, source, staff and dates.</Dialog.Description>
+            <div className="mt-5 grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <Input className="min-w-0" value={filters.request_id} onChange={(event) => setFilters({ ...filters, request_id: event.target.value })} placeholder="Request ID / Job ID" />
+              <select value={filters.funnel_status} onChange={(event) => setFilters({ ...filters, funnel_status: event.target.value })} className="h-11 min-w-0 rounded-md border border-slate-200 bg-white px-3 text-sm"><option value="">All funnel statuses</option>{["VISITED", "CART_ADDED", "UNPAID", "PAID", "BOOKED", "CANCELLED", "LOST"].map((value) => <option key={value}>{value}</option>)}</select>
+              <select value={filters.payment_status} onChange={(event) => setFilters({ ...filters, payment_status: event.target.value })} className="h-11 min-w-0 rounded-md border border-slate-200 bg-white px-3 text-sm"><option value="">All payment states</option>{["NOT_REQUIRED", "PENDING", "LINK_SENT", "FAILED", "PAID", "REFUNDED"].map((value) => <option key={value}>{value}</option>)}</select>
+              <select value={filters.source} onChange={(event) => setFilters({ ...filters, source: event.target.value })} className="h-11 min-w-0 rounded-md border border-slate-200 bg-white px-3 text-sm"><option value="">All sources</option>{["SERVICE_VIEW", "CART", "CHECKOUT", "ADMIN", "PHONE", "WHATSAPP", "WEBSITE", "CALLBACK_REQUEST", "CAMPAIGN", "MANUAL", "OTHER"].map((value) => <option key={value}>{value}</option>)}</select>
+              <AdminSearchSelect value={filters.assigned_to} options={(staff.data?.results ?? []).map((user) => ({ value: user.id, label: [user.first_name, user.last_name].filter(Boolean).join(" ") || user.phone_number }))} placeholder="All staff" onChange={(value) => setFilters({ ...filters, assigned_to: value })} onSearch={setStaffOptionSearch} loading={staff.isFetching} />
+              <AdminSearchSelect value={filters.service} options={(services.data?.results ?? []).map((service) => ({ value: service.id, label: service.name }))} placeholder="All services" onChange={(value) => setFilters({ ...filters, service: value })} onSearch={setServiceOptionSearch} loading={services.isFetching} />
+              <Input className="min-w-0" type="date" value={filters.created_from} onChange={(event) => setFilters({ ...filters, created_from: event.target.value })} aria-label="Created from" />
+              <Input className="min-w-0" type="date" value={filters.created_to} onChange={(event) => setFilters({ ...filters, created_to: event.target.value })} aria-label="Created to" />
+              <Input className="min-w-0" type="date" value={filters.follow_up_date} onChange={(event) => setFilters({ ...filters, follow_up_date: event.target.value })} aria-label="Follow-up date" />
+              <select value={filters.ordering} onChange={(event) => setFilters({ ...filters, ordering: event.target.value })} className="h-11 min-w-0 rounded-md border border-slate-200 bg-white px-3 text-sm"><option value="-last_activity_at">Recent activity</option><option value="follow_up_at">Follow-up first</option><option value="-created_at">Newest created</option><option value="customer_name">Customer name</option></select>
+            </div>
+            <div className="mt-5 flex justify-end gap-2"><Button type="button" variant="outline" onClick={clearFilters}>Clear all</Button><Button type="button" onClick={() => setShowMoreFilters(false)}>Done</Button></div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
       {query.isLoading ? <Loading /> : query.isError ? <AdminErrorState message={String(query.error.message)} onRetry={() => void query.refetch()} /> : (
         <AdminDataTable
           rows={query.data?.results ?? []}
