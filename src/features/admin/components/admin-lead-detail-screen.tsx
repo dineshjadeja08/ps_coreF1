@@ -8,28 +8,25 @@ import { useMemo, useState } from "react";
 import { AdminErrorState } from "@/components/admin/admin-error-state";
 import { Button } from "@/components/ui/button";
 import { LeadLineItemsCard, type DisplayLineItem } from "@/features/admin/components/leads/lead-line-items-card";
-import { createLeadLineItemDraft, selectedDraftPackages, updateLeadLineItemDraft } from "@/features/admin/components/leads/lead-line-items-data";
+import { createLeadLineItemDraft, updateLeadLineItemDraft } from "@/features/admin/components/leads/lead-line-items-data";
 import { LeadOverviewCard, type LeadEditValues } from "@/features/admin/components/leads/lead-overview-card";
 import { LeadPackagePicker } from "@/features/admin/components/leads/lead-package-picker";
 import { LeadScheduleDialog } from "@/features/admin/components/leads/lead-schedule-dialog";
-import { LeadActivityTimeline, LeadFollowUpPanel, LeadManualPaymentPanel, type ManualPaymentDraft } from "@/features/admin/components/leads/lead-secondary-sections";
+import { LeadActivityTimeline } from "@/features/admin/components/leads/lead-secondary-sections";
 import { adminApi } from "@/lib/api/endpoints";
 import type { UUID } from "@/types/api";
-
-const emptyManualPayment = (): ManualPaymentDraft => ({ amount: "", method: "MANUAL_CASH", reference: "", payment_date: new Date().toISOString().slice(0, 10), note: "", confirm: false });
 
 export function AdminLeadDetailScreen({ leadId }: { leadId: string }) {
   const queryClient = useQueryClient();
   const lead = useQuery({ queryKey: ["admin", "lead", leadId], queryFn: () => adminApi.getLead(leadId) });
   const activities = useQuery({ queryKey: ["admin", "lead", leadId, "activities"], queryFn: () => adminApi.listLeadActivities(leadId), enabled: Boolean(lead.data) });
-  const services = useQuery({ queryKey: ["admin", "service-options", ""], queryFn: () => adminApi.listServices({ page_size: 20 }), staleTime: 2 * 60_000, enabled: Boolean(lead.data) });
-  const packages = useQuery({ queryKey: ["admin", "packages", "lead-detail"], queryFn: () => adminApi.listPackages({ page_size: 20, is_active: true }), enabled: Boolean(lead.data) });
+  const services = useQuery({ queryKey: ["admin", "service-options", "lead-detail"], queryFn: () => adminApi.listServices({ page_size: 100 }), staleTime: 2 * 60_000, enabled: Boolean(lead.data) });
   const [editing, setEditing] = useState(false);
   const [scheduleOpen, setScheduleOpen] = useState(false);
-  const [note, setNote] = useState("");
-  const [followUp, setFollowUp] = useState("");
   const [conversionNotes, setConversionNotes] = useState("");
-  const [manualPayment, setManualPayment] = useState(emptyManualPayment);
+  const [paymentChannel, setPaymentChannel] = useState<"SMS" | "WHATSAPP">("SMS");
+  const [whatsappConsent, setWhatsappConsent] = useState(false);
+  const [deliveryStatus, setDeliveryStatus] = useState("");
   const [quantities, setQuantities] = useState<Record<UUID, number> | null>(null);
 
   const refresh = () => {
@@ -38,40 +35,36 @@ export function AdminLeadDetailScreen({ leadId }: { leadId: string }) {
     void queryClient.invalidateQueries({ queryKey: ["admin", "leads"] });
   };
   const save = useMutation({ mutationFn: (values: LeadEditValues) => adminApi.updateLead(leadId, values), onSuccess: () => { setEditing(false); refresh(); } });
-  const contact = useMutation({ mutationFn: () => adminApi.recordLeadContact(leadId, { note, next_follow_up_at: followUp || undefined }), onSuccess: () => { setNote(""); refresh(); } });
-  const paymentLink = useMutation({ mutationFn: (scope: "FULL" | "ADVANCE") => adminApi.sendLeadPaymentLink(leadId, { channel: "SMS", payment_scope: scope }), onSuccess: refresh });
+  const paymentLink = useMutation({ mutationFn: ({ scope, channel, consent }: { scope: "FULL" | "ADVANCE"; channel: "SMS" | "WHATSAPP"; consent: boolean }) => adminApi.sendLeadPaymentLink(leadId, { channel, payment_scope: scope, whatsapp_consent_confirmed: consent }), onSuccess: (result) => { setDeliveryStatus(result.payment_delivery_status ?? ""); refresh(); } });
   const convert = useMutation({ mutationFn: () => adminApi.convertLead(leadId, { notes: conversionNotes }), onSuccess: refresh });
-  const schedule = useMutation({ mutationFn: ({ date, time }: { date: string; time: string }) => adminApi.scheduleLead(leadId, { preferred_date: date, preferred_slot: time }), onSuccess: () => { setScheduleOpen(false); refresh(); } });
+  const schedule = useMutation({ mutationFn: ({ date, time, slot_id }: { date: string; time: string; slot_id: string }) => adminApi.scheduleLead(leadId, { preferred_date: date, preferred_slot: time, slot_id }), onSuccess: () => { setScheduleOpen(false); refresh(); } });
   const close = useMutation({ mutationFn: () => adminApi.updateLead(leadId, { status: "CLOSED" }), onSuccess: refresh });
-  const recordPayment = useMutation({ mutationFn: () => adminApi.recordLeadManualPayment(leadId, manualPayment), onSuccess: () => { setManualPayment(emptyManualPayment()); refresh(); } });
-
-  const relevantPackages = useMemo(() => {
-    const all = packages.data?.results ?? [];
-    const selectedService = services.data?.results.find((item) => item.id === lead.data?.required_service);
-    if (!selectedService) return all;
-    const matching = all.filter((item) => item.items.some((entry) => entry.service_detail.category.slug === selectedService.category_detail.slug));
-    return matching.length ? matching : all;
-  }, [lead.data?.required_service, packages.data?.results, services.data?.results]);
+  const saveServices = useMutation({
+    mutationFn: (body: { required_service: string; service_items: Array<{ service_id: string; quantity: number }> }) => adminApi.updateLead(leadId, body),
+    onSuccess: () => { setQuantities(null); refresh(); },
+  });
+  const selectedService = services.data?.results.find((item) => item.id === lead.data?.required_service);
+  const relevantServices = useMemo(() => selectedService ? (services.data?.results ?? []).filter((item) => item.is_active && item.category === selectedService.category) : [], [selectedService, services.data?.results]);
+  const categoryName = selectedService?.category_detail?.name ?? "related";
 
   if (lead.isLoading) return <LeadDetailSkeleton />;
   if (lead.isError) return <AdminErrorState message={lead.error.message} onRetry={() => void lead.refetch()} />;
   if (!lead.data) return null;
   const item = lead.data;
-  const initialQuantities = createLeadLineItemDraft(item, relevantPackages);
+  const initialQuantities = createLeadLineItemDraft(item);
   const effectiveQuantities = quantities ?? initialQuantities;
-  const draftPackages = selectedDraftPackages(effectiveQuantities, relevantPackages);
-  const packageNames = new Set(relevantPackages.map((entry) => entry.name));
-  const displayItems: DisplayLineItem[] = [
-    ...(item.line_items ?? []).filter((line) => !packageNames.has(line.package_name)).map((line) => ({ key: line.id ?? line.service_id, name: line.package_name, quantity: line.quantity, unitCost: line.unit_cost })),
-    ...draftPackages.map((draft) => {
-      const packageItem = relevantPackages.find((entry) => entry.id === draft.packageId)!;
-      return { key: packageItem.id, name: packageItem.name, quantity: draft.quantity, unitCost: packageItem.bundle_price };
-    }),
-  ];
+  const displayItems: DisplayLineItem[] = relevantServices.flatMap((service) => {
+    const quantity = effectiveQuantities[service.id] ?? 0;
+    return quantity ? [{ key: service.id, name: service.name, quantity, unitCost: service.effective_price }] : [];
+  });
   const subtotal = displayItems.reduce((sum, line) => sum + line.quantity * Number(line.unitCost), 0);
   const tax = Number(item.tax_amount ?? 0);
-  const trainingFee = Number(item.training_fee ?? 0);
+  const trainingFee = displayItems.reduce((sum, line) => {
+    const service = relevantServices.find((candidate) => candidate.id === line.key);
+    return sum + Number(service?.training_fee ?? 0) * (service?.training_fee_per_unit ? line.quantity : 1);
+  }, 0);
   const isScheduled = Boolean(item.preferred_date && item.preferred_slot);
+  const draftOnly = quantities !== null;
 
   return (
     <div className="space-y-6">
@@ -82,16 +75,12 @@ export function AdminLeadDetailScreen({ leadId }: { leadId: string }) {
 
       <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,3fr)_minmax(340px,2fr)] lg:items-start">
         <LeadOverviewCard key={item.updated_at} lead={item} services={services.data?.results ?? []} editing={editing} pending={save.isPending} closePending={close.isPending} error={save.isError ? save.error.message : undefined} onCancelEdit={() => setEditing(false)} onSave={(values) => save.mutate(values)} onClose={() => close.mutate()} />
-        <LeadLineItemsCard items={displayItems} subtotal={subtotal} tax={tax} trainingFee={trainingFee} total={subtotal + tax + trainingFee} scheduledLabel={isScheduled ? `${item.preferred_date} at ${item.preferred_slot}` : "Not scheduled"} isScheduled={isScheduled} paymentLinkUrl={item.payment_link_url} advanceAmount={item.advance_amount} conversionNotes={conversionNotes} paymentPending={paymentLink.isPending} conversionPending={convert.isPending} converted={item.status === "CONVERTED"} draftOnly={quantities !== null} error={paymentLink.isError ? paymentLink.error.message : convert.isError ? convert.error.message : undefined} onSchedule={() => setScheduleOpen(true)} onConversionNotesChange={setConversionNotes} onSendPaymentLink={(scope) => paymentLink.mutate(scope)} onConvert={() => convert.mutate()} />
+        <LeadLineItemsCard items={displayItems} subtotal={subtotal} tax={tax} trainingFee={trainingFee} total={subtotal + tax + trainingFee} scheduledLabel={isScheduled ? `${item.preferred_date} at ${item.preferred_slot}` : "Not scheduled"} isScheduled={isScheduled} paymentLinkUrl={item.payment_link_url} advanceAmount={item.advance_amount} deliveryStatus={deliveryStatus} conversionNotes={conversionNotes} paymentPending={paymentLink.isPending} paymentChannel={paymentChannel} whatsappConsent={whatsappConsent} conversionPending={convert.isPending} converted={item.status === "CONVERTED"} draftOnly={draftOnly} error={paymentLink.isError ? paymentLink.error.message : convert.isError ? convert.error.message : saveServices.isError ? saveServices.error.message : undefined} onSchedule={() => setScheduleOpen(true)} onConversionNotesChange={setConversionNotes} onPaymentChannelChange={(channel) => { setPaymentChannel(channel); setWhatsappConsent(false); }} onWhatsappConsentChange={setWhatsappConsent} onSendPaymentLink={(scope, channel, consent) => paymentLink.mutate({ scope, channel, consent })} onConvert={() => convert.mutate()} />
       </div>
 
-      <LeadPackagePicker packages={relevantPackages} quantities={effectiveQuantities} loading={packages.isLoading} onQuantityChange={(packageId, quantity) => setQuantities((current) => updateLeadLineItemDraft(current ?? initialQuantities, packageId, quantity))} />
-      <div className="grid gap-5 lg:grid-cols-2">
-        <LeadFollowUpPanel note={note} followUp={followUp} pending={contact.isPending} error={contact.isError ? contact.error.message : undefined} onNoteChange={setNote} onFollowUpChange={setFollowUp} onSubmit={() => contact.mutate()} />
-        <LeadManualPaymentPanel value={manualPayment} pending={recordPayment.isPending} error={recordPayment.isError ? recordPayment.error.message : undefined} onChange={setManualPayment} onSubmit={() => recordPayment.mutate()} />
-      </div>
+      <LeadPackagePicker services={relevantServices} quantities={effectiveQuantities} primaryServiceId={item.required_service ?? ""} categoryName={categoryName} loading={services.isLoading} dirty={draftOnly} saving={saveServices.isPending} onSave={() => saveServices.mutate({ required_service: item.required_service ?? "", service_items: Object.entries(effectiveQuantities).map(([service_id, quantity]) => ({ service_id, quantity })) })} onQuantityChange={(serviceId, quantity) => setQuantities((current) => updateLeadLineItemDraft(current ?? initialQuantities, serviceId, quantity))} />
       <LeadActivityTimeline activities={activities.data ?? item.activities ?? []} loading={activities.isLoading} />
-      <LeadScheduleDialog open={scheduleOpen} initialDate={item.preferred_date} initialTime={item.preferred_slot} pending={schedule.isPending} error={schedule.isError ? schedule.error.message : undefined} onOpenChange={setScheduleOpen} onSubmit={(date, time) => schedule.mutate({ date, time })} />
+      <LeadScheduleDialog open={scheduleOpen} initialDate={item.preferred_date} initialTime={item.preferred_slot} serviceId={item.required_service ?? ""} pincode={item.pincode} pending={schedule.isPending} error={schedule.isError ? schedule.error.message : undefined} onOpenChange={setScheduleOpen} onSubmit={(date, time, slot_id) => schedule.mutate({ date, time, slot_id })} />
     </div>
   );
 }

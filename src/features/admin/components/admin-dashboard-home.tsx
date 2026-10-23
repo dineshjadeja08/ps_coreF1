@@ -76,6 +76,29 @@ export function AdminDashboardHome() {
         <AdminMetricCard icon={Users} label="Follow-ups due" value={data?.followUpsDue ?? 0} href="/admin/leads" />
       </div>
 
+      <section aria-labelledby="admin-needs-attention" className="mt-6 rounded-xl border border-amber-200 bg-amber-50/70 p-4 sm:p-5">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h2 id="admin-needs-attention" className="text-base font-bold text-slate-950">Needs attention</h2>
+            <p className="mt-1 text-sm text-slate-600">A short list of items that may need an admin follow-up.</p>
+          </div>
+          <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-600">Live snapshot</span>
+        </div>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {[
+            { label: "Unassigned bookings", value: data?.unassignedBookings ?? 0, href: "/admin/assignments", hint: "Review vendor assignment" },
+            { label: "Payments pending", value: data?.paymentPendingBookings ?? 0, href: "/admin/bookings", hint: "Check booking payments" },
+            { label: "Lead follow-ups due", value: data?.followUpsDue ?? 0, href: "/admin/leads", hint: "Contact customers" },
+            { label: "Failed notifications", value: data?.failedNotifications ?? 0, href: "/admin/notifications", hint: "Review delivery status" },
+          ].map((item) => (
+            <Link key={item.label} href={item.href} className={`flex min-w-0 items-center justify-between gap-3 rounded-lg border bg-white p-3 transition hover:border-amber-400 hover:shadow-sm ${item.value > 0 ? "border-amber-200" : "border-slate-200"}`}>
+              <span className="min-w-0"><span className="block truncate text-sm font-semibold text-slate-800">{item.label}</span><span className="mt-1 block text-xs text-slate-500">{item.value > 0 ? item.hint : "Nothing pending"}</span></span>
+              <span className={`grid h-9 min-w-9 shrink-0 place-items-center rounded-full px-2 text-sm font-bold ${item.value > 0 ? "bg-amber-100 text-amber-900" : "bg-emerald-100 text-emerald-800"}`}>{item.value}</span>
+            </Link>
+          ))}
+        </div>
+      </section>
+
       {data?.missing.length ? (
         <div className="mt-6 rounded-lg border border-amber-200 bg-amber-50 p-4">
           <div className="flex gap-3">

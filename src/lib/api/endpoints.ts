@@ -36,6 +36,8 @@ import type {
   TimeSlot,
   TokenRefreshResponse,
   TechnicianProfile,
+  TechnicianDocument,
+  TechnicianCompanyUser,
   TechnicianKycDetail,
   TechnicianWriteRequest,
   TechnicianOptions,
@@ -63,7 +65,7 @@ import type {
   SeoLandingPageSummary,
 } from "@/types/api";
 
-export type AdminSearchResult = { type: "WORK_ORDER" | "LEAD" | "CUSTOMER"; id: string; title: string; subtitle: string; url: string };
+export type AdminSearchResult = { type: "WORK_ORDER" | "LEAD" | "CUSTOMER" | "TECHNICIAN"; id: string; title: string; subtitle: string; url: string };
 export type AdminSearchResponse = { query: string; results: AdminSearchResult[] };
 
 export const apiPaths = {
@@ -129,6 +131,11 @@ export const apiPaths = {
   adminBookingCancel: (id: UUID) => `/api/v1/admin/bookings/${id}/cancel/`,
   adminBookingRecordBalance: (id: UUID) => `/api/v1/admin/bookings/${id}/record-balance/`,
   adminTechnicians: "/api/v1/admin/technicians/",
+  adminTechnicianDocuments: (id: UUID) => `/api/v1/admin/technicians/${id}/documents/`,
+  adminTechnicianDocumentContent: (id: UUID, documentId: UUID) => `/api/v1/admin/technicians/${id}/documents/${documentId}/content/`,
+  adminTechnicianDocumentDetail: (id: UUID, documentId: UUID) => `/api/v1/admin/technicians/${id}/documents/${documentId}/`,
+  adminTechnicianCompanyUsers: (id: UUID) => `/api/v1/admin/technicians/${id}/company-users/`,
+  adminTechnicianCompanyUserDetail: (id: UUID, userId: UUID) => `/api/v1/admin/technicians/${id}/company-users/${userId}/`,
   adminTechnicianKyc: (id: UUID) => `/api/v1/admin/technicians/${id}/kyc/`,
   adminTimeSlots: "/api/v1/admin/time-slots/",
   adminTimeSlotDetail: (id: UUID) => `/api/v1/admin/time-slots/${id}/`,
@@ -465,6 +472,24 @@ export const adminApi = {
   getTechnicianOptions: () => apiRequest<TechnicianOptions>(`${apiPaths.adminTechnicians}options/`, { auth: true }),
   createTechnician: (body: TechnicianWriteRequest) => apiRequest<TechnicianProfile>(apiPaths.adminTechnicians, { method: "POST", auth: true, body }),
   updateTechnician: (id: UUID, body: Partial<TechnicianWriteRequest>) => apiRequest<TechnicianProfile>(`${apiPaths.adminTechnicians}${id}/`, { method: "PATCH", auth: true, body }),
+  uploadTechnicianPhoto: (id: UUID, file: File) => {
+    const body = new FormData();
+    body.append("profile_photo", file);
+    return apiRequest<TechnicianProfile>(`${apiPaths.adminTechnicians}${id}/`, { method: "PATCH", auth: true, body });
+  },
+  listTechnicianDocuments: (id: UUID) => apiRequest<TechnicianDocument[]>(apiPaths.adminTechnicianDocuments(id), { auth: true }),
+  uploadTechnicianDocument: (id: UUID, documentType: TechnicianDocument["document_type"], file: File) => {
+    const body = new FormData();
+    body.append("document_type", documentType);
+    body.append("file", file);
+    return apiRequest<TechnicianDocument>(apiPaths.adminTechnicianDocuments(id), { method: "POST", auth: true, body });
+  },
+  verifyTechnicianDocument: (id: UUID, documentId: UUID, body: { verification_status: "VERIFIED" | "REJECTED"; verification_note?: string }) => apiRequest<TechnicianDocument>(apiPaths.adminTechnicianDocumentDetail(id, documentId), { method: "PATCH", auth: true, body }),
+  deleteTechnicianDocument: (id: UUID, documentId: UUID) => apiRequest<void>(apiPaths.adminTechnicianDocumentDetail(id, documentId), { method: "POST", auth: true, body: { action: "delete" } }),
+  listTechnicianCompanyUsers: (id: UUID) => apiRequest<TechnicianCompanyUser[]>(apiPaths.adminTechnicianCompanyUsers(id), { auth: true }),
+  addTechnicianCompanyUser: (id: UUID, body: { phone_number: string; role: TechnicianCompanyUser["role"] }) => apiRequest<TechnicianCompanyUser>(apiPaths.adminTechnicianCompanyUsers(id), { method: "POST", auth: true, body }),
+  updateTechnicianCompanyUser: (id: UUID, userId: UUID, body: { role?: TechnicianCompanyUser["role"]; is_active?: boolean }) => apiRequest<TechnicianCompanyUser>(apiPaths.adminTechnicianCompanyUserDetail(id, userId), { method: "PATCH", auth: true, body }),
+  removeTechnicianCompanyUser: (id: UUID, userId: UUID) => apiRequest<void>(apiPaths.adminTechnicianCompanyUserDetail(id, userId), { method: "POST", auth: true, body: { action: "remove" } }),
   listTechnicianJobs: (id: UUID, query?: { active?: boolean; page?: number; page_size?: number }) => apiRequest<PaginatedResponse<Booking>>(`${apiPaths.adminTechnicians}${id}/jobs/`, { auth: true, query }),
   listTechnicianActivities: (id: UUID) => apiRequest<import("@/types/api").BookingActivity[]>(`${apiPaths.adminTechnicians}${id}/activities/`, { auth: true }),
   listLeads: (query?: {
@@ -508,13 +533,13 @@ export const adminApi = {
       body,
       auth: true,
     }),
-  sendLeadPaymentLink: (id: UUID, body: { channel: "SMS"; payment_scope?: "FULL" | "ADVANCE" }) =>
-    apiRequest<Lead & { payment_link_created?: boolean }>(apiPaths.adminLeadSendPaymentLink(id), {
+  sendLeadPaymentLink: (id: UUID, body: { channel: "SMS" | "WHATSAPP"; payment_scope?: "FULL" | "ADVANCE"; whatsapp_consent_confirmed?: boolean }) =>
+    apiRequest<Lead & { payment_link_created?: boolean; payment_delivery_status?: string }>(apiPaths.adminLeadSendPaymentLink(id), {
       method: "POST",
       body,
       auth: true,
     }),
-  scheduleLead: (id: UUID, body: { preferred_date: string; preferred_slot: string }) =>
+  scheduleLead: (id: UUID, body: { preferred_date: string; preferred_slot: string; slot_id?: UUID }) =>
     apiRequest<Lead>(apiPaths.adminLeadSchedule(id), { method: "POST", body, auth: true }),
   sendLeadReminder: (id: UUID, body: { channel: "SMS" }) =>
     apiRequest<Lead>(apiPaths.adminLeadReminder(id), { method: "POST", body, auth: true }),
@@ -635,7 +660,7 @@ export const adminApi = {
   listAuditLogs: (query?: { page?: number; page_size?: number; action?: string; resource_type?: string; search?: string }) =>
     apiRequest<PaginatedResponse<AuditLog>>(apiPaths.adminAuditLogs, { auth: true, query }),
   getSettings: () => apiRequest<AdminSettings>(apiPaths.adminSettings, { auth: true }),
-  listReviews: (query?: { page?: number; page_size?: number; search?: string; is_visible?: boolean; service?: UUID }) =>
+  listReviews: (query?: { page?: number; page_size?: number; search?: string; is_visible?: boolean; service?: UUID; technician?: UUID; rating?: number }) =>
     apiRequest<PaginatedResponse<AdminReview>>(apiPaths.adminReviews, { auth: true, query }),
   createReview: (body: AdminReviewRequest) =>
     apiRequest<AdminReview>(apiPaths.adminReviews, { method: "POST", body, auth: true }),

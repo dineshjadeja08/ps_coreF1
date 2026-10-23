@@ -19,7 +19,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
 
   return (
     <PermissionGuard>
-      <div className="flex min-h-screen min-w-0 overflow-x-hidden bg-slate-50">
+      <div data-admin-shell className="flex min-h-screen min-w-0 overflow-x-hidden bg-[#f3f4f6]">
         <AdminSidebar />
         <div className="min-w-0 max-w-full flex-1 lg:ml-72">
           <AdminTopbar />

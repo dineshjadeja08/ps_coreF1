@@ -26,6 +26,24 @@ function buildUrl(path: string, query?: RequestOptions["query"]) {
 }
 
 export async function downloadAuthenticatedFile(path: string, fallbackFilename: string) {
+  const response = await authenticatedFileResponse(path);
+  const disposition = response.headers.get("content-disposition") ?? "";
+  const filename = disposition.match(/filename="?([^";]+)"?/i)?.[1] ?? fallbackFilename;
+  const objectUrl = URL.createObjectURL(await response.blob());
+  const link = document.createElement("a");
+  link.href = objectUrl;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(objectUrl);
+}
+
+export async function getAuthenticatedFileBlob(path: string) {
+  return authenticatedFileResponse(path).then((response) => response.blob());
+}
+
+async function authenticatedFileResponse(path: string) {
   let accessToken = getAccessToken();
   let response = await fetch(buildUrl(path), {
     headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
@@ -42,16 +60,7 @@ export async function downloadAuthenticatedFile(path: string, fallbackFilename: 
     const parsed = parseApiErrorPayload(payload);
     throw new ApiError(parsed.message, response.status, payload, parsed.fieldErrors);
   }
-  const disposition = response.headers.get("content-disposition") ?? "";
-  const filename = disposition.match(/filename="?([^";]+)"?/i)?.[1] ?? fallbackFilename;
-  const objectUrl = URL.createObjectURL(await response.blob());
-  const link = document.createElement("a");
-  link.href = objectUrl;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  URL.revokeObjectURL(objectUrl);
+  return response;
 }
 
 export async function apiRequest<T>(path: string, options: RequestOptions = {}) {

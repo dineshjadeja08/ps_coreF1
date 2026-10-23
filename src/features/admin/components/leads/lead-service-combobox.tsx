@@ -39,6 +39,7 @@ export function LeadServiceCombobox({ services, value, onChange, error, loading,
         id="lead-service"
         type="button"
         role="combobox"
+        disabled={loading}
         aria-expanded={open}
         aria-controls="lead-service-listbox"
         aria-haspopup="listbox"

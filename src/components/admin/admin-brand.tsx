@@ -17,12 +17,12 @@ export function AdminBrand({ className, dark = false, showDescriptor = true }: A
       className={cn("inline-flex min-w-0 flex-col items-start gap-1", className)}
     >
       <Image
-        src="/images/brand/ps360-admin-logo.png"
+        src="/images/brand/ps360-admin-logo-20261023.png"
         alt="Purple Squad 360"
-        width={1280}
-        height={1280}
+        width={360}
+        height={100}
         priority
-        className={cn("w-[164px] shrink-0 rounded-lg object-cover", showDescriptor ? "h-[72px]" : "h-14")}
+        className={cn("h-[56px] w-[202px] shrink-0 rounded-lg object-contain", showDescriptor ? "mb-1" : "")}
       />
       {showDescriptor ? (
         <span className={cn("text-[10px] font-bold uppercase tracking-[0.18em]", dark ? "text-slate-400" : "text-slate-500")}>

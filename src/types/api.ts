@@ -452,7 +452,7 @@ export type Booking = {
   created_at: ISODateTime;
   updated_at: ISODateTime;
   service_category?: string;
-  assigned_technician?: { id: UUID | null; user_id: UUID; name: string; phone: string } | null;
+  assigned_technician?: { id: UUID | null; user_id: UUID; name: string; phone: string; city?: string } | null;
   technician?: {
     name: string;
     phone: string;
@@ -563,12 +563,21 @@ export type TechnicianProfile = {
   display_name: string;
   profile_photo_url?: string;
   phone: string;
+  virtual_mobile_number?: string;
   alternate_phone?: string;
   email?: string;
   technician_type?: "EMPLOYEE" | "CONTRACT" | "PARTNER";
   employment_status?: "ACTIVE" | "INACTIVE" | "LEFT";
   city?: string;
   pincode?: string;
+  service_group?: string;
+  profile_type?: string;
+  lead_per_day?: number;
+  job_per_day?: number;
+  no_of_teams?: number;
+  sales_person_assigned?: UUID | null;
+  sales_person_assigned_name?: string;
+  crm_owner_id?: string;
   skills: Array<{ id: UUID; name: string; description?: string }>;
   service_areas: Array<{ id: UUID; name: string; postal_code: string; city: string }>;
   supported_services?: Array<{ id: UUID; name: string; slug: string; category: string }>;
@@ -587,10 +596,14 @@ export type TechnicianProfile = {
   joined_at: ISODate | null;
   id_document_available?: boolean;
   address_document_available?: boolean;
+  id_proof_type?: string;
+  id_proof_number?: string;
   address?: string;
   internal_notes?: string;
   active_job_count?: number;
   completed_jobs?: number;
+  monthly_job_count?: number;
+  yearly_job_count?: number;
   cancelled_jobs?: number;
   approved_rating?: DecimalString | null;
   approved_review_count?: number;
@@ -623,9 +636,10 @@ export type BookingStartOtp = {
 };
 
 export type TechnicianWriteRequest = {
-  employee_code: string;
+  employee_code?: string;
   display_name: string;
   phone: string;
+  id_proof_number?: string;
   alternate_phone: string;
   email: string;
   address: string;
@@ -643,12 +657,46 @@ export type TechnicianWriteRequest = {
   skill_names: string[];
   service_area_ids: UUID[];
   supported_service_ids: UUID[];
+  virtual_mobile_number: string;
+  service_group: string;
+  profile_type: string;
+  lead_per_day: number;
+  job_per_day: number;
+  no_of_teams: number;
+  sales_person_assigned: UUID | null;
+  crm_owner_id: string;
+};
+
+export type TechnicianDocument = {
+  id: UUID;
+  document_type: "IDENTITY" | "ADDRESS" | "CERTIFICATE" | "OTHER";
+  original_name: string;
+  content_type: string;
+  file_size: number;
+  verification_status: "PENDING" | "VERIFIED" | "REJECTED";
+  verification_note: string;
+  uploaded_by_name: string;
+  verified_by_name: string;
+  verified_at: ISODateTime | null;
+  created_at: ISODateTime;
+  content_url: string;
+};
+
+export type TechnicianCompanyUser = {
+  id: UUID;
+  name: string;
+  phone_number: string;
+  email: string;
+  role: "OWNER" | "MANAGER" | "STAFF";
+  is_active: boolean;
+  created_at: ISODateTime;
 };
 
 export type TechnicianOptions = {
   skills: Array<{ id: UUID; name: string; is_active: boolean }>;
-  services: Array<{ id: UUID; name: string; is_active: boolean }>;
+  services: Array<{ id: UUID; name: string; category_name?: string; is_active: boolean }>;
   areas: Array<{ id: UUID; name: string; city: string; postal_code: string; is_active: boolean }>;
+  sales_people: Array<{ id: UUID; name: string; phone_number: string }>;
 };
 
 export type AdminDashboardSummary = {
@@ -715,6 +763,8 @@ export type Lead = {
   preferred_callback_at: ISODateTime | null;
   preferred_date: ISODate | null;
   preferred_slot: string;
+  preferred_time_slot?: UUID | null;
+  service_items?: Array<{ service_id: UUID; quantity: number }>;
   quoted_amount: DecimalString | null;
   advance_amount: DecimalString | null;
   balance_amount: DecimalString | null;

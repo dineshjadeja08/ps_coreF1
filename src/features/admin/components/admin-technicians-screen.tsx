@@ -2,6 +2,7 @@
 
 import { Loader2, Plus, Wrench } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { useDeferredValue, useState } from "react";
 
 import { AdminDataTable } from "@/components/admin/admin-data-table";
@@ -20,6 +21,7 @@ const selectClass = "h-11 min-w-0 rounded-lg border border-slate-200 bg-white px
 const pageSize = 25;
 
 export function AdminTechniciansScreen() {
+  const router = useRouter();
   const [search, setSearch] = useState("");
   const deferredSearch = useDeferredValue(search);
   const [service, setService] = useState("");
@@ -41,14 +43,16 @@ export function AdminTechniciansScreen() {
   return (
     <>
       <AdminPageHeader title="Technicians" description="Manage profiles, service coverage, availability, and assigned jobs. Click a technician to manage them." action={<Button type="button" onClick={() => setSelected("")}><Plus className="h-4 w-4" />Add technician</Button>} />
-      <div className="mb-5 grid gap-3 rounded-lg border border-slate-200 bg-white p-4 sm:grid-cols-2 xl:grid-cols-3">
-        <Input aria-label="Search technicians" value={search} onChange={(event) => { setSearch(event.target.value); setPage(1); }} placeholder="Name, phone, or employee code" />
+      <div className="mb-5 overflow-x-auto rounded-lg border border-slate-200 bg-white">
+        <div className="grid min-w-[1027px] grid-cols-[minmax(180px,1.3fr)_repeat(5,minmax(130px,1fr))_minmax(125px,0.9fr)] gap-3 p-4">
+        <Input className="h-11 min-w-0" aria-label="Search technicians" value={search} onChange={(event) => { setSearch(event.target.value); setPage(1); }} placeholder="Name, phone, or employee code" />
         <select aria-label="Filter by service" className={selectClass} value={service} onChange={(event) => { setService(event.target.value); setPage(1); }}><option value="">All services</option>{options.data?.services.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select>
         <select aria-label="Filter by service area" className={selectClass} value={area} onChange={(event) => { setArea(event.target.value); setPage(1); }}><option value="">All service areas</option>{options.data?.areas.map((item) => <option key={item.id} value={item.id}>{item.name} · {item.postal_code}</option>)}</select>
         <select aria-label="Filter by availability" className={selectClass} value={availability} onChange={(event) => { setAvailability(event.target.value); setPage(1); }}><option value="">All availability</option>{["AVAILABLE", "BUSY", "ON_LEAVE", "OFFLINE", "SUSPENDED"].map((status) => <option key={status} value={status}>{status.replaceAll("_", " ")}</option>)}</select>
         <select aria-label="Filter by active status" className={selectClass} value={active} onChange={(event) => { setActive(event.target.value); setPage(1); }}><option value="">Active and inactive</option><option value="true">Active only</option><option value="false">Inactive only</option></select>
         <select aria-label="Filter by verification status" className={selectClass} value={verification} onChange={(event) => { setVerification(event.target.value); setPage(1); }}><option value="">All verification statuses</option>{["PENDING", "UNDER_REVIEW", "VERIFIED", "REJECTED", "SUSPENDED"].map((status) => <option key={status} value={status}>{status.replaceAll("_", " ")}</option>)}</select>
-        <Button type="button" variant="outline" onClick={() => { setSearch(""); setService(""); setArea(""); setAvailability(""); setActive(""); setVerification(""); setPage(1); }}>Clear filters</Button>
+        <Button className="min-w-0 whitespace-nowrap px-2" type="button" variant="outline" onClick={() => { setSearch(""); setService(""); setArea(""); setAvailability(""); setActive(""); setVerification(""); setPage(1); }}>Clear filters</Button>
+        </div>
       </div>
       {options.isError ? <AdminErrorState message="Could not load service and area filters." onRetry={() => void options.refetch()} /> : null}
       {query.isLoading ? (
@@ -61,7 +65,7 @@ export function AdminTechniciansScreen() {
         <><AdminDataTable
           rows={(query.data ?? []).slice((currentPage - 1) * pageSize, currentPage * pageSize)}
           getRowKey={(technician) => technician.id}
-          onRowClick={(technician) => setSelected(technician.id)}
+          onRowClick={(technician) => router.push(`/admin/technicians/${technician.id}`)}
           emptyIcon={Wrench}
           emptyTitle="No technicians found"
           emptyMessage="Add a technician or adjust the filters."
@@ -69,7 +73,7 @@ export function AdminTechniciansScreen() {
             { key: "name", header: "Technician", render: (technician) => <div><p className="font-semibold">{technician.display_name}</p><p className="text-xs text-slate-500">{technician.employee_code}</p><a className="text-sm text-violet-700" href={`tel:${technician.phone}`}>{technician.phone}</a></div> },
             { key: "skills", header: "Skills", render: technicianSkillsSummary },
             { key: "areas", header: "Service area", render: technicianCoverageSummary },
-            { key: "availability", header: "Availability / Jobs", render: (technician) => <div><AdminStatusBadge status={technician.availability_status ?? "OFFLINE"} /><p className="mt-2 text-sm">{technician.active_job_count ?? 0} active jobs</p></div> },
+            { key: "availability", header: "Availability / Jobs", render: (technician) => <div><AdminStatusBadge status={technician.availability_status ?? "OFFLINE"} /><p className="mt-2 text-sm">{technician.yearly_job_count ?? 0} completed this year</p><p className="text-xs text-slate-500">{technician.active_job_count ?? 0} active now</p></div> },
             { key: "status", header: "Status", render: (technician) => <div className="grid justify-items-start gap-2"><div className="flex flex-wrap gap-2"><AdminStatusBadge status={technician.is_active ? "ACTIVE" : "INACTIVE"} /><AdminStatusBadge status={technician.background_verification_status ?? "PENDING"} /></div>{technician.background_verification_status === "REJECTED" && technician.verification_note ? <p className="max-w-xs text-xs text-red-700">{technician.verification_note}</p> : null}</div> },
           ]}
         /><AdminPagination count={count} page={currentPage} pageSize={pageSize} hasNext={currentPage * pageSize < count} hasPrevious={currentPage > 1} onPageChange={setPage} /></>

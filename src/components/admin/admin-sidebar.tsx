@@ -99,15 +99,15 @@ export function AdminSidebar() {
   });
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-40 hidden h-screen w-72 border-r border-slate-200 bg-white text-slate-950 lg:block">
+    <aside className="fixed inset-y-0 left-0 z-40 hidden h-screen w-72 border-r border-slate-700 bg-[#172033] text-white lg:block">
       <div className="flex h-full flex-col">
-        <div className="border-b border-slate-200 px-5 py-5">
-          <AdminBrand />
+        <div className="border-b border-slate-700 px-5 py-5">
+          <AdminBrand dark />
         </div>
         <nav className="flex-1 space-y-5 overflow-y-auto px-3 py-4">
           {adminNavigationSections.map((section) => ({ ...section, items: section.items.filter((item) => canAccessAdminPath(user, item.href)) })).filter((section) => section.items.length).map((section) => (
             <div key={section.title}>
-              <p className="px-3 text-[11px] font-bold uppercase text-slate-400">{section.title}</p>
+              <p className="px-3 text-[11px] font-bold uppercase tracking-wide text-slate-400">{section.title}</p>
               <div className="mt-2 space-y-1">
                 {section.items.map((item) => {
                   const child = "child" in item && item.child;
@@ -118,7 +118,7 @@ export function AdminSidebar() {
                       key={item.href}
                       href={item.href}
                       className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold transition ${child ? "ml-7 text-xs" : ""} ${
-                        active ? "bg-slate-950 text-white" : "text-slate-600 hover:bg-slate-100 hover:text-slate-950"
+                          active ? "bg-[#5b21b6] text-white" : "text-slate-200 hover:bg-slate-800 hover:text-white"
                       }`}
                     >
                       <Icon className="h-4 w-4" />

@@ -180,3 +180,22 @@ a {
   .mobile-scroll-row::-webkit-scrollbar { display: none; }
   input, select, textarea { font-size: 16px; }
 }
+
+/* Admin-only theme: keep the marketplace palette unchanged. */
+[data-admin-shell] {
+  --background: #f3f4f6;
+  --surface: #ffffff;
+  --soft-surface: #f9fafb;
+  --foreground: #111827;
+  --secondary: #4b5563;
+  --muted-foreground: #6b7280;
+  --muted: #e5e7eb;
+  --border: #d1d5db;
+  --primary: #5b21b6;
+  --primary-dark: #4c1d95;
+  --primary-hover: #4c1d95;
+  --primary-soft: #ede9fe;
+  --primary-subtle: #f5f3ff;
+  --primary-foreground: #ffffff;
+  --shadow-soft: 0 8px 20px rgb(91 33 182 / 10%);
+}

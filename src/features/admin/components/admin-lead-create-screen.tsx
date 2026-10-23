@@ -9,6 +9,7 @@ import { Controller, useForm } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { LeadAddressCombobox } from "@/features/admin/components/leads/lead-address-combobox";
 import { LeadServiceCombobox } from "@/features/admin/components/leads/lead-service-combobox";
 import { leadCreateSchema, normalizeIndianMobile, type LeadCreateValues } from "@/features/admin/components/leads/lead-utils";
 import { adminApi } from "@/lib/api/endpoints";
@@ -20,17 +21,23 @@ const emptyForm: LeadCreateValues = {
 export function AdminLeadCreateScreen() {
   const router = useRouter();
   const [serviceSearch, setServiceSearch] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const categories = useQuery({
+    queryKey: ["admin", "lead-service-categories"],
+    queryFn: () => adminApi.listCategories(),
+    staleTime: 5 * 60_000,
+  });
   const deferredServiceSearch = useDeferredValue(serviceSearch.trim());
   const services = useQuery({
-    queryKey: ["admin", "service-options", deferredServiceSearch],
-    queryFn: () => adminApi.listServices({ page_size: 20, search: deferredServiceSearch || undefined }),
+    queryKey: ["admin", "service-options", selectedCategory, deferredServiceSearch],
+    queryFn: () => adminApi.listServices({ page_size: 100, category: selectedCategory || undefined, search: deferredServiceSearch || undefined }),
     staleTime: 2 * 60_000,
   });
   const form = useForm<LeadCreateValues>({ resolver: zodResolver(leadCreateSchema), defaultValues: emptyForm, mode: "onChange" });
   const create = useMutation({
     mutationFn: (values: LeadCreateValues) => adminApi.createLead({
       customer_name: values.customer_name.trim(), primary_mobile: normalizeIndianMobile(values.primary_mobile),
-      required_service: values.required_service, city: values.city.trim(), address: values.address.trim(), pincode: values.pincode.trim(),
+      required_service: values.required_service, service_items: [{ service_id: values.required_service, quantity: 1 }], city: values.city.trim(), address: values.address.trim(), pincode: values.pincode.trim(),
       source: "ONCALL", status: "NEW", funnel_status: "VISITED", payment_status: "NOT_REQUIRED",
     }),
     onSuccess: (lead) => router.push(`/admin/leads/${lead.id}`),
@@ -48,9 +55,15 @@ export function AdminLeadCreateScreen() {
             <LeadField label="Mobile Number" htmlFor="lead-mobile" required error={form.formState.errors.primary_mobile?.message}>
               <Input id="lead-mobile" className="h-[50px]" inputMode="tel" autoComplete="tel" {...form.register("primary_mobile")} aria-invalid={Boolean(form.formState.errors.primary_mobile)} />
             </LeadField>
+            <LeadField label="Service Category" htmlFor="lead-service-category" required className="sm:col-span-2">
+              <select id="lead-service-category" value={selectedCategory} onChange={(event) => { setSelectedCategory(event.target.value); form.setValue("required_service", "", { shouldValidate: true }); setServiceSearch(""); }} className="h-[50px] w-full rounded-md border border-border bg-white px-4 text-sm outline-none focus:border-primary focus:ring-3 focus:ring-primary/15" required>
+                <option value="">Select a service category</option>
+                {(categories.data?.results ?? []).filter((category) => category.is_active).map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
+              </select>
+            </LeadField>
             <LeadField label="Select Service" htmlFor="lead-service" required className="sm:col-span-2">
               <Controller control={form.control} name="required_service" render={({ field, fieldState }) => (
-                <LeadServiceCombobox services={services.data?.results ?? []} value={field.value} onChange={field.onChange} onSearch={setServiceSearch} error={fieldState.error?.message} loading={services.isLoading} />
+                <LeadServiceCombobox services={services.data?.results ?? []} value={field.value} onChange={field.onChange} onSearch={setServiceSearch} error={fieldState.error?.message} loading={!selectedCategory || services.isLoading} />
               )} />
             </LeadField>
           </div>
@@ -59,13 +72,15 @@ export function AdminLeadCreateScreen() {
         <section className="rounded-xl border border-border bg-white p-5 shadow-sm sm:p-7">
           <h2 className="text-xl font-medium text-foreground">Create Address</h2>
           <div className="mt-7 space-y-6">
-            <LeadField label="City" htmlFor="lead-city" required error={form.formState.errors.city?.message}>
-              <Input id="lead-city" className="h-[50px]" {...form.register("city")} aria-invalid={Boolean(form.formState.errors.city)} />
-            </LeadField>
             <LeadField label="Address" htmlFor="lead-address" required error={form.formState.errors.address?.message}>
-              <Input id="lead-address" className="h-[50px]" placeholder="House number, street and locality" {...form.register("address")} aria-invalid={Boolean(form.formState.errors.address)} />
+              <Controller control={form.control} name="address" render={({ field, fieldState }) => <LeadAddressCombobox value={field.value} onChange={(value) => { field.onChange(value); form.setValue("pincode", ""); form.setValue("latitude", ""); form.setValue("longitude", ""); }} onResolve={(value) => { field.onChange(value.address); form.setValue("city", value.city, { shouldValidate: true }); form.setValue("pincode", value.pincode, { shouldValidate: true }); form.setValue("latitude", value.latitude); form.setValue("longitude", value.longitude); }} error={fieldState.error?.message} />} />
+              <p className="mt-1.5 text-xs text-secondary">Choose an address suggestion to fill in its service area automatically.</p>
+              {form.formState.errors.pincode?.message ? <p role="alert" className="mt-1 text-xs font-medium text-red-600">{form.formState.errors.pincode.message}</p> : null}
             </LeadField>
-            <LeadField label="Pincode" htmlFor="lead-pincode" error={form.formState.errors.pincode?.message}><Input id="lead-pincode" className="h-[50px] max-w-xs" inputMode="numeric" {...form.register("pincode")} /></LeadField>
+            <LeadField label="City" htmlFor="lead-city" required error={form.formState.errors.city?.message}>
+              <Input id="lead-city" className="h-[50px]" placeholder="Choose an address to fill the city" readOnly {...form.register("city")} aria-invalid={Boolean(form.formState.errors.city)} />
+            </LeadField>
+            <input type="hidden" {...form.register("pincode")} />
           </div>
         </section>
         {create.isError ? <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm font-medium text-red-700">{create.error.message}</p> : null}

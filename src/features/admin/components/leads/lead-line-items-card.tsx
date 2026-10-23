@@ -19,15 +19,20 @@ type Props = {
   isScheduled: boolean;
   paymentLinkUrl: string;
   advanceAmount: string | number | null;
+  deliveryStatus?: string;
   conversionNotes: string;
   paymentPending: boolean;
+  paymentChannel: "SMS" | "WHATSAPP";
+  whatsappConsent: boolean;
   conversionPending: boolean;
   converted: boolean;
   draftOnly: boolean;
   error?: string;
   onSchedule: () => void;
   onConversionNotesChange: (value: string) => void;
-  onSendPaymentLink: (scope: "FULL" | "ADVANCE") => void;
+  onPaymentChannelChange: (channel: "SMS" | "WHATSAPP") => void;
+  onWhatsappConsentChange: (confirmed: boolean) => void;
+  onSendPaymentLink: (scope: "FULL" | "ADVANCE", channel: "SMS" | "WHATSAPP", consent: boolean) => void;
   onConvert: () => void;
 };
 
@@ -62,15 +67,22 @@ export function LeadLineItemsCard(props: Props) {
           <div className="mt-6 flex items-center justify-between border-y border-border py-4 text-sm"><div><p className="font-bold text-foreground">Schedule Job:</p><p className="mt-1 text-xs text-secondary">{props.scheduledLabel}</p></div><button type="button" className="min-h-11 px-2 font-bold text-primary hover:underline" onClick={props.onSchedule}>Update</button></div>
           <div className="mt-5 grid gap-3">
             <Input value={props.conversionNotes} onChange={(event) => props.onConversionNotesChange(event.target.value)} placeholder="Conversion notes (optional)" />
+            <label className="grid gap-1 text-xs font-semibold text-secondary">Send payment link by
+              <select value={props.paymentChannel} onChange={(event) => props.onPaymentChannelChange(event.target.value as "SMS" | "WHATSAPP")} className="h-11 rounded-md border border-border bg-white px-3 text-sm font-medium text-foreground">
+                <option value="SMS">SMS</option><option value="WHATSAPP">WhatsApp</option>
+              </select>
+            </label>
+            {props.paymentChannel === "WHATSAPP" ? <label className="flex items-start gap-2 text-xs leading-5 text-secondary"><input type="checkbox" checked={props.whatsappConsent} onChange={(event) => props.onWhatsappConsentChange(event.target.checked)} className="mt-1" />Customer has agreed to receive this service and payment message on WhatsApp.</label> : null}
             <div className="flex flex-wrap gap-2">
-              <Button type="button" variant="outline" className="flex-1 rounded-full" disabled={!props.isScheduled || props.paymentPending || props.draftOnly} onClick={() => props.onSendPaymentLink("FULL")}>{props.paymentPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}Create Payment Link</Button>
+              <Button type="button" variant="outline" className="flex-1 rounded-full" disabled={!props.isScheduled || props.paymentPending || props.draftOnly || (props.paymentChannel === "WHATSAPP" && !props.whatsappConsent)} onClick={() => props.onSendPaymentLink("FULL", props.paymentChannel, props.whatsappConsent)}>{props.paymentPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}Send Payment Link</Button>
               <button type="button" className="grid h-11 w-11 shrink-0 place-items-center rounded-md border border-border hover:bg-primary-subtle disabled:opacity-50" disabled={!props.paymentLinkUrl} onClick={() => void copyLink()} aria-label="Copy payment link">{copied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}</button>
               <Button type="button" className="flex-1 rounded-full" disabled={!props.isScheduled || props.conversionPending || props.converted || props.draftOnly} onClick={props.onConvert}>{props.conversionPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}Create work order</Button>
             </div>
-            <Button type="button" variant="outline" className="w-full rounded-full" disabled={!props.isScheduled || props.paymentPending || Number(props.advanceAmount ?? 0) <= 0 || props.draftOnly} onClick={() => props.onSendPaymentLink("ADVANCE")}>Create Partial Payment Link</Button>
+            <Button type="button" variant="outline" className="w-full rounded-full" disabled={!props.isScheduled || props.paymentPending || Number(props.advanceAmount ?? 0) <= 0 || props.draftOnly || (props.paymentChannel === "WHATSAPP" && !props.whatsappConsent)} onClick={() => props.onSendPaymentLink("ADVANCE", props.paymentChannel, props.whatsappConsent)}>Send Advance Link</Button>
           </div>
           {props.draftOnly ? <p className="mt-3 rounded-md bg-primary-subtle p-3 text-xs font-medium text-primary">Package quantities are a local preview until lead line-item write APIs are available. Payment and work-order actions are disabled for this draft.</p> : null}
           {props.paymentLinkUrl ? <a href={props.paymentLinkUrl} target="_blank" rel="noreferrer" className="mt-3 block break-all text-xs font-semibold text-primary hover:underline">{props.paymentLinkUrl}</a> : null}
+          {props.deliveryStatus ? <p role="status" className={`mt-2 text-xs font-semibold ${props.deliveryStatus === "SENT" ? "text-green-700" : "text-amber-700"}`}>{props.deliveryStatus === "SENT" ? `Payment link sent via ${props.paymentChannel === "WHATSAPP" ? "WhatsApp" : "SMS"}.` : `Payment link created, but message delivery status is ${props.deliveryStatus.toLowerCase().replaceAll("_", " ")}. Check the MSG91 template/configuration.`}</p> : null}
           {props.error ? <p className="mt-2 text-xs text-red-600">{props.error}</p> : null}
           <div className="mt-6 text-xs leading-5 text-secondary"><p>( Before Confirming workorder verify the details )</p><p className="mt-3 font-bold text-foreground">Note</p><ol className="mt-2 list-decimal space-y-1 pl-5"><li>A professional partner will contact you within 10 - 20 minutes.</li><li>After discussing your requirements, a service estimate will be shared before starting the work.</li></ol></div>
         </>
