@@ -5,8 +5,8 @@ import type { Address } from "@/features/addresses/types";
 
 type AddressCardProps = {
   address: Address;
-  onEdit: (address: Address) => void;
-  onDelete: (id: string) => void;
+  onEdit?: (address: Address) => void;
+  onDelete?: (id: string) => void;
   onSetDefault?: (id: string) => void;
   deleting?: boolean;
   settingDefault?: boolean;
@@ -45,22 +45,28 @@ export function AddressCard({ address, onEdit, onDelete, onSetDefault, deleting,
           </div>
         </div>
       </div>
-      <div className="mt-4 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
-        <Button type="button" variant="outline" size="sm" className="w-full sm:w-auto" onClick={() => onEdit(address)}>
-          <Pencil className="h-4 w-4" />
-          Edit
-        </Button>
-        {!address.is_default && onSetDefault ? (
-          <Button type="button" variant="secondary" size="sm" className="w-full sm:w-auto" onClick={() => onSetDefault(address.id)} disabled={settingDefault}>
-            <Star className="h-4 w-4" />
-            Set default
-          </Button>
-        ) : null}
-        <Button type="button" variant="ghost" size="sm" className="w-full sm:w-auto" onClick={() => onDelete(address.id)} disabled={deleting}>
-          <Trash2 className="h-4 w-4" />
-          Delete
-        </Button>
-      </div>
+      {onEdit || onDelete || (!address.is_default && onSetDefault) ? (
+        <div className="mt-4 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+          {onEdit ? (
+            <Button type="button" variant="outline" size="sm" className="w-full sm:w-auto" onClick={() => onEdit(address)}>
+              <Pencil className="h-4 w-4" />
+              Edit
+            </Button>
+          ) : null}
+          {!address.is_default && onSetDefault ? (
+            <Button type="button" variant="secondary" size="sm" className="w-full sm:w-auto" onClick={() => onSetDefault(address.id)} disabled={settingDefault}>
+              <Star className="h-4 w-4" />
+              Set default
+            </Button>
+          ) : null}
+          {onDelete ? (
+            <Button type="button" variant="ghost" size="sm" className="w-full sm:w-auto" onClick={() => onDelete(address.id)} disabled={deleting}>
+              <Trash2 className="h-4 w-4" />
+              Delete
+            </Button>
+          ) : null}
+        </div>
+      ) : null}
     </article>
   );
 }

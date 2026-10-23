@@ -43,7 +43,7 @@ export function AdminMobileNav() {
                         <Link
                           key={item.href}
                           href={item.href}
-                          className={`flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold ${active ? "bg-violet-600 text-white" : "text-slate-200 hover:bg-slate-900"}`}
+                          className={`flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold ${active ? "bg-[#5b21b6] text-white" : "text-slate-200 hover:bg-slate-900"}`}
                           onClick={() => setOpen(false)}
                         >
                           <Icon className="h-4 w-4 shrink-0" />

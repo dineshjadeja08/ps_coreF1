@@ -4,7 +4,19 @@ const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 const apiImageHost = apiBaseUrl ? new URL(apiBaseUrl).hostname : undefined;
 
 const nextConfig: NextConfig = {
+  // Keep metadata in the head so GTM's noscript is the first body element.
+  htmlLimitedBots: /.*/,
   allowedDevOrigins: ["127.0.0.1"],
+  async redirects() {
+    return [
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "www.purplesquad.in" }],
+        destination: "https://purplesquad.in/:path*",
+        permanent: true,
+      },
+    ];
+  },
   images: {
     dangerouslyAllowLocalIP: process.env.NODE_ENV !== "production",
     remotePatterns: [

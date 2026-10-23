@@ -6,7 +6,7 @@ export const leadCreateSchema = z.object({
   required_service: z.string().trim().min(1, "Select a service."),
   city: z.string().trim().min(1, "Enter the city."),
   address: z.string().trim().min(1, "Select or enter an address."),
-  pincode: z.string().trim().max(12, "Enter a valid pincode."),
+  pincode: z.string().trim().regex(/^[1-9]\d{5}$/, "Choose a complete address suggestion with a valid postal code."),
   latitude: z.string().trim(),
   longitude: z.string().trim(),
 });

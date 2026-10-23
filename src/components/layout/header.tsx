@@ -37,6 +37,9 @@ export function Header() {
           <Link href={routes.services} className="hover:text-foreground">
             Services
           </Link>
+          <Link href="/blog" className="hover:text-foreground">
+            Blog
+          </Link>
           <button type="button" className="hover:text-foreground" onClick={openApplianceSelector}>
             Appliance
           </button>

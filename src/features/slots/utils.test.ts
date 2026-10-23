@@ -23,11 +23,13 @@ describe("slot utilities", () => {
     const groups = groupSlotsByDaypart([
       slot({ id: "morning", start_time: "09:00:00" }),
       slot({ id: "afternoon", start_time: "14:00:00" }),
+      slot({ id: "late-afternoon", start_time: "17:00:00" }),
       slot({ id: "evening", start_time: "18:00:00" }),
     ]);
 
     expect(Object.keys(groups)).toEqual(["Morning", "Afternoon", "Evening"]);
     expect(getSlotDaypart(slot({ start_time: "11:00:00" }))).toBe("Morning");
+    expect(getSlotDaypart(slot({ start_time: "16:00:00" }))).toBe("Afternoon");
   });
 
   it("detects unavailable slots by capacity", () => {

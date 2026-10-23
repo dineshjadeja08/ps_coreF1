@@ -1,73 +1,47 @@
 "use client";
 
-import { ChevronRight, Minus, Plus } from "lucide-react";
-import { useMemo, useState } from "react";
+import { Minus, Plus } from "lucide-react";
 
 import { formatInr } from "@/features/admin/components/leads/lead-utils";
-import type { AdminPackage, UUID } from "@/types/api";
+import type { AdminService, UUID } from "@/types/api";
 
 type Props = {
-  packages: AdminPackage[];
+  services: AdminService[];
   quantities: Record<UUID, number>;
+  primaryServiceId: UUID;
+  categoryName: string;
   loading?: boolean;
-  onQuantityChange: (packageId: UUID, quantity: number) => void;
+  dirty?: boolean;
+  saving?: boolean;
+  onSave?: () => void;
+  onQuantityChange: (serviceId: UUID, quantity: number) => void;
 };
 
-export function LeadPackagePicker({ packages, quantities, loading, onQuantityChange }: Props) {
-  const [expanded, setExpanded] = useState<Set<UUID>>(new Set());
-  const groups = useMemo(() => {
-    const grouped = new Map<string, AdminPackage[]>();
-    for (const item of packages.filter((entry) => entry.is_active)) {
-      const service = item.items[0]?.service_detail;
-      const group = service?.landing_group || service?.category?.name || "Service Packages";
-      grouped.set(group, [...(grouped.get(group) ?? []), item]);
-    }
-    return [...grouped.entries()];
-  }, [packages]);
-
+export function LeadPackagePicker({ services, quantities, primaryServiceId, categoryName, loading, dirty, saving, onSave, onQuantityChange }: Props) {
+  const activeServices = services.filter((service) => service.is_active);
   return (
     <section className="rounded-xl border border-border bg-white shadow-sm">
-      <div className="border-b border-border px-5 py-5 sm:px-7"><h2 className="text-xl font-bold text-foreground">Add packages</h2><p className="mt-1 text-sm text-secondary">Choose packages and adjust quantities for this request.</p></div>
-      <div className="divide-y divide-border">
-        {groups.map(([group, items]) => (
-          <div key={group} className="p-5 sm:p-7">
-            <h3 className="text-base font-bold text-foreground">{group}</h3>
-            <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-              {items.map((item) => {
-                const quantity = quantities[item.id] ?? 0;
-                const isExpanded = expanded.has(item.id);
-                return (
-                  <article key={item.id} className="flex min-h-44 items-start justify-between gap-4 rounded-lg border border-border p-4 transition hover:border-primary/35 hover:shadow-sm">
-                    <div className="min-w-0 flex-1">
-                      <h4 className="font-bold leading-5 text-foreground">{item.name}</h4>
-                      <p className={`mt-2 text-sm leading-5 text-secondary ${isExpanded ? "" : "line-clamp-2"}`}>{item.description || item.items.map((entry) => entry.service_detail.name).join(", ")}</p>
-                      <p className="mt-2 font-bold text-foreground">{formatInr(item.bundle_price)}</p>
-                      <button type="button" onClick={() => setExpanded((current) => {
-                        const next = new Set(current);
-                        if (next.has(item.id)) next.delete(item.id); else next.add(item.id);
-                        return next;
-                      })} className="mt-3 inline-flex min-h-11 items-center text-sm font-bold text-primary hover:underline">
-                        {isExpanded ? "Show less" : "Show more"}<ChevronRight className={`h-4 w-4 transition ${isExpanded ? "rotate-90" : ""}`} />
-                      </button>
-                    </div>
-                    {quantity > 0 ? (
-                      <div className="flex h-11 shrink-0 items-center overflow-hidden rounded-full border border-primary text-primary">
-                        <button type="button" className="grid h-11 w-11 place-items-center hover:bg-primary-subtle" onClick={() => onQuantityChange(item.id, quantity - 1)} aria-label={`Decrease ${item.name}`}><Minus className="h-4 w-4" /></button>
-                        <span className="min-w-7 text-center text-sm font-bold" aria-live="polite">{quantity}</span>
-                        <button type="button" className="grid h-11 w-11 place-items-center hover:bg-primary-subtle" onClick={() => onQuantityChange(item.id, quantity + 1)} aria-label={`Increase ${item.name}`}><Plus className="h-4 w-4" /></button>
-                      </div>
-                    ) : (
-                      <button type="button" className="min-h-11 shrink-0 rounded-full border border-primary px-5 text-sm font-bold text-primary hover:bg-primary-subtle" onClick={() => onQuantityChange(item.id, 1)}>Add</button>
-                    )}
-                  </article>
-                );
-              })}
-            </div>
-          </div>
-        ))}
-        {loading ? <div className="grid gap-3 p-5 sm:grid-cols-2 lg:grid-cols-3">{[0, 1, 2].map((item) => <div key={item} className="h-44 animate-pulse rounded-lg bg-muted" />)}</div> : null}
-        {!loading && !groups.length ? <p className="p-10 text-center text-sm text-secondary">No active packages are available.</p> : null}
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-5 sm:px-7">
+        <div><h2 className="text-xl font-bold text-foreground">Add services</h2><p className="mt-1 text-sm text-secondary">Choose additional {categoryName || "related"} services and quantities for this lead.</p></div>
+        {onSave ? <button type="button" disabled={!dirty || saving} onClick={onSave} className="min-h-11 rounded-full bg-primary px-5 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50">{saving ? "Saving…" : "Save services"}</button> : null}
       </div>
+      {loading ? <div className="grid gap-3 p-5 sm:grid-cols-2 lg:grid-cols-3">{[0, 1, 2].map((item) => <div key={item} className="h-28 animate-pulse rounded-lg bg-muted" />)}</div> : activeServices.length ? (
+        <div className="grid gap-3 p-5 sm:grid-cols-2 lg:grid-cols-3 sm:p-7">
+          {activeServices.map((service) => {
+            const quantity = quantities[service.id] ?? 0;
+            const required = service.id === primaryServiceId;
+            return <article key={service.id} className={`flex min-h-28 items-center justify-between gap-3 rounded-lg border p-4 ${quantity ? "border-primary/50 bg-primary-subtle/40" : "border-border"}`}>
+              <div className="min-w-0"><h3 className="font-bold leading-5 text-foreground">{service.name}{required ? <span className="ml-2 text-xs font-medium text-secondary">Primary</span> : null}</h3><p className="mt-2 text-sm font-semibold text-secondary">{formatInr(service.effective_price)}</p></div>
+              {quantity ? <div className="flex h-11 shrink-0 items-center overflow-hidden rounded-full border border-primary text-primary">
+                <button type="button" className="grid h-11 w-11 place-items-center hover:bg-white disabled:opacity-40" disabled={required && quantity <= 1} onClick={() => onQuantityChange(service.id, quantity - 1)} aria-label={`Decrease ${service.name}`}><Minus className="h-4 w-4" /></button>
+                <span className="min-w-7 text-center text-sm font-bold" aria-live="polite">{quantity}</span>
+                <button type="button" className="grid h-11 w-11 place-items-center hover:bg-white" onClick={() => onQuantityChange(service.id, quantity + 1)} aria-label={`Increase ${service.name}`}><Plus className="h-4 w-4" /></button>
+              </div> : <button type="button" className="min-h-11 shrink-0 rounded-full border border-primary px-5 text-sm font-bold text-primary hover:bg-primary-subtle" onClick={() => onQuantityChange(service.id, 1)}>Add</button>}
+            </article>;
+          })}
+        </div>
+      ) : <p className="p-10 text-center text-sm text-secondary">No active services are available in this category.</p>}
+      {dirty ? <p className="px-5 pb-5 text-xs font-medium text-amber-700 sm:px-7">Save your service selection before creating a payment link or work order.</p> : null}
     </section>
   );
 }

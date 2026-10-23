@@ -15,12 +15,14 @@ import type {
   AdminReportSummary,
   BalanceCollectionRequest,
   Booking,
+  BookingCompletionPhoto,
+  BookingStartOtp,
   AuthLoginResponse,
+  AdminBlogPost,
+  BlogPostWriteRequest,
   PasswordLoginResponse,
-  OtpSendResponse,
   PaginatedResponse,
   PasswordLoginRequest,
-  PasswordSignupRequest,
   PaymentOrder,
   PaymentVerifyRequest,
   PaymentVerifyResponse,
@@ -34,6 +36,11 @@ import type {
   TimeSlot,
   TokenRefreshResponse,
   TechnicianProfile,
+  TechnicianDocument,
+  TechnicianCompanyUser,
+  TechnicianKycDetail,
+  TechnicianWriteRequest,
+  TechnicianOptions,
   UUID,
   User,
   UserProfileUpdateRequest,
@@ -51,21 +58,20 @@ import type {
   AdminSettings,
   AdminStaff,
   AdminReview,
+  AdminReviewRequest,
   StaffGroup,
   ScheduleClosure,
+  SeoLandingPage,
+  SeoLandingPageSummary,
 } from "@/types/api";
 
-export type AdminSearchResult = { type: "WORK_ORDER" | "LEAD" | "CUSTOMER"; id: string; title: string; subtitle: string; url: string };
+export type AdminSearchResult = { type: "WORK_ORDER" | "LEAD" | "CUSTOMER" | "TECHNICIAN"; id: string; title: string; subtitle: string; url: string };
 export type AdminSearchResponse = { query: string; results: AdminSearchResult[] };
 
 export const apiPaths = {
   health: "/api/v1/health/",
-  customerAccess: "/api/v1/auth/customer-access/",
-  otpSend: "/api/v1/auth/otp/send/",
-  otpVerify: "/api/v1/auth/otp/verify/",
-  passwordSignup: "/api/v1/auth/password/signup/",
+  firebaseLogin: "/api/v1/auth/firebase/",
   passwordLogin: "/api/v1/auth/password/login/",
-  adminMfaVerify: "/api/v1/auth/admin-mfa/verify/",
   devPhoneAuth: "/api/v1/auth/dev-phone/",
   refreshAuth: "/api/v1/auth/refresh/",
   logout: "/api/v1/auth/logout/",
@@ -74,9 +80,17 @@ export const apiPaths = {
   serviceAreas: "/api/v1/service-areas/",
   locationReverseGeocode: "/api/v1/location/reverse-geocode/",
   locationAutocomplete: "/api/v1/location/autocomplete/",
+  locationGeocode: "/api/v1/location/geocode/",
+  deviceRegister: "/api/v1/devices/register/",
   serviceCategories: "/api/v1/service-categories/",
   services: "/api/v1/services/",
+  blogPosts: "/api/v1/blog-posts/",
+  blogPostDetail: (slug: string) => `/api/v1/blog-posts/${encodeURIComponent(slug)}/`,
+  adminBlogPosts: "/api/v1/admin/blog-posts/",
+  adminBlogPostDetail: (id: UUID) => `/api/v1/admin/blog-posts/${id}/`,
   serviceDetail: (slug: string) => `/api/v1/services/${slug}/`,
+  seoPages: "/api/v1/seo-pages/",
+  seoPageDetail: (pageSlug: string) => `/api/v1/seo-pages/${pageSlug}/`,
   serviceReviews: (serviceId: UUID) => `/api/v1/services/${serviceId}/reviews/`,
   faqs: "/api/v1/faqs/",
   homepageBanners: "/api/v1/homepage-banners/",
@@ -86,6 +100,7 @@ export const apiPaths = {
   bookings: "/api/v1/bookings/",
   bookingDetail: (id: UUID) => `/api/v1/bookings/${id}/`,
   bookingInvoice: (id: UUID) => `/api/v1/bookings/${id}/invoice/`,
+  bookingStartOtp: (id: UUID) => `/api/v1/bookings/${id}/start-otp/`,
   cancelBooking: (id: UUID) => `/api/v1/bookings/${id}/cancel/`,
   rescheduleBooking: (id: UUID) => `/api/v1/bookings/${id}/reschedule/`,
   paymentOrder: (bookingId: UUID) => `/api/v1/bookings/${bookingId}/payments/order/`,
@@ -107,6 +122,7 @@ export const apiPaths = {
   adminWorkOrderClose: (id: UUID) => `/api/v1/admin/work-orders/${id}/close/`,
   adminSearch: "/api/v1/admin/search/",
   adminBookingDetail: (id: UUID) => `/api/v1/admin/bookings/${id}/`,
+  adminBookingPhotos: (id: UUID) => `/api/v1/admin/bookings/${id}/photos/`,
   adminBookingInvoice: (id: UUID) => `/api/v1/admin/bookings/${id}/invoice/`,
   adminBookingAssignTechnician: (id: UUID) => `/api/v1/admin/bookings/${id}/assign-technician/`,
   adminBookingRemoveTechnician: (id: UUID) => `/api/v1/admin/bookings/${id}/remove-technician/`,
@@ -115,12 +131,19 @@ export const apiPaths = {
   adminBookingCancel: (id: UUID) => `/api/v1/admin/bookings/${id}/cancel/`,
   adminBookingRecordBalance: (id: UUID) => `/api/v1/admin/bookings/${id}/record-balance/`,
   adminTechnicians: "/api/v1/admin/technicians/",
+  adminTechnicianDocuments: (id: UUID) => `/api/v1/admin/technicians/${id}/documents/`,
+  adminTechnicianDocumentContent: (id: UUID, documentId: UUID) => `/api/v1/admin/technicians/${id}/documents/${documentId}/content/`,
+  adminTechnicianDocumentDetail: (id: UUID, documentId: UUID) => `/api/v1/admin/technicians/${id}/documents/${documentId}/`,
+  adminTechnicianCompanyUsers: (id: UUID) => `/api/v1/admin/technicians/${id}/company-users/`,
+  adminTechnicianCompanyUserDetail: (id: UUID, userId: UUID) => `/api/v1/admin/technicians/${id}/company-users/${userId}/`,
+  adminTechnicianKyc: (id: UUID) => `/api/v1/admin/technicians/${id}/kyc/`,
   adminTimeSlots: "/api/v1/admin/time-slots/",
   adminTimeSlotDetail: (id: UUID) => `/api/v1/admin/time-slots/${id}/`,
   adminScheduleClosures: "/api/v1/admin/schedule-closures/",
   adminScheduleClosureDetail: (id: UUID) => `/api/v1/admin/schedule-closures/${id}/`,
   technicianJobs: "/api/v1/technician/jobs/",
   technicianJobEnRoute: (id: UUID) => `/api/v1/technician/jobs/${id}/en-route/`,
+  technicianJobArrived: (id: UUID) => `/api/v1/technician/jobs/${id}/arrived/`,
   technicianJobStart: (id: UUID) => `/api/v1/technician/jobs/${id}/start/`,
   technicianJobComplete: (id: UUID) => `/api/v1/technician/jobs/${id}/complete/`,
   adminLeads: "/api/v1/admin/leads/",
@@ -163,8 +186,8 @@ export const catalogueApi = {
   listServices: (query?: { category?: string; search?: string; featured?: boolean; city?: string; postal_code?: string; page?: number; page_size?: number }) =>
     apiRequest<PaginatedResponse<ServiceListItem>>(apiPaths.services, { query, cache: "no-store" }),
   getService: (slug: string) => apiRequest<ServiceDetail>(apiPaths.serviceDetail(slug), { cache: "no-store" }),
-  listServiceReviews: (serviceId: UUID) =>
-    apiRequest<PaginatedResponse<Review>>(apiPaths.serviceReviews(serviceId), { query: { page_size: 3 } }),
+  listServiceReviews: (serviceId: UUID, pageSize = 3) =>
+    apiRequest<PaginatedResponse<Review>>(apiPaths.serviceReviews(serviceId), { query: { page_size: pageSize } }),
   listServiceFaqs: (serviceId: UUID) => apiRequest<FAQ[]>(apiPaths.faqs, { query: { service_id: serviceId } }),
   listHomepageBanners: (placement: HomepageBanner["placement"] = "MAIN") =>
     apiRequest<HomepageBanner[]>(apiPaths.homepageBanners, { query: { placement }, cache: "no-store" }),
@@ -172,6 +195,8 @@ export const catalogueApi = {
     apiRequest<ServiceAreaCheckResponse>(apiPaths.serviceAreaCheck, { query: { postal_code: postalCode } }),
   listServiceAreas: (city?: string) =>
     apiRequest<ServiceArea[]>(apiPaths.serviceAreas, { query: { city } }),
+  listSeoPages: () => apiRequest<SeoLandingPageSummary[]>(apiPaths.seoPages),
+  getSeoPage: (pageSlug: string) => apiRequest<SeoLandingPage>(apiPaths.seoPageDetail(pageSlug)),
 };
 
 export const addressApi = {
@@ -183,6 +208,8 @@ export const addressApi = {
     apiRequest<AddressAutocompleteResponse>(apiPaths.locationAutocomplete, {
       query: { input },
     }),
+  geocode: (placeId: string) =>
+    apiRequest<LocationAddress>(apiPaths.locationGeocode, { query: { place_id: placeId } }),
   list: () => apiRequest<PaginatedResponse<Address>>(apiPaths.addresses, { auth: true }),
   create: (body: AddressRequest) =>
     apiRequest<Address>(apiPaths.addresses, {
@@ -211,6 +238,7 @@ export const slotApi = {
 export const bookingApi = {
   list: (query?: { page?: number; page_size?: number }) => apiRequest<PaginatedResponse<Booking>>(apiPaths.bookings, { auth: true, query }),
   get: (id: UUID) => apiRequest<Booking>(apiPaths.bookingDetail(id), { auth: true }),
+  getStartOtp: (id: UUID) => apiRequest<BookingStartOtp>(apiPaths.bookingStartOtp(id), { auth: true }),
   create: (body: BookingCreateRequest) =>
     apiRequest<Booking>(apiPaths.bookings, {
       method: "POST",
@@ -257,40 +285,26 @@ export const paymentApi = {
 };
 
 export const authApi = {
-  customerAccess: (body: { name: string; phone_number: string }) =>
-    apiRequest<AuthLoginResponse>(apiPaths.customerAccess, {
+  firebaseLogin: (idToken: string) =>
+    apiRequest<AuthLoginResponse>(apiPaths.firebaseLogin, {
       method: "POST",
-      body,
-    }),
-  passwordSignup: (body: PasswordSignupRequest) =>
-    apiRequest<AuthLoginResponse>(apiPaths.passwordSignup, {
-      method: "POST",
-      body,
+      body: { id_token: idToken },
     }),
   passwordLogin: (body: PasswordLoginRequest) =>
     apiRequest<PasswordLoginResponse>(apiPaths.passwordLogin, {
       method: "POST",
       body,
     }),
-  verifyAdminMfa: (challengeId: UUID, otp: string) =>
-    apiRequest<AuthLoginResponse>(apiPaths.adminMfaVerify, {
-      method: "POST",
-      body: { challenge_id: challengeId, otp },
-    }),
   devPhoneLogin: (phoneNumber: string) =>
     apiRequest<AuthLoginResponse>(apiPaths.devPhoneAuth, {
       method: "POST",
       body: { phone_number: phoneNumber },
     }),
-  sendOtp: (phoneNumber: string, channel: "SMS" | "WHATSAPP", captchaToken = "") =>
-    apiRequest<OtpSendResponse>(apiPaths.otpSend, {
+  registerDevice: (token: string, platform: "WEB" | "ANDROID" | "IOS" = "WEB") =>
+    apiRequest<{ token: string; platform: string }>(apiPaths.deviceRegister, {
       method: "POST",
-      body: { phone_number: phoneNumber, channel, captcha_token: captchaToken },
-    }),
-  verifyOtp: (phoneNumber: string, otp: string) =>
-    apiRequest<AuthLoginResponse>(apiPaths.otpVerify, {
-      method: "POST",
-      body: { phone_number: phoneNumber, otp },
+      body: { token, platform },
+      auth: true,
     }),
   me: () => apiRequest<User>(apiPaths.me, { auth: true }),
   updateMe: (body: UserProfileUpdateRequest) =>
@@ -315,13 +329,23 @@ export const authApi = {
 };
 
 export const technicianApi = {
-  listJobs: () => apiRequest<PaginatedResponse<Booking>>(apiPaths.technicianJobs, { auth: true, query: { page_size: 100 } }),
+  listJobs: (query?: { page?: number; page_size?: number; job_status?: "active" | "history" }) => apiRequest<PaginatedResponse<Booking>>(apiPaths.technicianJobs, { auth: true, query: { page_size: 25, ...query } }),
   markEnRoute: (id: UUID) => apiRequest<Booking>(apiPaths.technicianJobEnRoute(id), { method: "POST", body: {}, auth: true }),
+  markArrived: (id: UUID) => apiRequest<Booking>(apiPaths.technicianJobArrived(id), { method: "POST", body: {}, auth: true }),
   startJob: (id: UUID) => apiRequest<Booking>(apiPaths.technicianJobStart(id), { method: "POST", body: {}, auth: true }),
   completeJob: (id: UUID) => apiRequest<Booking>(apiPaths.technicianJobComplete(id), { method: "POST", body: {}, auth: true }),
 };
 
 export const adminApi = {
+  listBlogPosts: (query?: { page?: number; page_size?: number; search?: string }) =>
+    apiRequest<PaginatedResponse<AdminBlogPost>>(apiPaths.adminBlogPosts, { auth: true, query }),
+  createBlogPost: (body: BlogPostWriteRequest) =>
+    apiRequest<AdminBlogPost>(apiPaths.adminBlogPosts, { method: "POST", body, auth: true }),
+  updateBlogPost: (id: UUID, body: Partial<BlogPostWriteRequest>) =>
+    apiRequest<AdminBlogPost>(apiPaths.adminBlogPostDetail(id), { method: "PATCH", body, auth: true }),
+  getBooking: (id: UUID) => apiRequest<Booking>(apiPaths.adminBookingDetail(id), { auth: true }),
+  listBookingPhotos: (id: UUID) => apiRequest<BookingCompletionPhoto[]>(apiPaths.adminBookingPhotos(id), { auth: true }),
+  listBookingActivities: (id: UUID) => apiRequest<import("@/types/api").BookingActivity[]>(`${apiPaths.adminBookingDetail(id)}activities/`, { auth: true }),
   listTimeSlots: (query?: { service_area?: string; date?: string; page_size?: number }) =>
     apiRequest<PaginatedResponse<AdminTimeSlot>>(apiPaths.adminTimeSlots, { auth: true, query }),
   updateTimeSlot: (id: UUID, body: Partial<Pick<AdminTimeSlot, "date" | "start_time" | "end_time" | "capacity" | "is_active">>) =>
@@ -334,7 +358,8 @@ export const adminApi = {
     apiRequest<ScheduleClosure>(apiPaths.adminScheduleClosureDetail(id), { method: "PATCH", body, auth: true }),
   removeScheduleClosure: (id: UUID) =>
     apiRequest<void>(apiPaths.adminScheduleClosureDetail(id), { method: "DELETE", auth: true }),
-  listServiceAreas: () => apiRequest<PaginatedResponse<AdminServiceArea>>(apiPaths.adminServiceAreas, { auth: true }),
+  listServiceAreas: (query?: { page?: number; page_size?: number }) =>
+    apiRequest<PaginatedResponse<AdminServiceArea>>(apiPaths.adminServiceAreas, { auth: true, query }),
   createServiceArea: (body: Partial<AdminServiceArea> & { service_ids: UUID[] }) =>
     apiRequest<AdminServiceArea>(apiPaths.adminServiceAreas, { method: "POST", body, auth: true }),
   updateServiceArea: (id: UUID, body: Partial<AdminServiceArea> & { service_ids?: UUID[] }) =>
@@ -439,7 +464,34 @@ export const adminApi = {
       body,
       auth: true,
     }),
-  listTechnicians: (query?: { booking_id?: UUID }) => apiRequest<TechnicianProfile[]>(apiPaths.adminTechnicians, { auth: true, query }),
+  listTechnicians: (query?: { booking_id?: UUID; include_inactive?: boolean; include_ineligible?: boolean; search?: string; service_id?: UUID; area_id?: UUID; availability_status?: string; is_active?: boolean; verification?: string }) => apiRequest<TechnicianProfile[]>(apiPaths.adminTechnicians, { auth: true, query }),
+  getTechnician: (id: UUID) => apiRequest<TechnicianProfile>(`${apiPaths.adminTechnicians}${id}/`, { auth: true }),
+  listTechniciansForKyc: (verification: string) => apiRequest<TechnicianProfile[]>(apiPaths.adminTechnicians, { auth: true, query: { verification } }),
+  getTechnicianKyc: (id: UUID) => apiRequest<TechnicianKycDetail>(apiPaths.adminTechnicianKyc(id), { auth: true }),
+  decideTechnicianKyc: (id: UUID, body: { decision: "APPROVE" | "REJECT"; note?: string }) => apiRequest<TechnicianKycDetail>(apiPaths.adminTechnicianKyc(id), { method: "POST", auth: true, body }),
+  getTechnicianOptions: () => apiRequest<TechnicianOptions>(`${apiPaths.adminTechnicians}options/`, { auth: true }),
+  createTechnician: (body: TechnicianWriteRequest) => apiRequest<TechnicianProfile>(apiPaths.adminTechnicians, { method: "POST", auth: true, body }),
+  updateTechnician: (id: UUID, body: Partial<TechnicianWriteRequest>) => apiRequest<TechnicianProfile>(`${apiPaths.adminTechnicians}${id}/`, { method: "PATCH", auth: true, body }),
+  uploadTechnicianPhoto: (id: UUID, file: File) => {
+    const body = new FormData();
+    body.append("profile_photo", file);
+    return apiRequest<TechnicianProfile>(`${apiPaths.adminTechnicians}${id}/`, { method: "PATCH", auth: true, body });
+  },
+  listTechnicianDocuments: (id: UUID) => apiRequest<TechnicianDocument[]>(apiPaths.adminTechnicianDocuments(id), { auth: true }),
+  uploadTechnicianDocument: (id: UUID, documentType: TechnicianDocument["document_type"], file: File) => {
+    const body = new FormData();
+    body.append("document_type", documentType);
+    body.append("file", file);
+    return apiRequest<TechnicianDocument>(apiPaths.adminTechnicianDocuments(id), { method: "POST", auth: true, body });
+  },
+  verifyTechnicianDocument: (id: UUID, documentId: UUID, body: { verification_status: "VERIFIED" | "REJECTED"; verification_note?: string }) => apiRequest<TechnicianDocument>(apiPaths.adminTechnicianDocumentDetail(id, documentId), { method: "PATCH", auth: true, body }),
+  deleteTechnicianDocument: (id: UUID, documentId: UUID) => apiRequest<void>(apiPaths.adminTechnicianDocumentDetail(id, documentId), { method: "POST", auth: true, body: { action: "delete" } }),
+  listTechnicianCompanyUsers: (id: UUID) => apiRequest<TechnicianCompanyUser[]>(apiPaths.adminTechnicianCompanyUsers(id), { auth: true }),
+  addTechnicianCompanyUser: (id: UUID, body: { phone_number: string; role: TechnicianCompanyUser["role"] }) => apiRequest<TechnicianCompanyUser>(apiPaths.adminTechnicianCompanyUsers(id), { method: "POST", auth: true, body }),
+  updateTechnicianCompanyUser: (id: UUID, userId: UUID, body: { role?: TechnicianCompanyUser["role"]; is_active?: boolean }) => apiRequest<TechnicianCompanyUser>(apiPaths.adminTechnicianCompanyUserDetail(id, userId), { method: "PATCH", auth: true, body }),
+  removeTechnicianCompanyUser: (id: UUID, userId: UUID) => apiRequest<void>(apiPaths.adminTechnicianCompanyUserDetail(id, userId), { method: "POST", auth: true, body: { action: "remove" } }),
+  listTechnicianJobs: (id: UUID, query?: { active?: boolean; page?: number; page_size?: number }) => apiRequest<PaginatedResponse<Booking>>(`${apiPaths.adminTechnicians}${id}/jobs/`, { auth: true, query }),
+  listTechnicianActivities: (id: UUID) => apiRequest<import("@/types/api").BookingActivity[]>(`${apiPaths.adminTechnicians}${id}/activities/`, { auth: true }),
   listLeads: (query?: {
     page?: number;
     page_size?: number;
@@ -481,15 +533,15 @@ export const adminApi = {
       body,
       auth: true,
     }),
-  sendLeadPaymentLink: (id: UUID, body: { channel: "SMS" | "WHATSAPP"; payment_scope?: "FULL" | "ADVANCE" }) =>
-    apiRequest<Lead & { payment_link_created?: boolean }>(apiPaths.adminLeadSendPaymentLink(id), {
+  sendLeadPaymentLink: (id: UUID, body: { channel: "SMS" | "WHATSAPP"; payment_scope?: "FULL" | "ADVANCE"; whatsapp_consent_confirmed?: boolean }) =>
+    apiRequest<Lead & { payment_link_created?: boolean; payment_delivery_status?: string }>(apiPaths.adminLeadSendPaymentLink(id), {
       method: "POST",
       body,
       auth: true,
     }),
-  scheduleLead: (id: UUID, body: { preferred_date: string; preferred_slot: string }) =>
+  scheduleLead: (id: UUID, body: { preferred_date: string; preferred_slot: string; slot_id?: UUID }) =>
     apiRequest<Lead>(apiPaths.adminLeadSchedule(id), { method: "POST", body, auth: true }),
-  sendLeadReminder: (id: UUID, body: { channel: "SMS" | "WHATSAPP" }) =>
+  sendLeadReminder: (id: UUID, body: { channel: "SMS" }) =>
     apiRequest<Lead>(apiPaths.adminLeadReminder(id), { method: "POST", body, auth: true }),
   recordLeadContact: (id: UUID, body: { note: string; next_follow_up_at?: string }) =>
     apiRequest<Lead>(apiPaths.adminLeadRecordContact(id), {
@@ -608,12 +660,16 @@ export const adminApi = {
   listAuditLogs: (query?: { page?: number; page_size?: number; action?: string; resource_type?: string; search?: string }) =>
     apiRequest<PaginatedResponse<AuditLog>>(apiPaths.adminAuditLogs, { auth: true, query }),
   getSettings: () => apiRequest<AdminSettings>(apiPaths.adminSettings, { auth: true }),
-  listReviews: (query?: { page?: number; page_size?: number; search?: string; is_visible?: boolean }) =>
+  listReviews: (query?: { page?: number; page_size?: number; search?: string; is_visible?: boolean; service?: UUID; technician?: UUID; rating?: number }) =>
     apiRequest<PaginatedResponse<AdminReview>>(apiPaths.adminReviews, { auth: true, query }),
+  createReview: (body: AdminReviewRequest) =>
+    apiRequest<AdminReview>(apiPaths.adminReviews, { method: "POST", body, auth: true }),
   updateReview: (id: UUID, body: Partial<AdminReview>) =>
     apiRequest<AdminReview>(apiPaths.adminReviewDetail(id), {
       method: "PATCH",
       body,
       auth: true,
     }),
+  removeReview: (id: UUID) =>
+    apiRequest<void>(apiPaths.adminReviewDetail(id), { method: "DELETE", auth: true }),
 };

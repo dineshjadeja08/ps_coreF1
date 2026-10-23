@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { ServiceListItem } from "@/features/catalogue/types";
 import {
+  groupTvServicesForLanding,
   groupServicesForLanding,
   splitServiceBullets,
   stripGroupPrefix,
@@ -73,5 +74,37 @@ describe("landing labels", () => {
 
   it("normalizes newline bullets", () => {
     expect(splitServiceBullets("Drain\n- Scrub\n• Rinse")).toEqual(["Drain", "Scrub", "Rinse"]);
+  });
+});
+
+describe("groupTvServicesForLanding", () => {
+  const tvService = (name: string, slug: string, categoryName = "TV Repair & Services") => service({
+    id: slug,
+    name,
+    slug,
+    category: { id: "tv-category", name: categoryName, slug: "tv-repair-services" },
+  });
+
+  it("separates TV repair services from wall-mount size options and ignores CCTV", () => {
+    const groups = groupTvServicesForLanding([
+      tvService("TV Repair & Services", "tv-repair"),
+      tvService("TV Wall Mount Installation", "tv-wall-mount-installation"),
+      tvService("TV Wall Mount Installation - 32 to 43 inch", "tv-mount-32-43"),
+      tvService("TV Wall Mount Installation - 44 to 55 inch", "tv-mount-44-55"),
+      tvService("CCTV Cameras Repair and Installation", "cctv-repair", "CCTV"),
+    ]);
+
+    expect(groups.map((group) => group.title)).toEqual(["TV Repair & Services", "TV Wall Mount Installation"]);
+    expect(groups[0]?.options.map((option) => option.slug)).toEqual(["tv-repair"]);
+    expect(groups[1]?.options.map((option) => option.slug)).toEqual(["tv-mount-32-43", "tv-mount-44-55"]);
+    expect(groups[1]?.alwaysOpenOptions).toBe(true);
+    expect(groups[1]?.optionDescription).toContain("TV size");
+    expect(groups.flatMap((group) => group.options).some((option) => option.slug === "cctv-repair")).toBe(false);
+  });
+
+  it("returns no TV groups when the category only contains CCTV services", () => {
+    expect(groupTvServicesForLanding([
+      tvService("CCTV Cameras Repair and Installation", "cctv-repair", "CCTV"),
+    ])).toEqual([]);
   });
 });

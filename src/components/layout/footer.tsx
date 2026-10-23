@@ -20,9 +20,15 @@ export function Footer() {
     {
       title: "For customers",
       links: [
+        { href: "/ac-service-chennai", label: "AC service in Chennai" },
+        { href: "/washing-machine-repair-chennai", label: "Washing machine repair" },
+        { href: "/refrigerator-repair-chennai", label: "Refrigerator repair" },
+        { href: "/water-purifier-service-chennai", label: "Water purifier service" },
         { href: "/bookings", label: "Bookings" },
         { href: "/services", label: "Categories near you" },
         { href: "/faq", label: "FAQs" },
+        { href: "/guides", label: "Appliance care guides" },
+        { href: "/blog", label: "Home Care Guides" },
         { href: "/support", label: "Help centre" },
       ],
     },
@@ -36,6 +42,7 @@ export function Footer() {
     },
   ];
   const socialLinks = [
+    { label: "X", href: "https://x.com/PurpleSquad_in", icon: <XIcon /> },
     { label: "LinkedIn", href: "https://www.linkedin.com/company/purplesquad", icon: <LinkedinIcon /> },
     { label: "Instagram", href: "https://www.instagram.com/purplesquad.in/", icon: <InstagramIcon /> },
     { label: "Facebook", href: "https://www.facebook.com/profile.php?id=61593384331661", icon: <FacebookIcon /> },
@@ -140,6 +147,14 @@ function LinkedinIcon() {
   return (
     <svg aria-hidden="true" className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
       <path d="M6.94 8.98H3.75V20h3.19V8.98ZM5.35 4a1.85 1.85 0 1 0 0 3.7 1.85 1.85 0 0 0 0-3.7ZM20.25 13.68c0-2.96-1.58-4.34-3.69-4.34a3.18 3.18 0 0 0-2.88 1.58h-.04V8.98h-3.05V20h3.18v-5.45c0-1.44.27-2.84 2.06-2.84 1.76 0 1.79 1.65 1.79 2.93V20h3.18v-6.32h-.55Z" />
+    </svg>
+  );
+}
+
+function XIcon() {
+  return (
+    <svg aria-hidden="true" className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M18.9 2H22l-6.78 7.75L23.2 22h-6.25l-4.9-7.45L5.53 22H2.4l7.25-8.29L1.8 2h6.4l4.43 6.78L18.9 2Zm-1.1 18h1.73L7.28 3.89H5.42L17.8 20Z" />
     </svg>
   );
 }

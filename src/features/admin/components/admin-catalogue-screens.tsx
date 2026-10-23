@@ -7,14 +7,16 @@ import Link from "next/link";
 import { FormEvent, useDeferredValue, useEffect, useMemo, useState } from "react";
 
 import { AdminDataTable } from "@/components/admin/admin-data-table";
+import { AdminDetailPanel } from "@/components/admin/admin-detail-panel";
 import { AdminErrorState } from "@/components/admin/admin-error-state";
 import { AdminPagination } from "@/components/admin/admin-pagination";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminStatusBadge } from "@/components/admin/admin-status-badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { listAllServiceOptions } from "@/features/admin/service-options";
 import { adminApi } from "@/lib/api/endpoints";
-import type { AdminService, AdminServiceCategory, FAQ, HomepageBanner, UUID } from "@/types/api";
+import type { AdminService, AdminServiceCategory, FAQ, HomepageBanner, MobileAppCategory, UUID } from "@/types/api";
 
 type CategoryForm = {
   id?: UUID;
@@ -46,6 +48,8 @@ type ServiceForm = {
   is_featured: boolean;
   is_popular: boolean;
   is_active: boolean;
+  show_in_app: boolean;
+  app_category: MobileAppCategory | "";
   cover_image_url: string;
   landing_thumbnail_url: string;
   popup_cover_image_url: string;
@@ -81,6 +85,21 @@ type BannerForm = {
 const fieldClass =
   "rounded-lg border-slate-200 bg-white shadow-none focus:border-violet-500 focus:ring-violet-500/15";
 const labelClass = "text-xs font-bold uppercase text-slate-500";
+const mobileAppCategories: Array<{ value: MobileAppCategory; label: string }> = [
+  { value: "water-tank", label: "Water Tank Cleaning" },
+  { value: "sofa", label: "Sofa Repair" },
+  { value: "mosquito-net", label: "Mosquito Net" },
+  { value: "ac", label: "AC Service" },
+  { value: "washing-machine", label: "Washing Machine" },
+  { value: "refrigerator", label: "Refrigerator" },
+  { value: "water-purifier", label: "Water Purifier" },
+  { value: "tv", label: "TV Repair" },
+  { value: "geyser", label: "Geyser" },
+  { value: "microwave", label: "Microwave" },
+  { value: "dishwasher", label: "Dishwasher" },
+  { value: "chimney", label: "Chimney" },
+  { value: "cctv", label: "CCTV" },
+];
 
 function money(value: string | number | null | undefined) {
   return new Intl.NumberFormat("en-IN", { currency: "INR", style: "currency", maximumFractionDigits: 0 }).format(Number(value ?? 0));
@@ -127,6 +146,8 @@ function serviceToForm(service?: AdminService, firstCategory?: string): ServiceF
     is_featured: service?.is_featured ?? false,
     is_popular: service?.is_popular ?? false,
     is_active: service?.is_active ?? true,
+    show_in_app: service?.show_in_app ?? false,
+    app_category: service?.app_category ?? "",
     cover_image_url: service?.cover_image ?? "",
     landing_thumbnail_url: service?.landing_thumbnail ?? "",
     popup_cover_image_url: service?.popup_cover_image ?? "",
@@ -237,17 +258,7 @@ function Textarea(props: React.ComponentProps<"textarea">) {
 }
 
 function Panel({ title, children, onClose }: { title: string; children: React.ReactNode; onClose: () => void }) {
-  return (
-    <section className="rounded-lg border border-slate-200 bg-white shadow-sm">
-      <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-        <h2 className="text-base font-bold text-slate-950">{title}</h2>
-        <Button type="button" variant="ghost" size="sm" onClick={onClose}>
-          Close
-        </Button>
-      </div>
-      <div className="p-5">{children}</div>
-    </section>
-  );
+  return <AdminDetailPanel title={title} onClose={onClose}>{children}</AdminDetailPanel>;
 }
 
 export function AdminCategoriesScreen() {
@@ -523,6 +534,8 @@ export function AdminServicesScreen({
       body.set("is_featured", String(payload.is_featured));
       body.set("is_popular", String(payload.is_popular));
       body.set("is_active", String(payload.is_active));
+      body.set("show_in_app", String(payload.show_in_app));
+      body.set("app_category", payload.app_category);
       if (coverImage) body.set("cover_image", coverImage);
       if (landingThumbnail) body.set("landing_thumbnail", landingThumbnail);
       if (popupCoverImage) body.set("popup_cover_image", popupCoverImage);
@@ -537,6 +550,11 @@ export function AdminServicesScreen({
     },
   });
   const remove = useMutation({ mutationFn: adminApi.removeService, onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin", "services"] }) });
+  const updateMobileAppSettings = useMutation({
+    mutationFn: ({ serviceId, body }: { serviceId: UUID; body: Partial<Pick<AdminService, "show_in_app" | "app_category">> }) =>
+      adminApi.updateService(serviceId, body),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin", "services"] }),
+  });
   const addImage = useMutation({
     mutationFn: ({ serviceId, file }: { serviceId: UUID; file: File }) => {
       const body = new FormData();
@@ -651,6 +669,31 @@ export function AdminServicesScreen({
               onChange={setListImage}
               previewClassName="aspect-square max-w-48"
             />
+            <section className="grid gap-4 rounded-xl border border-violet-200 bg-violet-50/70 p-4 sm:grid-cols-[minmax(0,1fr)_minmax(220px,0.7fr)] sm:items-center lg:col-span-3" aria-labelledby="mobile-app-settings-title">
+              <div>
+                <h3 id="mobile-app-settings-title" className="text-sm font-bold text-slate-900">Mobile app visibility</h3>
+                <p className="mt-1 text-xs leading-5 text-slate-600">Choose whether the app lists this service, and which app category it belongs to.</p>
+                <label className="mt-3 inline-flex cursor-pointer items-center gap-2 text-sm font-semibold text-slate-800">
+                  <input
+                    type="checkbox"
+                    checked={form.show_in_app}
+                    onChange={(event) => setForm({ ...form, show_in_app: event.target.checked })}
+                    className="h-4 w-4 accent-violet-700"
+                  />
+                  Show this service in the mobile app
+                </label>
+              </div>
+              <Field label="App category">
+                <select
+                  className={`${fieldClass} h-11 w-full rounded-lg border px-3 text-sm`}
+                  value={form.app_category}
+                  onChange={(event) => setForm({ ...form, app_category: event.target.value as MobileAppCategory | "" })}
+                >
+                  <option value="">No app category</option>
+                  {mobileAppCategories.map((category) => <option key={category.value} value={category.value}>{category.label}</option>)}
+                </select>
+              </Field>
+            </section>
             <div className="flex flex-wrap items-center gap-4 pt-6 text-sm font-semibold text-slate-700 lg:col-span-2">
               {(["is_active", "is_featured", "is_popular"] as const).map((key) => (
                 <label key={key} className="flex items-center gap-2">
@@ -739,6 +782,35 @@ export function AdminServicesScreen({
               { key: "category", header: "Category", render: (service) => service.category_detail.name },
               { key: "price", header: "Price", render: (service) => money(service.effective_price) },
               { key: "advance", header: "Advance", render: (service) => money(service.advance_amount) },
+              {
+                key: "mobile-app",
+                header: "Mobile app",
+                render: (service) => (
+                  <div className="grid min-w-0 gap-2">
+                    <label className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                      <input
+                        type="checkbox"
+                        checked={service.show_in_app ?? false}
+                        disabled={updateMobileAppSettings.isPending}
+                        onChange={(event) => updateMobileAppSettings.mutate({ serviceId: service.id, body: { show_in_app: event.target.checked } })}
+                        aria-label={`Show ${service.name} in mobile app`}
+                        className="h-4 w-4 accent-violet-700"
+                      />
+                      {service.show_in_app ? "Shown" : "Hidden"}
+                    </label>
+                    <select
+                      className="h-9 min-w-0 rounded-md border border-slate-200 bg-white px-2 text-xs"
+                      value={service.app_category ?? ""}
+                      disabled={updateMobileAppSettings.isPending}
+                      onChange={(event) => updateMobileAppSettings.mutate({ serviceId: service.id, body: { app_category: event.target.value as MobileAppCategory | "" } })}
+                      aria-label={`${service.name} mobile app category`}
+                    >
+                      <option value="">Choose category</option>
+                      {mobileAppCategories.map((category) => <option key={category.value} value={category.value}>{category.label}</option>)}
+                    </select>
+                  </div>
+                ),
+              },
               { key: "status", header: "Status", render: (service) => <AdminStatusBadge status={service.is_active ? "ACTIVE" : "INACTIVE"} /> },
               {
                 key: "actions",
@@ -758,6 +830,7 @@ export function AdminServicesScreen({
               },
               ]}
             />
+            {updateMobileAppSettings.isError ? <p role="alert" className="mt-3 text-sm font-semibold text-red-600">Could not update mobile app settings: {updateMobileAppSettings.error.message}</p> : null}
             <AdminPagination
               count={services.data?.count ?? 0}
               page={page}
@@ -800,12 +873,12 @@ export function AdminPackagesScreen() {
 export function AdminFaqsScreen() {
   const queryClient = useQueryClient();
   const categories = useQuery({ queryKey: ["admin", "categories"], queryFn: adminApi.listCategories });
-  const services = useQuery({ queryKey: ["admin", "service-options", ""], queryFn: () => adminApi.listServices({ page_size: 20 }), staleTime: 2 * 60_000 });
+  const services = useQuery({ queryKey: ["admin", "faq-service-options"], queryFn: listAllServiceOptions, staleTime: 2 * 60_000 });
   const [search, setSearch] = useState("");
   const faqs = useQuery({ queryKey: ["admin", "faqs", search], queryFn: () => adminApi.listFaqs({ page_size: 50, search: search || undefined }) });
   const [form, setForm] = useState<FaqForm | null>(null);
   const firstCategory = categories.data?.results?.[0]?.id;
-  const firstService = services.data?.results?.[0]?.id;
+  const firstService = services.data?.[0]?.id;
   const save = useMutation({
     mutationFn: (payload: FaqForm) => {
       const body = {
@@ -836,11 +909,11 @@ export function AdminFaqsScreen() {
             <Field label="Question"><Input className={fieldClass} value={form.question} onChange={(event) => setForm({ ...form, question: event.target.value })} required /></Field>
             <Field label="Order"><Input className={fieldClass} type="number" value={form.display_order} onChange={(event) => setForm({ ...form, display_order: event.target.value })} /></Field>
             <Field label="Category"><select className={`${fieldClass} h-11 rounded-lg border px-3 text-sm`} value={form.category} onChange={(event) => setForm({ ...form, category: event.target.value })}><option value="">General</option>{categories.data?.results.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></Field>
-            <Field label="Service"><select className={`${fieldClass} h-11 rounded-lg border px-3 text-sm`} value={form.service} onChange={(event) => setForm({ ...form, service: event.target.value })}><option value="">All services</option>{services.data?.results.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></Field>
+            <Field label="Service"><select className={`${fieldClass} h-11 rounded-lg border px-3 text-sm`} value={form.service} disabled={services.isPending || services.isError} onChange={(event) => setForm({ ...form, service: event.target.value })}><option value="">{services.isPending ? "Loading services..." : "All services"}</option>{services.data?.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select>{services.isError ? <AdminErrorState message="Could not load all services. Please retry." onRetry={() => void services.refetch()} /> : null}</Field>
             <Field label="Package label"><Input className={fieldClass} value={form.package} onChange={(event) => setForm({ ...form, package: event.target.value })} /></Field>
             <label className="flex items-center gap-2 pt-6 text-sm font-semibold text-slate-700"><input type="checkbox" checked={form.is_active} onChange={(event) => setForm({ ...form, is_active: event.target.checked })} />Active</label>
             <Field label="Answer"><Textarea className="md:col-span-2" value={form.answer} onChange={(event) => setForm({ ...form, answer: event.target.value })} required /></Field>
-            <div className="md:col-span-2"><Button type="submit" disabled={save.isPending}><Save className="h-4 w-4" />Save FAQ</Button>{save.isError ? <p className="mt-2 text-sm font-semibold text-red-600">{save.error.message}</p> : null}</div>
+            <div className="md:col-span-2"><Button type="submit" disabled={save.isPending || services.isPending || services.isError}><Save className="h-4 w-4" />Save FAQ</Button>{save.isError ? <p className="mt-2 text-sm font-semibold text-red-600">{save.error.message}</p> : null}</div>
           </form>
         </Panel>
       ) : null}

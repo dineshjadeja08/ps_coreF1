@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { AdminStatusBadge } from "@/components/admin/admin-status-badge";
+import { BookingJourney, CompletionProof } from "@/features/bookings/components/booking-tracking";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { adminApi } from "@/lib/api/endpoints";
@@ -11,7 +12,7 @@ import type { Booking, UUID } from "@/types/api";
 
 const inputClass = "h-11 rounded-md border border-slate-200 bg-white px-3 text-sm";
 
-export function AdminBookingOperations({ booking, onChanged }: { booking: Booking; onChanged?: () => void }) {
+export function AdminBookingOperations({ booking, onChanged, showHistory = true, showAssignment = true, showJourney = true, showStatusActions = true, showOperations = true, showBalanceCollection = true }: { booking: Booking; onChanged?: () => void; showHistory?: boolean; showAssignment?: boolean; showJourney?: boolean; showStatusActions?: boolean; showOperations?: boolean; showBalanceCollection?: boolean }) {
   const queryClient = useQueryClient();
   const [technicianId, setTechnicianId] = useState("");
   const [notes, setNotes] = useState("");
@@ -19,14 +20,22 @@ export function AdminBookingOperations({ booking, onChanged }: { booking: Bookin
   const [balanceAmount, setBalanceAmount] = useState(booking.balance_due);
   const [balanceMethod, setBalanceMethod] = useState<"CASH" | "UPI" | "CARD_OFFLINE" | "OTHER">("CASH");
   const [message, setMessage] = useState("");
+  const assignable = ["CONFIRMED", "TECHNICIAN_ASSIGNED"].includes(booking.booking_status);
   const technicians = useQuery({
     queryKey: ["admin", "technicians", "eligible", booking.id],
-    queryFn: () => adminApi.listTechnicians({ booking_id: booking.id }),
+    queryFn: () => adminApi.listTechnicians({ booking_id: booking.id, include_ineligible: true }),
+    enabled: showAssignment && assignable,
+  });
+  const proof = useQuery({
+    queryKey: ["admin", "bookings", booking.id, "completion-proof"],
+    queryFn: () => adminApi.listBookingPhotos(booking.id),
+    enabled: ["TECHNICIAN_ARRIVED", "IN_PROGRESS", "COMPLETED", "CLOSED"].includes(booking.booking_status),
   });
 
   async function refresh(messageText: string) {
     setMessage(messageText);
     await queryClient.invalidateQueries({ queryKey: ["admin", "bookings"] });
+    await queryClient.invalidateQueries({ queryKey: ["admin", "technicians"] });
     onChanged?.();
   }
 
@@ -58,33 +67,39 @@ export function AdminBookingOperations({ booking, onChanged }: { booking: Bookin
     },
   });
   const activeError = assign.error ?? remove.error ?? operate.error ?? balance.error ?? paymentOrder.error;
+  const selectedTechnician = technicians.data?.find((technician) => technician.id === technicianId);
+  const canAssign = assignable && selectedTechnician && !selectedTechnician.eligibility_errors?.length && !technicians.isError;
 
   return (
     <div className="grid gap-5">
-      <section className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+      {showAssignment ? <section className="rounded-lg border border-slate-200 bg-slate-50 p-4">
         <h3 className="font-bold text-slate-950">Assign or reassign technician</h3>
         <div className="mt-3 grid gap-3 md:grid-cols-2">
-          <select className={inputClass} value={technicianId} onChange={(event) => setTechnicianId(event.target.value)}>
+          <select aria-label="Technician for assignment" className={inputClass} value={technicianId} onChange={(event) => setTechnicianId(event.target.value)} disabled={!assignable || technicians.isLoading || assign.isPending}>
             <option value="">Select an eligible technician</option>
             {(technicians.data ?? []).map((technician) => (
-              <option key={technician.id} value={technician.id}>
-                {technician.display_name} · {technician.employee_code} · {technician.availability_status ?? "AVAILABLE"}
+              <option key={technician.id} value={technician.id} disabled={Boolean(technician.eligibility_errors?.length)}>
+                {technician.display_name} · {technician.employee_code} · {technician.eligibility_errors?.join(" ") || "Eligible"}
               </option>
             ))}
           </select>
           <Input value={reason} onChange={(event) => setReason(event.target.value)} placeholder="Assignment or reassignment reason" />
           <div className="flex flex-wrap gap-2 md:col-span-2">
-            <Button type="button" disabled={!technicianId || assign.isPending} onClick={() => assign.mutate()}>
+            <Button type="button" disabled={!canAssign || assign.isPending || remove.isPending} onClick={() => assign.mutate()}>
               {assign.isPending ? "Assigning" : "Assign technician"}
             </Button>
-            <Button type="button" variant="outline" disabled={remove.isPending} onClick={() => remove.mutate()}>
+            <Button type="button" variant="outline" disabled={!booking.assigned_technician || remove.isPending || assign.isPending} onClick={() => remove.mutate()}>
               {remove.isPending ? "Removing" : "Remove assignment"}
             </Button>
           </div>
         </div>
-      </section>
+        {!assignable ? <p className="mt-3 text-sm text-slate-600">Assignment is available only for confirmed or technician-assigned bookings.</p> : null}
+        {technicians.isError ? <p role="alert" className="mt-3 text-sm text-red-600">Could not check technician eligibility. <button type="button" className="underline" onClick={() => void technicians.refetch()}>Retry</button></p> : null}
+        {assignable && technicians.data && !technicians.data.some((technician) => !technician.eligibility_errors?.length) ? <p className="mt-3 text-sm text-amber-700">No eligible technicians for this slot. Check verification, availability, coverage, leave, or overlapping jobs.</p> : null}
+        {selectedTechnician?.eligibility_errors?.length ? <p role="alert" className="mt-3 text-sm text-amber-700">{selectedTechnician.eligibility_errors.join(" ")}</p> : null}
+      </section> : null}
 
-      <section className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+      {showOperations ? <section className="rounded-lg border border-slate-200 bg-slate-50 p-4">
         <h3 className="font-bold text-slate-950">Booking operations</h3>
         <textarea
           value={notes}
@@ -93,16 +108,18 @@ export function AdminBookingOperations({ booking, onChanged }: { booking: Bookin
           className="mt-3 min-h-24 w-full rounded-md border border-slate-200 bg-white p-3 text-sm"
         />
         <div className="mt-3 flex flex-wrap gap-2">
-          <Button type="button" variant="outline" onClick={() => operate.mutate("start")} disabled={operate.isPending}>Start service</Button>
-          <Button type="button" variant="outline" onClick={() => operate.mutate("complete")} disabled={operate.isPending}>Complete service</Button>
+          {showStatusActions ? <>
+            <Button type="button" variant="outline" onClick={() => operate.mutate("start")} disabled={operate.isPending}>Start service</Button>
+            <Button type="button" variant="outline" onClick={() => operate.mutate("complete")} disabled={operate.isPending}>Complete service</Button>
+          </> : null}
           <Button type="button" variant="outline" onClick={() => operate.mutate("cancel")} disabled={operate.isPending}>Cancel booking</Button>
           <Button type="button" variant="outline" onClick={() => paymentOrder.mutate()} disabled={paymentOrder.isPending || booking.payment_status === "PAID"}>
             {paymentOrder.isPending ? "Creating order" : "Create payment order"}
           </Button>
         </div>
-      </section>
+      </section> : null}
 
-      <section className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+      {showBalanceCollection ? <section className="rounded-lg border border-slate-200 bg-slate-50 p-4">
         <h3 className="font-bold text-slate-950">Record balance collection</h3>
         <div className="mt-3 grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
           <Input inputMode="decimal" value={balanceAmount} onChange={(event) => setBalanceAmount(event.target.value)} placeholder="Amount" />
@@ -114,9 +131,13 @@ export function AdminBookingOperations({ booking, onChanged }: { booking: Bookin
           </select>
           <Button type="button" onClick={() => balance.mutate()} disabled={balance.isPending || Number(balanceAmount) <= 0}>Record balance</Button>
         </div>
-      </section>
+      </section> : null}
 
-      <section>
+      {showJourney ? <BookingJourney booking={booking} compact /> : null}
+      {proof.data?.length ? <CompletionProof photos={proof.data} /> : null}
+      {proof.isError ? <p role="status" className="text-sm text-amber-700">Completion proof is unavailable right now.</p> : null}
+
+      {showHistory ? <section>
         <h3 className="font-bold text-slate-950">Status history</h3>
         <div className="mt-3 grid gap-2">
           {booking.status_history.map((history) => (
@@ -130,7 +151,7 @@ export function AdminBookingOperations({ booking, onChanged }: { booking: Bookin
           ))}
           {!booking.status_history.length ? <p className="text-sm text-slate-500">No status history recorded.</p> : null}
         </div>
-      </section>
+      </section> : null}
 
       {message ? <p className="text-sm font-semibold text-emerald-700">{message}</p> : null}
       {activeError ? <p className="text-sm font-semibold text-red-600">{activeError.message}</p> : null}

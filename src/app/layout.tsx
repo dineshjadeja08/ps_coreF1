@@ -33,18 +33,16 @@ export const metadata: Metadata = {
     template: "%s | Purple Squad",
   },
   description: siteConfig.description,
-  keywords: siteConfig.keywords,
   applicationName: siteConfig.name,
   authors: [{ name: "Purple Squad" }],
   creator: "Purple Squad",
   publisher: "Purple Squad",
-  alternates: {
-    canonical: "/",
+  verification: {
+    google: "tcmzX6q64XpBgxBW3rNKLNFxfpXwBEBHSRPctzRZUCo",
   },
   openGraph: {
     type: "website",
     locale: "en_IN",
-    url: "/",
     siteName: siteConfig.name,
     title: "Purple Squad | Home Appliance Services in Chennai",
     description: siteConfig.description,
@@ -76,6 +74,24 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
       lang="en"
       className={`${manrope.variable} ${geistMono.variable} h-full antialiased`}
     >
+      <head>
+        {/* Search Console requires the literal GTM snippet in the document head. */}
+        {/* eslint-disable-next-line @next/next/next-script-for-ga */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${googleTagManagerId}');`,
+          }}
+        />
+        <script
+          async
+          src={`https://www.googletagmanager.com/gtag/js?id=${googleAnalyticsId}`}
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${googleAnalyticsId}');`,
+          }}
+        />
+      </head>
       <body className="flex min-h-full flex-col">
         <noscript>
           <iframe
@@ -86,16 +102,6 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
             title="Google Tag Manager"
           />
         </noscript>
-        <Script id="google-tag-manager" strategy="afterInteractive">
-          {`(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${googleTagManagerId}');`}
-        </Script>
-        <Script
-          src={`https://www.googletagmanager.com/gtag/js?id=${googleAnalyticsId}`}
-          strategy="afterInteractive"
-        />
-        <Script id="google-analytics" strategy="afterInteractive">
-          {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${googleAnalyticsId}');`}
-        </Script>
         <Script id="meta-pixel" strategy="afterInteractive">
           {`!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','${metaPixelId}');fbq('track','PageView');`}
         </Script>

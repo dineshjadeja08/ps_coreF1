@@ -29,6 +29,7 @@ import { ServiceImage } from "@/features/catalogue/components/service-image";
 import { formatDuration } from "@/features/catalogue/utils";
 import { useAvailableSlots } from "@/features/slots/queries";
 import { formatSlotTime, isSlotAvailable } from "@/features/slots/utils";
+import { trackConversion } from "@/lib/conversion-tracking";
 
 export function BookingReviewShell() {
   const cart = useCart();
@@ -139,6 +140,7 @@ export function BookingReviewShell() {
         }),
       );
       window.sessionStorage.removeItem("purple-squad-booking-notes");
+      trackConversion("booking_created", booking.id);
       cart.markBooked();
       router.replace(routes.bookingPayment(booking.id));
     } catch (error) {
@@ -213,7 +215,7 @@ export function BookingReviewShell() {
   }
 
   return (
-    <form className="mx-auto max-w-7xl px-4 py-8 pb-28 sm:px-6 lg:px-8" onSubmit={submitBooking}>
+    <form className="mx-auto max-w-7xl px-4 py-8 pb-12 sm:px-6 lg:px-8" onSubmit={submitBooking}>
       <Button asChild variant="ghost" className="mb-5">
         <Link href={`/book?${searchParams.toString()}`}>
           <ArrowLeft className="mr-2 h-4 w-4" />
@@ -230,9 +232,9 @@ export function BookingReviewShell() {
               We re-check your service, address and selected slot before creating the booking.
             </p>
           </section>
-          <section className="hidden items-center justify-between gap-5 rounded-md border border-border bg-surface p-5 shadow-sm lg:flex">
-            <div><h2 className="text-xl font-bold text-foreground">Confirm & Book Now</h2><p className="mt-1 text-sm text-secondary">Review the payment summary, then securely pay the advance.</p></div>
-            <Button type="submit" size="lg" disabled={!canSubmit} className="min-w-52">{createBooking.isPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Creating booking...</> : `Pay ${formatMoney(advance)} Now`}</Button>
+          <section className="flex flex-col gap-4 rounded-md border border-primary/20 bg-primary-soft p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+            <div><h2 className="text-xl font-bold text-foreground">Pay {formatMoney(advance)} now</h2><p className="mt-1 text-sm text-secondary">Review your details below. We’ll create the booking, then take you to secure payment.</p></div>
+            <Button type="submit" size="lg" disabled={!canSubmit} className="w-full shrink-0 sm:w-auto sm:min-w-52">{createBooking.isPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Creating booking...</> : `Continue to pay ${formatMoney(advance)}`}</Button>
           </section>
 
           {loadingDraft ? <div className="h-28 animate-pulse rounded-md bg-muted" /> : null}
@@ -288,16 +290,17 @@ export function BookingReviewShell() {
               placeholder="Tell us what needs attention, if anything."
               className="mt-2 min-h-28 w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none transition focus:border-primary focus:ring-3 focus:ring-primary/15"
             />
-            <label htmlFor="customer-notes" className="mt-4 block text-sm font-semibold text-foreground">
-              Notes for technician
-            </label>
-            <textarea
-              id="customer-notes"
-              value={customerNotes}
-              onChange={(event) => setCustomerNotes(event.target.value)}
-              placeholder="Optional instructions."
-              className="mt-2 min-h-20 w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none transition focus:border-primary focus:ring-3 focus:ring-primary/15"
-            />
+            <details className="mt-4">
+              <summary className="cursor-pointer text-sm font-semibold text-primary">Add more notes for the technician (optional)</summary>
+              <label htmlFor="customer-notes" className="mt-3 block text-sm font-semibold text-foreground">Notes for technician</label>
+              <textarea
+                id="customer-notes"
+                value={customerNotes}
+                onChange={(event) => setCustomerNotes(event.target.value)}
+                placeholder="Optional instructions."
+                className="mt-2 min-h-20 w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none transition focus:border-primary focus:ring-3 focus:ring-primary/15"
+              />
+            </details>
           </section>
         </main>
 
@@ -327,16 +330,6 @@ export function BookingReviewShell() {
             Your final amount is calculated securely by Purple Squad before payment.
           </p>
           {submitError ? <p className="mt-4 rounded-md bg-destructive/10 p-3 text-sm text-destructive">{submitError}</p> : null}
-          <Button type="submit" className="mt-5 w-full lg:hidden" disabled={!canSubmit} aria-disabled={!canSubmit}>
-            {createBooking.isPending ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating your booking...
-              </>
-            ) : (
-              `Pay ${formatMoney(advance)} Now`
-            )}
-          </Button>
           <p className="mt-3 text-xs leading-5 text-secondary">The remaining amount is payable after the service is completed.</p>
         </aside>
       </div>

@@ -1,44 +1,79 @@
 import type { MetadataRoute } from "next";
 
-import { siteConfig } from "@/config/site";
-import { getServicesForSeo } from "@/features/catalogue/server";
-import { absoluteUrl } from "@/lib/seo";
+import { getSitemapCatalogue } from "@/features/catalogue/server";
+import { getPublishedBlogPosts } from "@/features/blog/server";
+import { maintenanceGuides } from "@/features/catalogue/maintenance-guides";
+import { absoluteUrl, canonicalFor } from "@/lib/seo";
+import { getCategoryVisualSrc, resolveServiceImage, serviceHeroImage, serviceListImage, servicePageImages } from "@/lib/service-images";
 
-const siteUrl = siteConfig.url;
+// API failure must not publish an incomplete sitemap.
+export const dynamic = "force-dynamic";
 
-const publicRoutes = [
-  "",
-  "/services",
-  "/book",
-  "/about",
-  "/support",
-  "/join-as-technician",
-  "/partner-support",
-  "/service-standards",
-  "/faq",
-  "/privacy-policy",
-  "/terms",
-  "/cancellation-policy",
-];
+const publicRoutes = ["/", "/services", "/about", "/support", "/join-as-technician", "/partner-support", "/service-standards", "/faq", "/privacy-policy", "/terms", "/cancellation-policy"];
+const validSlug = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+function genuineDate(value?: string) {
+  if (!value || !Number.isFinite(Date.parse(value))) return undefined;
+  return value;
+}
+
+function imageUrls(sources: Array<string | null | undefined>) {
+  return Array.from(new Set(sources.flatMap((value) => {
+    const source = value?.trim();
+    if (!source || !(/^https:\/\//i.test(source) || /^\/(?!\/)/.test(source))) return [];
+    try {
+      const url = new URL(absoluteUrl(source));
+      if (url.protocol !== "https:" || url.username || url.password || /^(localhost|0\.|127\.|10\.|169\.254\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|\[::1\]|\[::\])/.test(url.hostname)) return [];
+      url.hash = ""; // Fragments do not identify a different image response.
+      return [url.href];
+    } catch { return []; }
+  })));
+}
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const now = new Date();
-  const services = await getServicesForSeo({ page_size: 100 });
-
-  const staticEntries: MetadataRoute.Sitemap = publicRoutes.map((route) => ({
-    url: `${siteUrl}${route}`,
-    lastModified: now,
-    changeFrequency: route === "" || route === "/services" ? "daily" : "weekly",
-    priority: route === "" ? 1 : route === "/services" ? 0.9 : 0.6,
-  }));
-
-  const serviceEntries: MetadataRoute.Sitemap = services.results.map((service) => ({
-    url: `${siteUrl}/services/${service.slug}`,
-    lastModified: now,
-    changeFrequency: "weekly",
-    priority: 0.8,
-    images: service.cover_image ? [absoluteUrl(service.cover_image)] : undefined,
-  }));
-
-  return [...staticEntries, ...serviceEntries];
+  const [{ services, categories, categoryServices = services, pages }, blogPosts] = await Promise.all([
+    getSitemapCatalogue(), getPublishedBlogPosts(),
+  ]);
+  const entries: MetadataRoute.Sitemap = publicRoutes.map((path) => ({ url: canonicalFor(path) }));
+  entries.push({ url: canonicalFor("/guides") }, ...Object.keys(maintenanceGuides).map((slug) => ({ url: canonicalFor(`/guides/${slug}`) })));
+  if (blogPosts.length) entries.push({ url: canonicalFor("/blog") });
+  for (const post of blogPosts) {
+    if (!validSlug.test(post.slug)) continue;
+    entries.push({ url: canonicalFor(`/blog/${post.slug}`), lastModified: genuineDate(post.updated_at), images: imageUrls([post.cover_image_url]) });
+  }
+  entries.push({ url: canonicalFor("/services"), images: imageUrls([
+    ...categories.map(getCategoryVisualSrc),
+    ...categoryServices.slice(0, 40).map((service) => resolveServiceImage(service.cover_image, service.name).src),
+  ]) });
+  for (const category of categories) {
+    const packages = categoryServices.filter((service) => service.category?.slug === category.slug).slice(0, category.slug === "ac-services" ? 80 : 40);
+    const primary = packages.find((service) => service.landing_thumbnail || service.cover_image) ?? packages[0];
+    if (validSlug.test(category.slug)) entries.push({
+      url: canonicalFor(`/services/${category.slug}`),
+      images: imageUrls(category.slug === "ac-services" ? [primary ? serviceHeroImage(primary) : null, ...packages.map(serviceListImage)] : [getCategoryVisualSrc(category), ...packages.map((service) => resolveServiceImage(service.cover_image, service.name).src)]),
+    });
+  }
+  for (const service of services) {
+    if (!validSlug.test(service.slug)) continue;
+    entries.push({
+      url: canonicalFor(`/services/${service.slug}`),
+      lastModified: genuineDate(service.updated_at),
+      images: imageUrls(servicePageImages(service)),
+    });
+  }
+  for (const page of pages) {
+    if (!page.is_indexable || page.city !== "Chennai" || !/^\/[a-z0-9-]+-chennai(?:\/[a-z0-9-]+)?$/.test(page.path)) continue;
+    if (page.path !== `/${page.page_slug}`) continue;
+    if ("canonical_override" in page && page.canonical_override && canonicalFor(page.canonical_override) !== canonicalFor(page.path)) continue;
+    entries.push({ url: canonicalFor(page.path), lastModified: genuineDate(page.updated_at), images: "services" in page ? imageUrls([page.services[0] ? serviceHeroImage(page.services[0]) : null, ...page.services.map(serviceListImage)]) : undefined });
+  }
+  if (entries.length > 50000) throw new Error("Sitemap exceeds 50,000 URLs; split it before publishing");
+  const unique = new Map<string, MetadataRoute.Sitemap[number]>();
+  for (const entry of entries) {
+    const existing = unique.get(entry.url);
+    unique.set(entry.url, { ...existing, ...entry, lastModified: entry.lastModified ?? existing?.lastModified, images: imageUrls([...(existing?.images ?? []), ...(entry.images ?? [])]) });
+  }
+  // Next 16.3's sitemap serializer interpolates image URLs without XML escaping.
+  // Escape once, after URL validation/deduplication, so CDN query strings stay valid XML.
+  return Array.from(unique.values()).map((entry) => ({ ...entry, images: entry.images?.map((image) => image.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&apos;")) }));
 }

@@ -3,14 +3,15 @@
 import { useQueries, useQuery } from "@tanstack/react-query";
 
 import { publicCatalogueApi } from "@/features/catalogue/api";
-import type { PaginatedResponse, ServiceDetail, ServiceListItem } from "@/features/catalogue/types";
+import type { PaginatedResponse, Review, ServiceCategory, ServiceDetail, ServiceListItem } from "@/features/catalogue/types";
 import type { HomepageBanner } from "@/types/api";
 import { queryKeys } from "@/lib/api/query-keys";
 
-export function useServiceCategories() {
+export function useServiceCategories(initialData?: ServiceCategory[]) {
   return useQuery({
     queryKey: queryKeys.serviceCategories,
     queryFn: publicCatalogueApi.listCategories,
+    initialData,
     staleTime: 5 * 60_000,
   });
 }
@@ -54,11 +55,12 @@ export function useServiceDetail(slug: string, initialData?: ServiceDetail) {
   });
 }
 
-export function useServiceReviews(serviceId?: string) {
+export function useServiceReviews(serviceId?: string, initialData?: PaginatedResponse<Review>, pageSize = 3) {
   return useQuery({
-    queryKey: serviceId ? queryKeys.serviceReviews(serviceId) : ["catalogue", "reviews", "missing"],
-    queryFn: () => publicCatalogueApi.listServiceReviews(serviceId ?? ""),
+    queryKey: serviceId ? [...queryKeys.serviceReviews(serviceId), pageSize] : ["catalogue", "reviews", "missing", pageSize],
+    queryFn: () => publicCatalogueApi.listServiceReviews(serviceId ?? "", pageSize),
     enabled: Boolean(serviceId),
+    initialData,
   });
 }
 
@@ -66,8 +68,8 @@ export function useServiceReviewsAggregate(serviceIds: string[]) {
   const uniqueIds = Array.from(new Set(serviceIds.filter(Boolean)));
   const queries = useQueries({
     queries: uniqueIds.map((serviceId) => ({
-      queryKey: queryKeys.serviceReviews(serviceId),
-      queryFn: () => publicCatalogueApi.listServiceReviews(serviceId),
+      queryKey: [...queryKeys.serviceReviews(serviceId), 100],
+      queryFn: () => publicCatalogueApi.listServiceReviews(serviceId, 100),
       staleTime: 2 * 60_000,
     })),
   });

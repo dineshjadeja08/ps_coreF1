@@ -27,22 +27,27 @@ export function LeadAddressCombobox({ value, onChange, onResolve, error }: Props
   const [searching, setSearching] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const [open, setOpen] = useState(false);
+  const [lookupError, setLookupError] = useState("");
   const requestId = useRef(0);
   const rootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const query = value.trim();
+    const currentRequest = ++requestId.current;
     if (query.length < 3 || !open) {
       return;
     }
-    const currentRequest = ++requestId.current;
     const timeout = window.setTimeout(async () => {
       setSearching(true);
+      setLookupError("");
       try {
         const results = await searchAddressSuggestions(query);
         if (requestId.current === currentRequest) setSuggestions(results.slice(0, 5));
-      } catch {
-        if (requestId.current === currentRequest) setSuggestions([]);
+      } catch (error) {
+        if (requestId.current === currentRequest) {
+          setSuggestions([]);
+          setLookupError(error instanceof Error ? error.message : "Address suggestions are temporarily unavailable.");
+        }
       } finally {
         if (requestId.current === currentRequest) setSearching(false);
       }
@@ -52,6 +57,7 @@ export function LeadAddressCombobox({ value, onChange, onResolve, error }: Props
 
   async function selectSuggestion(suggestion: AddressSuggestion) {
     setSearching(true);
+    setLookupError("");
     try {
       const resolved = await resolveAddressSuggestion(suggestion);
       const address = suggestion.description || resolved.address_line_1 || value;
@@ -64,6 +70,8 @@ export function LeadAddressCombobox({ value, onChange, onResolve, error }: Props
       });
       setOpen(false);
       setSuggestions([]);
+    } catch (error) {
+      setLookupError(error instanceof Error ? error.message : "We could not verify this address. Try another suggestion.");
     } finally {
       setSearching(false);
     }
@@ -101,13 +109,20 @@ export function LeadAddressCombobox({ value, onChange, onResolve, error }: Props
           onChange={(event) => {
             const nextValue = event.target.value;
             onChange(nextValue);
+            setLookupError("");
             setOpen(true);
             setActiveIndex(-1);
-            if (nextValue.trim().length < 3) setSuggestions([]);
+            if (nextValue.trim().length < 3) {
+              setSuggestions([]);
+              setSearching(false);
+            }
           }}
           onFocus={() => setOpen(true)}
           onBlur={(event) => {
-            if (!rootRef.current?.contains(event.relatedTarget)) setOpen(false);
+            if (!rootRef.current?.contains(event.relatedTarget)) {
+              setOpen(false);
+              setSearching(false);
+            }
           }}
           onKeyDown={handleKeyDown}
           placeholder="Start typing an address"
@@ -139,6 +154,7 @@ export function LeadAddressCombobox({ value, onChange, onResolve, error }: Props
         </div>
       ) : null}
       {error ? <p className="mt-1.5 text-xs font-medium text-red-600">{error}</p> : null}
+      {lookupError ? <p role="alert" className="mt-1.5 text-xs font-medium text-red-600">{lookupError}</p> : null}
     </div>
   );
 }

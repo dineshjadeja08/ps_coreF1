@@ -16,7 +16,7 @@ export function AdminSchedulingScreen() {
   const queryClient = useQueryClient();
   const [serviceAreaFilter, setServiceAreaFilter] = useState("");
   const [dateFilter, setDateFilter] = useState("");
-  const areas = useQuery({ queryKey: ["admin", "service-areas"], queryFn: adminApi.listServiceAreas });
+  const areas = useQuery({ queryKey: ["admin", "service-areas"], queryFn: () => adminApi.listServiceAreas() });
   const closures = useQuery({ queryKey: ["admin", "schedule-closures"], queryFn: adminApi.listScheduleClosures });
   const slots = useQuery({ queryKey: ["admin", "time-slots", serviceAreaFilter, dateFilter], queryFn: () => adminApi.listTimeSlots({ page_size: 100, service_area: serviceAreaFilter || undefined, date: dateFilter || undefined }) });
   const [form, setForm] = useState({ service_area: "", closure_type: "BLACKOUT" as "HOLIDAY" | "BLACKOUT" | "EMERGENCY", start_date: "", end_date: "", reason: "" });

@@ -11,46 +11,31 @@ import { ErrorState } from "@/components/common/error-state";
 import { SectionHeading } from "@/components/common/section-heading";
 import { routes } from "@/constants/routes";
 import { AddToCartButton, CartSummary } from "@/features/cart/cart-controls";
+import { CartStickyBar } from "@/features/catalogue/components/landing/cart-sticky-bar";
+import { OverallReviewSummary } from "@/features/catalogue/components/overall-review-summary";
 import { ServiceImage } from "@/features/catalogue/components/service-image";
-import { ReviewCard } from "@/features/catalogue/components/review-card";
+import { CustomerFeedbackMarquee } from "@/features/catalogue/components/customer-feedback-marquee";
+import { ReviewList } from "@/features/catalogue/components/review-list";
+import { FaqItem } from "@/features/catalogue/components/faq-item";
 import { ServiceDetailSkeleton } from "@/features/catalogue/components/skeletons";
+import { packageFamilyKey } from "@/features/catalogue/package-family";
 import { useServiceDetail, useServiceFaqs, useServiceReviews, useServices } from "@/features/catalogue/queries";
-import type { ServiceDetail, ServiceListItem } from "@/features/catalogue/types";
-import type { FAQ, Review } from "@/types/api";
+import type { PaginatedResponse, ServiceDetail, ServiceListItem } from "@/features/catalogue/types";
+import type { FAQ, Review, SeoLandingPage } from "@/types/api";
 import { formatDuration, formatPrice, getCurrentPrice, hasOfferPrice } from "@/features/catalogue/utils";
 import { useSelectedLocation } from "@/features/location/selected-location";
-
-function packageFamilyKey(service: Pick<ServiceListItem, "name" | "short_description" | "category">) {
-  const text = `${service.name} ${service.short_description} ${service.category.name}`.toLowerCase();
-  if (text.includes("ac ")) return "ac";
-  if (text.includes("washing")) return "washing";
-  if (text.includes("refrigerator") || text.includes("fridge")) return "refrigerator";
-  if (text.includes("wall mount")) return "tv-wall-mount";
-  if (text.includes("tv")) return "tv";
-  if (text.includes("purifier")) return "water-purifier";
-  if (text.includes("geyser")) return "geyser";
-  if (text.includes("cctv")) return "cctv";
-  if (text.includes("dishwasher")) return "dishwasher";
-  if (text.includes("chimney")) return "chimney";
-  if (text.includes("water tank") || text.includes("sump")) return "water-tank";
-  if (text.includes("mosquito")) return "mosquito-net";
-  if (text.includes("sofa")) return "sofa";
-  if (text.includes("bathroom")) return "bathroom";
-  if (text.includes("house")) return "house-cleaning";
-  return service.category.slug;
-}
 
 function packageSectionTitle(service: ServiceDetail) {
   const family = packageFamilyKey(service);
   if (family === "ac") return "AC service packages";
   if (family === "water-tank") return "Water tank and sump cleaning packages";
   if (family === "chimney") return "Chimney cleaning packages";
-  if (family === "tv-wall-mount") return "TV wall mount packages";
+  if (family === "tv") return "TV repair and wall mount packages";
   return `${service.name} packages`;
 }
 
 function landingImage(service: ServiceListItem) {
-  return service.landing_thumbnail || service.cover_image;
+  return service.landing_thumbnail?.trim() || service.cover_image;
 }
 
 function popupImage(service: ServiceListItem) {
@@ -58,17 +43,23 @@ function popupImage(service: ServiceListItem) {
 }
 
 function listImage(service: ServiceListItem) {
-  return service.list_image || service.landing_thumbnail || service.cover_image;
+  return service.list_image?.trim() || service.landing_thumbnail?.trim() || service.cover_image;
 }
 
 export function ServiceDetailView({
   initialService,
   serviceSlug,
   landingTitle,
+  initialServices,
+  initialReviews,
+  seoContent,
 }: {
   initialService?: ServiceDetail | null;
   serviceSlug?: string;
   landingTitle?: string;
+  initialServices?: PaginatedResponse<ServiceListItem>;
+  initialReviews?: PaginatedResponse<Review>;
+  seoContent?: SeoLandingPage;
 }) {
   const params = useParams<{ slug: string }>();
   const slug = serviceSlug ?? params.slug;
@@ -79,12 +70,12 @@ export function ServiceDetailView({
     category: service.data?.category.slug,
     page_size: 80,
     ...locationFilter,
-  });
-  const reviews = useServiceReviews(service.data?.id);
+  }, location.city === "Chennai" && !location.pincode ? initialServices : undefined);
+  const reviews = useServiceReviews(service.data?.id, service.data?.id === initialService?.id ? initialReviews : undefined, 100);
   const [selectedPackage, setSelectedPackage] = useState<ServiceListItem | null>(null);
   const selectedPackageDetail = useServiceDetail(selectedPackage?.slug ?? "");
   const selectedPackageFaqs = useServiceFaqs(selectedPackage?.id);
-  const selectedPackageReviews = useServiceReviews(selectedPackage?.id);
+  const selectedPackageReviews = useServiceReviews(selectedPackage?.id, undefined, 100);
 
   if (service.isLoading) {
     return <ServiceDetailSkeleton />;
@@ -107,12 +98,15 @@ export function ServiceDetailView({
   }
 
   const detail = service.data;
-  const allRelated = related.data?.results ?? [];
+  const allRelated = (related.data?.results ?? []).filter((item) => !seoContent || seoContent.services.some((service) => service.id === item.id));
   const currentFamily = packageFamilyKey(detail);
   const familyPackages = allRelated.filter((item) => packageFamilyKey(item) === currentFamily);
   const packageServices = familyPackages.length > 1 ? familyPackages : [detail];
   const familyPopupContentImage = packageServices.map((item) => item.popup_content_image).find(Boolean) ?? detail.popup_content_image;
   const pageTitle = landingTitle ?? detail.name;
+  const heading = pageTitle.toLowerCase().endsWith(` in ${location.city.toLowerCase()}`) ? pageTitle : `${pageTitle} in ${location.city}`;
+  const visibleReviews = (reviews.data?.results ?? []).filter((review) => review.is_visible);
+  const averageRating = visibleReviews.length ? visibleReviews.reduce((total, review) => total + review.rating, 0) / visibleReviews.length : null;
 
   return (
     <div className="overflow-x-clip bg-[#f7f7f7]">
@@ -134,17 +128,20 @@ export function ServiceDetailView({
             <div className="min-w-0 rounded-lg border border-border bg-white p-3 shadow-sm sm:p-4">
               <ServiceImage
                 src={landingImage(detail)}
-                alt={`${pageTitle} by Purple Squad in ${location.city}`}
+                fallbackLabel={detail.name}
+                alt={`${pageTitle} by Purple Squad in ${seoContent?.city || location.city}`}
                 priority
+                sizes="(min-width: 1280px) 800px, (min-width: 1024px) 65vw, 100vw"
                 className="aspect-[16/10] h-auto w-full rounded-lg bg-white sm:aspect-[16/7]"
                 imageClassName="object-contain sm:object-cover"
               />
               <div className="mt-5">
-                <h1 className="text-2xl font-bold leading-tight text-foreground sm:text-3xl">{pageTitle} in {location.city}</h1>
-                <p className="mt-2 flex items-center gap-2 text-sm font-semibold text-secondary">
+                <h1 className="text-2xl font-bold leading-tight text-foreground sm:text-3xl">{seoContent?.h1 || heading}</h1>
+                {averageRating !== null ? <p className="mt-2 flex items-center gap-2 text-sm font-semibold text-secondary">
                   <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-                  4.8 service quality
-                </p>
+                  {averageRating.toFixed(1)} ({visibleReviews.length} customer reviews)
+                </p> : null}
+                {detail.description || detail.short_description ? <p className="mt-3 text-sm leading-6 text-secondary">{detail.description || detail.short_description}</p> : null}
               </div>
             </div>
 
@@ -162,7 +159,7 @@ export function ServiceDetailView({
       </section>
 
       <section className="mx-auto grid min-w-0 max-w-7xl gap-0 px-3 py-5 sm:px-6 sm:py-6 lg:grid-cols-[minmax(0,1fr)_280px] lg:px-8">
-        <main className="min-w-0 border-border bg-white p-4 sm:p-5 lg:border-r lg:p-7">
+        <div className="min-w-0 border-border bg-white p-4 sm:p-5 lg:border-r lg:p-7">
           <div className="border-b border-border pb-5">
             <p className="text-xs font-bold uppercase tracking-wide text-primary">Available services</p>
             <h2 className="mt-1 text-2xl font-bold text-foreground">{packageSectionTitle(detail)}</h2>
@@ -176,7 +173,7 @@ export function ServiceDetailView({
               <PackageRow key={item.id} service={item} featured={index === 0} onReadMore={() => setSelectedPackage(item)} />
             ))}
           </div>
-        </main>
+        </div>
 
         <aside className="hidden bg-[#f7f7f7] p-5 lg:block">
           <div className="sticky top-28 space-y-4">
@@ -212,17 +209,18 @@ export function ServiceDetailView({
         </aside>
       </section>
 
-      {reviews.data?.results?.length ? (
+      {seoContent ? <section className="mx-auto max-w-7xl space-y-5 px-4 py-8 sm:px-6 lg:px-8">
+        <div><h2 className="text-xl font-bold">About {seoContent.service_name}</h2><p className="mt-2 whitespace-pre-line text-sm leading-7 text-secondary">{seoContent.intro_content}</p>{seoContent.pricing_intro ? <p className="mt-2 text-sm leading-7 text-secondary">{seoContent.pricing_intro}</p> : null}</div>
+        {seoContent.coverage_areas.length ? <div><h2 className="text-xl font-bold">Service coverage</h2><p className="mt-2 text-sm leading-7 text-secondary">{seoContent.coverage_areas.join(", ")}</p></div> : null}
+        {seoContent.faqs.length ? <div><h2 className="text-xl font-bold">Frequently asked questions</h2>{seoContent.faqs.map((faq) => <details key={faq.question} className="mt-3 rounded-lg border border-border bg-white p-4"><summary className="cursor-pointer font-semibold">{faq.question}</summary><p className="mt-2 whitespace-pre-line text-sm leading-7 text-secondary">{faq.answer}</p></details>)}</div> : null}
+        {seoContent.related_pages.length ? <nav aria-label="Related services"><h2 className="text-xl font-bold">Related services</h2><ul className="mt-3 flex flex-wrap gap-3">{seoContent.related_pages.map((page) => <li key={page.path}><Link href={page.path} className="text-sm text-primary underline">{page.name}</Link></li>)}</ul></nav> : null}
+      </section> : null}
+
+      {visibleReviews.length ? (
         <section className="mx-auto max-w-7xl space-y-5 px-4 py-8 sm:px-6 lg:px-8">
           <SectionHeading eyebrow="Reviews" title="Customer feedback" />
-          <div className="grid gap-4 md:grid-cols-3">
-            {reviews.data.results.map((review) => (
-              <article key={review.id} className="rounded-lg border border-border bg-surface p-5">
-                <p className="font-semibold text-foreground">Rating {review.rating}/5</p>
-                <p className="mt-2 text-sm leading-6 text-secondary">{review.comment}</p>
-              </article>
-            ))}
-          </div>
+          <p className="text-sm text-secondary">Experiences shared by our customers, including what went well and what could be better.</p>
+          <CustomerFeedbackMarquee reviews={visibleReviews} />
         </section>
       ) : null}
 
@@ -255,8 +253,8 @@ function PackageRow({ service, featured, onReadMore }: { service: ServiceListIte
         <h3 className="mt-0.5 break-words text-base font-bold text-foreground sm:text-lg">{service.name}</h3>
         <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs font-semibold text-secondary">
           <span className="inline-flex items-center gap-1">
-            <Star className="h-3.5 w-3.5 fill-primary text-primary" />
-            4.8
+            <ShieldCheck className="h-3.5 w-3.5 text-primary" />
+            Package details
           </span>
           {duration ? (
             <>
@@ -325,7 +323,8 @@ function PackageDetailsDialog({
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/55 data-[state=open]:animate-in data-[state=closed]:animate-out" />
-        <Dialog.Content className="fixed inset-x-2 top-1/2 z-50 max-h-[94vh] -translate-y-1/2 overflow-x-hidden overflow-y-auto rounded-lg bg-white shadow-2xl outline-none sm:inset-x-auto sm:left-1/2 sm:max-h-[92vh] sm:w-[min(680px,calc(100vw-2rem))] sm:-translate-x-1/2">
+        <Dialog.Content className="fixed inset-x-2 top-1/2 z-50 flex max-h-[94vh] -translate-y-1/2 flex-col overflow-hidden rounded-lg bg-white shadow-2xl outline-none sm:inset-x-auto sm:left-1/2 sm:max-h-[92vh] sm:w-[min(680px,calc(100vw-2rem))] sm:-translate-x-1/2">
+          <div className="min-h-0 overflow-x-hidden overflow-y-auto">
           {service ? <ServiceImage src={popupImage(service)} alt={service.name} className="aspect-[16/10] h-auto w-full rounded-none bg-white" imageClassName="object-cover" /> : null}
           <Dialog.Close className="absolute right-3 top-3 grid h-10 w-10 place-items-center rounded-full bg-white/95 text-foreground shadow-md hover:bg-white" aria-label="Close package details">
             <X className="h-5 w-5" />
@@ -336,7 +335,7 @@ function PackageDetailsDialog({
             {service ? (
               <div className="min-w-0 pr-10">
                 <Dialog.Title className="text-xl font-bold text-foreground sm:text-2xl">{service.name}</Dialog.Title>
-                <p className="mt-2 flex items-center gap-1.5 text-sm text-secondary"><Star className="h-4 w-4 fill-amber-400 text-amber-400" />4.8 customer rating</p>
+                {reviews.length ? <p className="mt-2 flex items-center gap-1.5 text-sm text-secondary"><Star className="h-4 w-4 fill-amber-400 text-amber-400" />{(reviews.reduce((total, review) => total + review.rating, 0) / reviews.length).toFixed(1)} ({reviews.length} customer reviews)</p> : null}
                 <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
                   <div className="flex items-baseline gap-2"><span className="text-xl font-bold text-foreground">{price ?? "Price unavailable"}</span>{showOffer ? <span className="text-sm text-muted-foreground line-through">{basePrice}</span> : null}</div>
                   <AddToCartButton service={service} className="shrink-0" />
@@ -362,14 +361,17 @@ function PackageDetailsDialog({
               ) : null}
               <section className="py-6">
                 <h3 className="text-lg font-bold text-foreground">Frequently Asked Questions</h3>
-                {faqs.length ? <div className="mt-3 divide-y divide-border rounded-md border border-border">{faqs.map((faq) => <details key={faq.id} className="group p-4"><summary className="cursor-pointer list-none pr-6 text-sm font-semibold text-foreground">{faq.question}</summary><p className="mt-3 whitespace-pre-line text-sm leading-6 text-secondary">{faq.answer}</p></details>)}</div> : <p className="mt-2 text-sm text-secondary">No package-specific questions have been added yet.</p>}
+                {faqs.length ? <div className="mt-3 divide-y divide-border overflow-hidden rounded-xl border border-border">{faqs.map((faq) => <FaqItem key={faq.id} question={faq.question} answer={faq.answer} />)}</div> : <p className="mt-2 text-sm text-secondary">No package-specific questions have been added yet.</p>}
               </section>
               <section className="py-6">
                 <h3 className="text-lg font-bold text-foreground">Customer Reviews</h3>
-                {reviews.length ? <div className="mt-3 grid gap-3">{reviews.map((review) => <ReviewCard key={review.id} review={review} />)}</div> : <p className="mt-2 text-sm text-secondary">No customer reviews have been published yet.</p>}
+                <div className="mt-3"><OverallReviewSummary reviews={reviews} /></div>
+                {reviews.length ? <ReviewList reviews={reviews} showAll serviceName={detail.name} /> : null}
               </section>
             </div>
           ) : null}
+          </div>
+          <div className="shrink-0 md:hidden"><CartStickyBar insideSheet /></div>
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>

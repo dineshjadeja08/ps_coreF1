@@ -11,6 +11,26 @@ export type PaginatedResponse<T> = {
   results: T[];
 };
 
+export type BlogPostSummary = {
+  id: UUID;
+  title: string;
+  slug: string;
+  excerpt: string;
+  author_name: string;
+  cover_image_url: string;
+  related_service_slug: string | null;
+  published_at: ISODateTime | null;
+  updated_at: ISODateTime;
+};
+
+export type BlogPost = BlogPostSummary & { body: string };
+export type AdminBlogPost = BlogPost & {
+  related_service: UUID | null;
+  is_published: boolean;
+  created_at: ISODateTime;
+};
+export type BlogPostWriteRequest = Pick<AdminBlogPost, "title" | "slug" | "excerpt" | "body" | "author_name" | "cover_image_url" | "related_service" | "is_published">;
+
 export type ServiceCategory = {
   id: UUID;
   name: string;
@@ -43,6 +63,7 @@ export type ServiceAreaCheckResponse = {
   postal_code: string;
   is_supported: boolean;
   service_area: Record<string, unknown> | null;
+  areas: string[];
 };
 
 export type ServiceArea = {
@@ -52,6 +73,45 @@ export type ServiceArea = {
   state: string;
   country: string;
   postal_code: string;
+  localities: Array<{ id: UUID; name: string; slug: string }>;
+};
+
+export type SeoPageLink = {
+  name: string;
+  path: string;
+  area: string;
+  postal_code: string;
+};
+
+export type SeoLandingPageSummary = {
+  page_slug: string;
+  path: string;
+  service_name: string;
+  city: string;
+  area: string;
+  postal_code: string;
+  is_indexable: boolean;
+  updated_at: ISODateTime;
+};
+
+export type SeoLandingPage = SeoLandingPageSummary & {
+  service_slug: string;
+  page_type: "SERVICE_CITY" | "SERVICE_AREA";
+  category_slug: string;
+  area_slug: string;
+  meta_title: string;
+  meta_description: string;
+  h1: string;
+  intro_content: string;
+  pricing_intro: string;
+  coverage_areas: string[];
+  faqs: Array<{ question: string; answer: string }>;
+  canonical_override: string;
+  services: ServiceListItem[];
+  parent_page: SeoPageLink | null;
+  area_pages: SeoPageLink[];
+  related_pages: SeoPageLink[];
+  nearby_pages: SeoPageLink[];
 };
 
 export type LocationAddress = {
@@ -80,9 +140,11 @@ export type AddressAutocompleteResponse = {
 
 export type Review = {
   id: UUID;
-  booking: UUID;
+  booking: UUID | null;
   customer: Record<string, unknown>;
-  technician: Record<string, unknown>;
+  technician: Record<string, unknown> | null;
+  reviewer_name?: string;
+  is_booking_review?: boolean;
   rating: number;
   comment: string;
   is_visible: boolean;
@@ -93,6 +155,15 @@ export type Review = {
 export type AdminReview = Review & {
   booking_number: string;
   service_name: string;
+  service: UUID;
+};
+
+export type AdminReviewRequest = {
+  service: UUID;
+  reviewer_name: string;
+  rating: number;
+  comment: string;
+  is_visible: boolean;
 };
 
 export type ReviewCreateRequest = {
@@ -101,6 +172,7 @@ export type ReviewCreateRequest = {
 };
 
 export type ServiceListItem = {
+  updated_at?: ISODateTime;
   id: UUID;
   category: ServiceCategory;
   name: string;
@@ -124,8 +196,25 @@ export type ServiceListItem = {
   list_image?: string | null;
   is_featured: boolean;
   is_popular: boolean;
+  show_in_app?: boolean;
+  app_category?: MobileAppCategory | "";
   display_order: number;
 };
+
+export type MobileAppCategory =
+  | "water-tank"
+  | "sofa"
+  | "mosquito-net"
+  | "ac"
+  | "washing-machine"
+  | "refrigerator"
+  | "water-purifier"
+  | "tv"
+  | "geyser"
+  | "microwave"
+  | "dishwasher"
+  | "chimney"
+  | "cctv";
 
 export type ServiceDetail = ServiceListItem & {
   description?: string;
@@ -235,11 +324,11 @@ export type AdminSettings = {
   allowed_hosts: string[];
   cors_allowed_origins: string[];
   csrf_trusted_origins: string[];
-  otp_provider: string;
   notification_provider: string;
   razorpay_configured: boolean;
-  msg91_configured: boolean;
   firebase_configured: boolean;
+  msg91_configured: boolean;
+  google_maps_configured: boolean;
   cloudinary_media_enabled: boolean;
   cloudinary_media_configured: boolean;
   booking_require_balance_before_completion: boolean;
@@ -314,6 +403,7 @@ export type BookingStatus =
   | "CONFIRMED"
   | "TECHNICIAN_ASSIGNED"
   | "TECHNICIAN_EN_ROUTE"
+  | "TECHNICIAN_ARRIVED"
   | "IN_PROGRESS"
   | "COMPLETED"
   | "CLOSED"
@@ -355,11 +445,22 @@ export type Booking = {
   admin_notes?: string;
   confirmed_at: ISODateTime | null;
   completed_at: ISODateTime | null;
+  accepted_at?: ISODateTime | null;
+  arrived_at?: ISODateTime | null;
+  start_otp_verified?: boolean;
   cancelled_at: ISODateTime | null;
   created_at: ISODateTime;
   updated_at: ISODateTime;
   service_category?: string;
-  assigned_technician?: { id: UUID | null; user_id: UUID; name: string; phone: string } | null;
+  assigned_technician?: { id: UUID | null; user_id: UUID; name: string; phone: string; city?: string } | null;
+  technician?: {
+    name: string;
+    phone: string;
+    photo_url: string | null;
+    average_rating: DecimalString | null;
+    completed_job_count: number;
+    is_verified: boolean;
+  } | null;
   paid_at?: ISODateTime | null;
   status_history: BookingStatusHistory[];
 };
@@ -375,6 +476,14 @@ export type BookingStatusHistory = {
   from_status?: string;
   to_status: string;
   notes?: string;
+  created_at: ISODateTime;
+};
+
+export type BookingActivity = {
+  id: string;
+  title: string;
+  description: string;
+  actor: string;
   created_at: ISODateTime;
 };
 
@@ -454,27 +563,140 @@ export type TechnicianProfile = {
   display_name: string;
   profile_photo_url?: string;
   phone: string;
+  virtual_mobile_number?: string;
   alternate_phone?: string;
   email?: string;
   technician_type?: "EMPLOYEE" | "CONTRACT" | "PARTNER";
   employment_status?: "ACTIVE" | "INACTIVE" | "LEFT";
   city?: string;
   pincode?: string;
+  service_group?: string;
+  profile_type?: string;
+  lead_per_day?: number;
+  job_per_day?: number;
+  no_of_teams?: number;
+  sales_person_assigned?: UUID | null;
+  sales_person_assigned_name?: string;
+  crm_owner_id?: string;
   skills: Array<{ id: UUID; name: string; description?: string }>;
   service_areas: Array<{ id: UUID; name: string; postal_code: string; city: string }>;
   supported_services?: Array<{ id: UUID; name: string; slug: string; category: string }>;
   experience_years?: DecimalString;
   languages?: string[];
   background_verification_status?: "PENDING" | "UNDER_REVIEW" | "VERIFIED" | "REJECTED" | "SUSPENDED";
+  kyc_submitted_at?: ISODateTime | null;
+  verification_note?: string;
   availability_status?: "AVAILABLE" | "BUSY" | "ON_LEAVE" | "OFFLINE" | "SUSPENDED";
   average_rating?: DecimalString;
   completed_job_count?: number;
   cancellation_count?: number;
   is_available: boolean;
+  whatsapp_notifications_enabled?: boolean;
   is_active: boolean;
   joined_at: ISODate | null;
   id_document_available?: boolean;
   address_document_available?: boolean;
+  id_proof_type?: string;
+  id_proof_number?: string;
+  address?: string;
+  internal_notes?: string;
+  active_job_count?: number;
+  completed_jobs?: number;
+  monthly_job_count?: number;
+  yearly_job_count?: number;
+  cancelled_jobs?: number;
+  approved_rating?: DecimalString | null;
+  approved_review_count?: number;
+  eligibility_errors?: string[];
+};
+
+export type TechnicianKycDocument = {
+  id: UUID;
+  doc_type: "AADHAAR_FRONT" | "AADHAAR_BACK" | "PAN" | "PHOTO" | "CERTIFICATE";
+  url: string;
+  created_at: ISODateTime;
+};
+
+export type TechnicianKycDetail = {
+  profile: TechnicianProfile;
+  documents: TechnicianKycDocument[];
+};
+
+export type BookingCompletionPhoto = {
+  id: UUID;
+  kind: "BEFORE" | "AFTER" | "RECEIPT";
+  url: string;
+  created_at: ISODateTime;
+};
+
+export type BookingStartOtp = {
+  otp: string;
+  verified: boolean;
+  verified_at: ISODateTime | null;
+};
+
+export type TechnicianWriteRequest = {
+  employee_code?: string;
+  display_name: string;
+  phone: string;
+  id_proof_number?: string;
+  alternate_phone: string;
+  email: string;
+  address: string;
+  city: string;
+  pincode: string;
+  technician_type: NonNullable<TechnicianProfile["technician_type"]>;
+  employment_status: NonNullable<TechnicianProfile["employment_status"]>;
+  background_verification_status: NonNullable<TechnicianProfile["background_verification_status"]>;
+  availability_status: NonNullable<TechnicianProfile["availability_status"]>;
+  experience_years: string;
+  joined_at: ISODate | null;
+  is_active: boolean;
+  whatsapp_notifications_enabled: boolean;
+  internal_notes: string;
+  skill_names: string[];
+  service_area_ids: UUID[];
+  supported_service_ids: UUID[];
+  virtual_mobile_number: string;
+  service_group: string;
+  profile_type: string;
+  lead_per_day: number;
+  job_per_day: number;
+  no_of_teams: number;
+  sales_person_assigned: UUID | null;
+  crm_owner_id: string;
+};
+
+export type TechnicianDocument = {
+  id: UUID;
+  document_type: "IDENTITY" | "ADDRESS" | "CERTIFICATE" | "OTHER";
+  original_name: string;
+  content_type: string;
+  file_size: number;
+  verification_status: "PENDING" | "VERIFIED" | "REJECTED";
+  verification_note: string;
+  uploaded_by_name: string;
+  verified_by_name: string;
+  verified_at: ISODateTime | null;
+  created_at: ISODateTime;
+  content_url: string;
+};
+
+export type TechnicianCompanyUser = {
+  id: UUID;
+  name: string;
+  phone_number: string;
+  email: string;
+  role: "OWNER" | "MANAGER" | "STAFF";
+  is_active: boolean;
+  created_at: ISODateTime;
+};
+
+export type TechnicianOptions = {
+  skills: Array<{ id: UUID; name: string; is_active: boolean }>;
+  services: Array<{ id: UUID; name: string; category_name?: string; is_active: boolean }>;
+  areas: Array<{ id: UUID; name: string; city: string; postal_code: string; is_active: boolean }>;
+  sales_people: Array<{ id: UUID; name: string; phone_number: string }>;
 };
 
 export type AdminDashboardSummary = {
@@ -491,6 +713,11 @@ export type AdminDashboardSummary = {
   unassigned: Booking[];
   failedNotifications: number;
   missing: string[];
+  totalBookings: number;
+  completedJobs: number;
+  activeTechnicians: number;
+  totalRevenue: number;
+  activeNowBookings: Booking[];
 };
 
 export type AdminDashboardSummaryResponse = {
@@ -536,6 +763,8 @@ export type Lead = {
   preferred_callback_at: ISODateTime | null;
   preferred_date: ISODate | null;
   preferred_slot: string;
+  preferred_time_slot?: UUID | null;
+  service_items?: Array<{ service_id: UUID; quantity: number }>;
   quoted_amount: DecimalString | null;
   advance_amount: DecimalString | null;
   balance_amount: DecimalString | null;
@@ -681,36 +910,12 @@ export type AuthLoginResponse = {
   created: boolean;
 };
 
-export type AdminMfaRequiredResponse = {
-  mfa_required: true;
-  challenge_id: UUID;
-  channel: OtpDeliveryChannel;
-  expires_in: number;
-};
-
-export type PasswordLoginResponse = AuthLoginResponse | AdminMfaRequiredResponse;
-
-export type PasswordSignupRequest = {
-  phone_number: string;
-  password: string;
-  first_name?: string;
-  last_name?: string;
-  email?: string;
-};
+export type PasswordLoginResponse = AuthLoginResponse;
 
 export type PasswordLoginRequest = {
   phone_number: string;
   password: string;
-  channel?: OtpDeliveryChannel;
 };
-
-export type OtpSendResponse = {
-  phone_number: string;
-  request_id: string;
-  channel: OtpDeliveryChannel;
-};
-
-export type OtpDeliveryChannel = "SMS" | "WHATSAPP";
 
 export type TokenRefreshResponse = {
   access: string;

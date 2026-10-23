@@ -1,14 +1,18 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
 import { JsonLd } from "@/components/seo/json-ld";
 import { ServiceDetailView } from "@/features/catalogue/components/service-detail-view";
 import { ServicesListing } from "@/features/catalogue/components/services-listing";
 import { WaterTankLanding } from "@/features/catalogue/components/landing/water-tank-landing";
-import { isWaterTankService } from "@/features/catalogue/group-services";
+import { TvLanding } from "@/features/catalogue/components/landing/tv-landing";
+import { isTvService, isWaterTankService } from "@/features/catalogue/group-services";
 import { ServiceCardSkeletonGrid } from "@/features/catalogue/components/skeletons";
 import { getServiceCategoriesForSeo, getServiceDetailForSeo, getServiceReviewsForSeo, getServicesForSeo } from "@/features/catalogue/server";
-import { breadcrumbJsonLd, canonicalFor, compactDescription, defaultOgImagePath, localBusinessJsonLd, serviceJsonLd, servicesJsonLd } from "@/lib/seo";
+import { breadcrumbJsonLd, compactDescription, defaultOgImagePath, localBusinessJsonLd, serviceJsonLd, servicesJsonLd } from "@/lib/seo";
+import { publicPageMetadata } from "@/lib/page-metadata";
+import { getCategoryVisualSrc, serviceHeroImage } from "@/lib/service-images";
 
 type ServiceDetailPageProps = {
   params: Promise<{ slug: string }>;
@@ -16,6 +20,7 @@ type ServiceDetailPageProps = {
 
 const knownCategoryLandings: Record<string, string> = {
   "ac-services": "AC Services",
+  "tv-repair-services": "TV Repair & Services",
 };
 
 export async function generateMetadata({ params }: ServiceDetailPageProps): Promise<Metadata> {
@@ -27,11 +32,15 @@ export async function generateMetadata({ params }: ServiceDetailPageProps): Prom
   if (category || fallbackCategoryName) {
     const categoryName = category?.name ?? fallbackCategoryName;
     const description = compactDescription(category?.description ?? "", `Book ${categoryName} services with Purple Squad.`);
-    return {
-      title: `${categoryName} in Chennai and Coimbatore`,
-      description,
-      alternates: { canonical: canonicalFor(`/services/${slug}`) },
-    };
+    const sourceCategory = slug === "tv-repair-services"
+      ? categories.find((item) => item.slug === "home-appliances-repair")?.slug ?? "home-appliances-repair"
+      : slug;
+    const services = await getServicesForSeo({ category: sourceCategory, page_size: 40, city: "Chennai" });
+    const primary = services.results.find((service) => service.landing_thumbnail || service.cover_image) ?? services.results[0];
+    const image = slug === "tv-repair-services"
+      ? "/images/services/tv.png"
+      : slug === "ac-services" && primary ? serviceHeroImage(primary) : (category && getCategoryVisualSrc(category)) || (primary ? serviceHeroImage(primary) : defaultOgImagePath);
+    return publicPageMetadata(`/services/${slug}`, `${categoryName} in Chennai`, description, image);
   }
 
   const service = await getServiceDetailForSeo(slug);
@@ -40,34 +49,10 @@ export async function generateMetadata({ params }: ServiceDetailPageProps): Prom
       service.short_description || service.description,
       `Book ${service.name} at your doorstep in Chennai with Purple Squad.`,
     );
-    return {
-      title: `${service.name} in Chennai`,
-      description,
-      keywords: [service.name, service.category.name, `${service.name} Chennai`],
-      alternates: {
-        canonical: canonicalFor(`/services/${service.slug}`),
-      },
-      openGraph: {
-        title: `${service.name} in Chennai | Purple Squad`,
-        description,
-        url: canonicalFor(`/services/${service.slug}`),
-        images: [service.cover_image || defaultOgImagePath],
-      },
-      twitter: {
-        title: `${service.name} in Chennai | Purple Squad`,
-        description,
-        images: [service.cover_image || defaultOgImagePath],
-      },
-    };
+    return publicPageMetadata(`/services/${service.slug}`, /\bin Chennai$/i.test(service.name) ? service.name : `${service.name} in Chennai`, description, serviceHeroImage(service));
   }
 
-  return {
-    title: "Service",
-    description: "View Purple Squad service details.",
-    alternates: {
-      canonical: canonicalFor(`/services/${slug}`),
-    },
-  };
+  notFound();
 }
 
 export default async function ServiceDetailPage({ params }: ServiceDetailPageProps) {
@@ -78,7 +63,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
 
   if (slug === "water-tank-cleaning") {
     const sourceCategory = category ?? categories.find((item) => item.slug === "cleaning");
-    const services = await getServicesForSeo({ category: sourceCategory?.slug ?? "cleaning", page_size: 100 });
+    const services = await getServicesForSeo({ category: sourceCategory?.slug ?? "cleaning", page_size: 100, city: "Chennai" });
     const waterServices = services.results.filter(isWaterTankService);
     const initialServices = { ...services, count: waterServices.length, results: waterServices, next: null, previous: null };
     return (
@@ -91,8 +76,22 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
     );
   }
 
+  if (categoryLandingSlug === "tv-repair-services") {
+    const sourceCategorySlug = categories.find((item) => item.slug === "home-appliances-repair")?.slug ?? "home-appliances-repair";
+    const services = await getServicesForSeo({ category: sourceCategorySlug, page_size: 100, city: "Chennai" });
+    const tvServices = services.results.filter(isTvService);
+    return (
+      <>
+        <JsonLd data={servicesJsonLd(tvServices, "/services/tv-repair-services")} />
+        <Suspense fallback={<div className="mx-auto max-w-3xl px-4 py-8"><ServiceCardSkeletonGrid count={3} /></div>}>
+          <TvLanding initialServices={{ ...services, count: tvServices.length, results: tvServices, next: null, previous: null }} sourceCategorySlug={sourceCategorySlug} />
+        </Suspense>
+      </>
+    );
+  }
+
   if (categoryLandingSlug === "ac-services") {
-    const services = await getServicesForSeo({ category: categoryLandingSlug, page_size: 60 });
+    const services = await getServicesForSeo({ category: categoryLandingSlug, page_size: 80, city: "Chennai" });
     const firstService = services.results.find((service) => service.landing_thumbnail || service.cover_image)
       ?? services.results[0];
     const initialService = firstService ? await getServiceDetailForSeo(firstService.slug) : null;
@@ -105,6 +104,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
             initialService={initialService}
             serviceSlug={firstService?.slug}
             landingTitle="AC Services"
+            initialServices={services}
           />
         </Suspense>
       </>
@@ -112,18 +112,19 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
   }
 
   if (categoryLandingSlug) {
-    const services = await getServicesForSeo({ category: categoryLandingSlug, page_size: 60 });
+    const services = await getServicesForSeo({ category: categoryLandingSlug, page_size: 40, city: "Chennai" });
     return (
       <>
         <JsonLd data={servicesJsonLd(services.results, `/services/${categoryLandingSlug}`)} />
         <Suspense fallback={<div className="mx-auto max-w-7xl px-4 py-10"><ServiceCardSkeletonGrid count={8} /></div>}>
-          <ServicesListing categorySlug={categoryLandingSlug} />
+          <ServicesListing categorySlug={categoryLandingSlug} initialServices={services} initialCategories={categories} />
         </Suspense>
       </>
     );
   }
   const service = await getServiceDetailForSeo(slug);
-  const reviews = service ? await getServiceReviewsForSeo(service.id) : null;
+  if (!service) notFound();
+  const [reviews, related] = await Promise.all([getServiceReviewsForSeo(service.id), getServicesForSeo({ category: service.category.slug, page_size: 80, city: "Chennai" })]);
 
   return (
     <>
@@ -140,7 +141,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
           ]}
         />
       ) : null}
-      <ServiceDetailView initialService={service} />
+      <ServiceDetailView initialService={service} initialServices={related} initialReviews={reviews} />
     </>
   );
 }
