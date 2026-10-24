@@ -718,6 +718,7 @@ export type AdminDashboardSummary = {
   activeTechnicians: number;
   totalRevenue: number;
   activeNowBookings: Booking[];
+  bookingsThisMonth: number;
 };
 
 export type AdminDashboardSummaryResponse = {
@@ -728,6 +729,7 @@ export type AdminDashboardSummaryResponse = {
   leads_today: number;
   follow_ups_due: number;
   bookings_today: number;
+  bookings_this_month: number;
   confirmed_bookings: number;
   payment_pending_bookings: number;
   revenue_today: DecimalString;

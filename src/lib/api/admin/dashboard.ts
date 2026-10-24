@@ -31,5 +31,6 @@ export async function getAdminDashboardSummary(): Promise<AdminDashboardSummary>
     activeTechnicians: activeTechnicians.length,
     totalRevenue: Number(payload.revenue_today),
     activeNowBookings: [...activeAssigned.results, ...activeEnRoute.results, ...activeInProgress.results].sort((a, b) => b.updated_at.localeCompare(a.updated_at)),
+    bookingsThisMonth: payload.bookings_this_month,
   };
 }

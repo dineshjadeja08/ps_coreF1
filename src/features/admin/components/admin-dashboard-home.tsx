@@ -64,6 +64,7 @@ export function AdminDashboardHome() {
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <AdminMetricCard icon={CalendarCheck} label="Total bookings" value={data?.totalBookings ?? 0} href="/admin/bookings" />
+        <AdminMetricCard icon={CalendarCheck} label="Bookings this month" value={data?.bookingsThisMonth ?? 0} href="/admin/bookings" />
         <AdminMetricCard icon={CheckCircle2} label="Completed jobs" value={data?.completedJobs ?? 0} href="/admin/bookings?status=COMPLETED" />
         <AdminMetricCard icon={Wrench} label="Active technicians" value={data?.activeTechnicians ?? 0} href="/admin/technicians" />
         <AdminMetricCard icon={CreditCard} label="Revenue today" value={money(data?.totalRevenue)} href="/admin/payments" />
