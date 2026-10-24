@@ -183,19 +183,19 @@ a {
 
 /* Admin-only theme: keep the marketplace palette unchanged. */
 [data-admin-shell] {
-  --background: #f3f4f6;
+  --background: #f1f5f9;
   --surface: #ffffff;
-  --soft-surface: #f9fafb;
-  --foreground: #111827;
-  --secondary: #4b5563;
-  --muted-foreground: #6b7280;
-  --muted: #e5e7eb;
-  --border: #d1d5db;
-  --primary: #5b21b6;
-  --primary-dark: #4c1d95;
-  --primary-hover: #4c1d95;
-  --primary-soft: #ede9fe;
-  --primary-subtle: #f5f3ff;
+  --soft-surface: #f8fafc;
+  --foreground: #0f172a;
+  --secondary: #334155;
+  --muted-foreground: #64748b;
+  --muted: #e2e8f0;
+  --border: #cbd5e1;
+  --primary: #0f766e;
+  --primary-dark: #115e59;
+  --primary-hover: #115e59;
+  --primary-soft: #ccfbf1;
+  --primary-subtle: #f0fdfa;
   --primary-foreground: #ffffff;
-  --shadow-soft: 0 8px 20px rgb(91 33 182 / 10%);
+  --shadow-soft: 0 8px 20px rgb(15 23 42 / 8%);
 }

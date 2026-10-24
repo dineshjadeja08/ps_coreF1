@@ -43,8 +43,8 @@ export function AdminTechniciansScreen() {
   return (
     <>
       <AdminPageHeader title="Technicians" description="Manage profiles, service coverage, availability, and assigned jobs. Click a technician to manage them." action={<Button type="button" onClick={() => setSelected("")}><Plus className="h-4 w-4" />Add technician</Button>} />
-      <div className="mb-5 overflow-x-auto rounded-lg border border-slate-200 bg-white">
-        <div className="grid min-w-[1027px] grid-cols-[minmax(180px,1.3fr)_repeat(5,minmax(130px,1fr))_minmax(125px,0.9fr)] gap-3 p-4">
+      <div className="mb-5 rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div className="grid gap-3 p-4 sm:grid-cols-2 xl:grid-cols-[minmax(170px,1.4fr)_repeat(5,minmax(100px,1fr))_minmax(110px,0.9fr)]">
         <Input className="h-11 min-w-0" aria-label="Search technicians" value={search} onChange={(event) => { setSearch(event.target.value); setPage(1); }} placeholder="Name, phone, or employee code" />
         <select aria-label="Filter by service" className={selectClass} value={service} onChange={(event) => { setService(event.target.value); setPage(1); }}><option value="">All services</option>{options.data?.services.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select>
         <select aria-label="Filter by service area" className={selectClass} value={area} onChange={(event) => { setArea(event.target.value); setPage(1); }}><option value="">All service areas</option>{options.data?.areas.map((item) => <option key={item.id} value={item.id}>{item.name} · {item.postal_code}</option>)}</select>

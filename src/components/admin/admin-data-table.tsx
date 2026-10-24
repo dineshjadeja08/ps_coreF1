@@ -59,9 +59,9 @@ export function AdminDataTable<T>({
         ))}
       </div>
 
-      <div className={`hidden w-full min-w-0 rounded-lg border border-slate-200 bg-white shadow-sm ${dense ? "xl:block" : "md:block"}`}>
+      <div className={`hidden w-full min-w-0 rounded-xl border border-slate-200 bg-white shadow-sm ${dense ? "xl:block" : "md:block"}`}>
         <table className="w-full table-fixed divide-y divide-slate-200 text-sm">
-          <thead className="bg-slate-50">
+          <thead className="bg-slate-100">
             <tr>
               {columns.map((column) => (
                 <th key={column.key} className="break-words px-2 py-3 text-left text-[11px] font-bold uppercase text-slate-500 lg:px-3">
@@ -72,7 +72,7 @@ export function AdminDataTable<T>({
           </thead>
           <tbody className="divide-y divide-slate-100">
             {rows.map((row) => (
-              <tr key={getRowKey(row)} tabIndex={canOpen ? 0 : undefined} aria-label={canOpen ? "Open record details" : undefined} onClick={(event) => { if (!isControl(event.target)) openRow(row, event.currentTarget); }} onKeyDown={(event) => { if (event.target === event.currentTarget && (event.key === "Enter" || event.key === " ")) { event.preventDefault(); openRow(row, event.currentTarget); } }} className={`hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-violet-500 ${canOpen ? "cursor-pointer" : ""}`}>
+              <tr key={getRowKey(row)} tabIndex={canOpen ? 0 : undefined} aria-label={canOpen ? "Open record details" : undefined} onClick={(event) => { if (!isControl(event.target)) openRow(row, event.currentTarget); }} onKeyDown={(event) => { if (event.target === event.currentTarget && (event.key === "Enter" || event.key === " ")) { event.preventDefault(); openRow(row, event.currentTarget); } }} className={`odd:bg-white even:bg-slate-50/60 hover:bg-teal-50/70 focus-visible:outline-2 focus-visible:outline-teal-700 ${canOpen ? "cursor-pointer" : ""}`}>
                 {columns.map((column) => (
                   <td key={column.key} className="min-w-0 break-words px-2 py-3 align-middle text-slate-700 [overflow-wrap:anywhere] [&_*]:max-w-full [&_button]:whitespace-normal [&_.flex]:flex-wrap lg:px-3">
                     {column.render(row)}

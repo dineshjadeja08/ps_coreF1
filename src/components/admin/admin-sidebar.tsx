@@ -118,12 +118,12 @@ export function AdminSidebar() {
                       key={item.href}
                       href={item.href}
                       className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold transition ${child ? "ml-7 text-xs" : ""} ${
-                          active ? "bg-[#5b21b6] text-white" : "text-slate-200 hover:bg-slate-800 hover:text-white"
+                          active ? "bg-teal-700 text-white shadow-sm" : "text-slate-200 hover:bg-slate-800 hover:text-white"
                       }`}
                     >
                       <Icon className="h-4 w-4" />
                       <span className="flex-1">{item.label}</span>
-                      {item.href === "/admin/technicians/kyc" && (pendingKyc.data?.length ?? 0) > 0 ? <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-bold text-violet-800">{pendingKyc.data!.length}</span> : null}
+                      {item.href === "/admin/technicians/kyc" && (pendingKyc.data?.length ?? 0) > 0 ? <span className="rounded-full bg-teal-100 px-2 py-0.5 text-[10px] font-bold text-teal-900">{pendingKyc.data!.length}</span> : null}
                     </Link>
                   );
                 })}

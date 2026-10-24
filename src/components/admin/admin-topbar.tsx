@@ -26,13 +26,13 @@ export function AdminTopbar() {
   }
 
   return (
-    <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 px-3 py-3 backdrop-blur sm:px-4 lg:px-8">
+    <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 px-3 py-3 shadow-[0_1px_3px_rgba(15,23,42,0.04)] backdrop-blur sm:px-4 lg:px-8">
       <div className="flex min-w-0 flex-wrap items-center gap-3">
         <AdminMobileNav />
         <div className="relative order-3 w-full sm:order-none sm:max-w-md sm:flex-1">
           <label htmlFor="admin-global-search" className="sr-only">Search admin</label>
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <Input id="admin-global-search" value={search} onChange={(event) => setSearch(event.target.value)} className="h-10 rounded-lg border-slate-200 bg-slate-50 pl-9 shadow-none" placeholder="Search work orders, leads, customers, technicians" />
+          <Input id="admin-global-search" value={search} onChange={(event) => setSearch(event.target.value)} className="h-10 rounded-lg border-slate-300 bg-slate-50 pl-9 shadow-none focus-visible:border-teal-700 focus-visible:ring-teal-700" placeholder="Search work orders, leads, customers, technicians" />
           {debounced.length >= 2 ? <div className="absolute inset-x-0 top-12 z-50 max-h-80 overflow-y-auto rounded-lg border border-slate-200 bg-white p-2 shadow-xl">
             {results.isFetching ? <p className="p-3 text-sm text-slate-500">Searching…</p> : results.data?.results.length ? results.data.results.map((result) => <Link key={`${result.type}-${result.id}`} href={result.url} onClick={() => setSearch("")} className="block rounded-md p-3 hover:bg-slate-50"><span className="block text-sm font-bold text-slate-950">{result.title}</span><span className="mt-0.5 block text-xs text-slate-500">{result.subtitle}</span></Link>) : <p className="p-3 text-sm text-slate-500">No results found.</p>}
           </div> : null}
