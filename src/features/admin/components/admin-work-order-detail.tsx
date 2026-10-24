@@ -73,6 +73,7 @@ function JobProgress({ booking, onChanged }: { booking: Booking; onChanged: () =
     {activeStage < 0 ? <p className="mt-3 text-sm text-amber-700">Assign an available vendor before starting this job.</p> : null}
     {activeStage >= 0 && activeStage < 2 ? <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-slate-100 pt-4">
       <label htmlFor="work-order-job-status" className="mr-auto text-sm font-medium text-slate-700">Update job status</label>
+      {canComplete ? <Button type="button" disabled={updateStatus.isPending} onClick={() => { if (window.confirm(`Manually mark ${booking.booking_number} as completed? Confirm the work is finished and the balance is collected.`)) updateStatus.mutate("COMPLETED"); }}>Mark completed manually</Button> : null}
       <div className="relative">
         {updateStatus.isPending ? <Loader2 className="pointer-events-none absolute right-3 top-3 h-4 w-4 animate-spin text-violet-700" /> : null}
         <select

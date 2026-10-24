@@ -7,10 +7,11 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { LeadServiceCombobox } from "@/features/admin/components/leads/lead-service-combobox";
+import { LeadAddressCombobox } from "@/features/admin/components/leads/lead-address-combobox";
 import { formatLeadDate, formatLeadStatus, isValidIndianMobile, normalizeIndianMobile } from "@/features/admin/components/leads/lead-utils";
 import type { AdminService, Lead } from "@/types/api";
 
-export type LeadEditValues = Pick<Lead, "customer_name" | "primary_mobile" | "address" | "admin_notes" | "funnel_status"> & { required_service: string };
+export type LeadEditValues = Pick<Lead, "customer_name" | "primary_mobile" | "address" | "city" | "pincode" | "admin_notes" | "funnel_status"> & { required_service: string };
 
 type Props = {
   lead: Lead;
@@ -36,7 +37,9 @@ export function LeadOverviewCard({ lead, services, editing, pending, closePendin
           <EditField label="Customer"><Input value={values.customer_name} onChange={(event) => setValues({ ...values, customer_name: event.target.value })} /></EditField>
           <EditField label="Mob Number" error={values.primary_mobile && !mobileValid ? "Enter a valid 10-digit Indian mobile number." : undefined}><Input inputMode="tel" value={values.primary_mobile} onChange={(event) => setValues({ ...values, primary_mobile: event.target.value })} /></EditField>
           <EditField label="Service" className="sm:col-span-2"><LeadServiceCombobox services={services} value={values.required_service} onChange={(required_service) => setValues({ ...values, required_service })} /></EditField>
-          <EditField label="Location" className="sm:col-span-2"><textarea value={values.address} onChange={(event) => setValues({ ...values, address: event.target.value })} className="min-h-24 w-full rounded-md border border-border bg-white p-3 text-sm outline-none focus:border-primary focus:ring-3 focus:ring-primary/15" /></EditField>
+          <EditField label="Address" className="sm:col-span-2"><LeadAddressCombobox value={values.address} onChange={(address) => setValues({ ...values, address, city: "", pincode: "" })} onResolve={(address) => setValues({ ...values, address: address.address, city: address.city, pincode: address.pincode })} /><p className="mt-1.5 text-xs text-secondary">Search and select a Google Maps suggestion to update the service area.</p></EditField>
+          <EditField label="City"><Input value={values.city} onChange={(event) => setValues({ ...values, city: event.target.value })} /></EditField>
+          <EditField label="Pincode"><Input inputMode="numeric" value={values.pincode} onChange={(event) => setValues({ ...values, pincode: event.target.value })} /></EditField>
           <EditField label="Funnel status"><select value={values.funnel_status} onChange={(event) => setValues({ ...values, funnel_status: event.target.value })} className="h-11 w-full rounded-md border border-border bg-white px-3 text-sm">{["VISITED", "CART_ADDED", "UNPAID", "PAID", "BOOKED", "CANCELLED", "LOST"].map((status) => <option key={status} value={status}>{status.replaceAll("_", " ")}</option>)}</select></EditField>
           <EditField label="Admin notes" className="sm:col-span-2"><textarea value={values.admin_notes} onChange={(event) => setValues({ ...values, admin_notes: event.target.value })} className="min-h-24 w-full rounded-md border border-border bg-white p-3 text-sm outline-none focus:border-primary focus:ring-3 focus:ring-primary/15" /></EditField>
         </div>
@@ -61,7 +64,7 @@ export function LeadOverviewCard({ lead, services, editing, pending, closePendin
 }
 
 function toEditValues(lead: Lead): LeadEditValues {
-  return { customer_name: lead.customer_name, primary_mobile: lead.primary_mobile, required_service: lead.required_service ?? "", address: lead.address, admin_notes: lead.admin_notes, funnel_status: lead.funnel_status };
+  return { customer_name: lead.customer_name, primary_mobile: lead.primary_mobile, required_service: lead.required_service ?? "", address: lead.address, city: lead.city, pincode: lead.pincode, admin_notes: lead.admin_notes, funnel_status: lead.funnel_status };
 }
 
 function EditField({ label, error, className, children }: { label: string; error?: string; className?: string; children: React.ReactNode }) {
